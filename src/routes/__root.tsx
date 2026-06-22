@@ -83,10 +83,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets. Shipping across India." },
       { name: "author", content: "TECHLAB" },
       { property: "og:title", content: "TECHLAB — The Niche Tech Revolution" },
-      { property: "og:description", content: "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets." },
+      { property: "og:description", content: "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets. Shipping across India." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "TECHLAB — The Niche Tech Revolution" },
+      { name: "twitter:description", content: "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets. Shipping across India." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c8e38c11-c137-4a3f-aa51-4cb8ab4e9e0b/id-preview-d342fd9e--40a3ae82-080c-4e68-8561-161d6a73169b.lovable.app-1782123698453.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c8e38c11-c137-4a3f-aa51-4cb8ab4e9e0b/id-preview-d342fd9e--40a3ae82-080c-4e68-8561-161d6a73169b.lovable.app-1782123698453.png" },
     ],
     links: [
       {
