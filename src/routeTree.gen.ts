@@ -9,38 +9,278 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
+import { Route as LegalShippingRouteImport } from './routes/legal.shipping'
+import { Route as LegalReturnsRouteImport } from './routes/legal.returns'
+import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as LegalContactRouteImport } from './routes/legal.contact'
+import { Route as LegalCancellationRouteImport } from './routes/legal.cancellation'
+import { Route as LegalAboutRouteImport } from './routes/legal.about'
+import { Route as AccountOrdersRouteImport } from './routes/account.orders'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductSlugRoute = ProductSlugRouteImport.update({
+  id: '/product/$slug',
+  path: '/product/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/legal/terms',
+  path: '/legal/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalShippingRoute = LegalShippingRouteImport.update({
+  id: '/legal/shipping',
+  path: '/legal/shipping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalReturnsRoute = LegalReturnsRouteImport.update({
+  id: '/legal/returns',
+  path: '/legal/returns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
+  id: '/legal/privacy',
+  path: '/legal/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalContactRoute = LegalContactRouteImport.update({
+  id: '/legal/contact',
+  path: '/legal/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalCancellationRoute = LegalCancellationRouteImport.update({
+  id: '/legal/cancellation',
+  path: '/legal/cancellation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalAboutRoute = LegalAboutRouteImport.update({
+  id: '/legal/about',
+  path: '/legal/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountOrdersRoute = AccountOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AccountRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/cart': typeof CartRoute
+  '/catalog': typeof CatalogRoute
+  '/checkout': typeof CheckoutRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account/orders': typeof AccountOrdersRoute
+  '/legal/about': typeof LegalAboutRoute
+  '/legal/cancellation': typeof LegalCancellationRoute
+  '/legal/contact': typeof LegalContactRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/returns': typeof LegalReturnsRoute
+  '/legal/shipping': typeof LegalShippingRoute
+  '/legal/terms': typeof LegalTermsRoute
+  '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/cart': typeof CartRoute
+  '/catalog': typeof CatalogRoute
+  '/checkout': typeof CheckoutRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account/orders': typeof AccountOrdersRoute
+  '/legal/about': typeof LegalAboutRoute
+  '/legal/cancellation': typeof LegalCancellationRoute
+  '/legal/contact': typeof LegalContactRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/returns': typeof LegalReturnsRoute
+  '/legal/shipping': typeof LegalShippingRoute
+  '/legal/terms': typeof LegalTermsRoute
+  '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/cart': typeof CartRoute
+  '/catalog': typeof CatalogRoute
+  '/checkout': typeof CheckoutRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/account/orders': typeof AccountOrdersRoute
+  '/legal/about': typeof LegalAboutRoute
+  '/legal/cancellation': typeof LegalCancellationRoute
+  '/legal/contact': typeof LegalContactRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/returns': typeof LegalReturnsRoute
+  '/legal/shipping': typeof LegalShippingRoute
+  '/legal/terms': typeof LegalTermsRoute
+  '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/account'
+    | '/auth'
+    | '/cart'
+    | '/catalog'
+    | '/checkout'
+    | '/sitemap.xml'
+    | '/account/orders'
+    | '/legal/about'
+    | '/legal/cancellation'
+    | '/legal/contact'
+    | '/legal/privacy'
+    | '/legal/returns'
+    | '/legal/shipping'
+    | '/legal/terms'
+    | '/product/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/account'
+    | '/auth'
+    | '/cart'
+    | '/catalog'
+    | '/checkout'
+    | '/sitemap.xml'
+    | '/account/orders'
+    | '/legal/about'
+    | '/legal/cancellation'
+    | '/legal/contact'
+    | '/legal/privacy'
+    | '/legal/returns'
+    | '/legal/shipping'
+    | '/legal/terms'
+    | '/product/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/account'
+    | '/auth'
+    | '/cart'
+    | '/catalog'
+    | '/checkout'
+    | '/sitemap.xml'
+    | '/account/orders'
+    | '/legal/about'
+    | '/legal/cancellation'
+    | '/legal/contact'
+    | '/legal/privacy'
+    | '/legal/returns'
+    | '/legal/shipping'
+    | '/legal/terms'
+    | '/product/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CartRoute: typeof CartRoute
+  CatalogRoute: typeof CatalogRoute
+  CheckoutRoute: typeof CheckoutRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  LegalAboutRoute: typeof LegalAboutRoute
+  LegalCancellationRoute: typeof LegalCancellationRoute
+  LegalContactRoute: typeof LegalContactRoute
+  LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalReturnsRoute: typeof LegalReturnsRoute
+  LegalShippingRoute: typeof LegalShippingRoute
+  LegalTermsRoute: typeof LegalTermsRoute
+  ProductSlugRoute: typeof ProductSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +288,100 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/$slug': {
+      id: '/product/$slug'
+      path: '/product/$slug'
+      fullPath: '/product/$slug'
+      preLoaderRoute: typeof ProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/legal/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/shipping': {
+      id: '/legal/shipping'
+      path: '/legal/shipping'
+      fullPath: '/legal/shipping'
+      preLoaderRoute: typeof LegalShippingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/returns': {
+      id: '/legal/returns'
+      path: '/legal/returns'
+      fullPath: '/legal/returns'
+      preLoaderRoute: typeof LegalReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacy': {
+      id: '/legal/privacy'
+      path: '/legal/privacy'
+      fullPath: '/legal/privacy'
+      preLoaderRoute: typeof LegalPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/contact': {
+      id: '/legal/contact'
+      path: '/legal/contact'
+      fullPath: '/legal/contact'
+      preLoaderRoute: typeof LegalContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/cancellation': {
+      id: '/legal/cancellation'
+      path: '/legal/cancellation'
+      fullPath: '/legal/cancellation'
+      preLoaderRoute: typeof LegalCancellationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/about': {
+      id: '/legal/about'
+      path: '/legal/about'
+      fullPath: '/legal/about'
+      preLoaderRoute: typeof LegalAboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/orders': {
+      id: '/account/orders'
+      path: '/orders'
+      fullPath: '/account/orders'
+      preLoaderRoute: typeof AccountOrdersRouteImport
+      parentRoute: typeof AccountRoute
+    }
   }
 }
 
+interface AccountRouteChildren {
+  AccountOrdersRoute: typeof AccountOrdersRoute
+}
+
+const AccountRouteChildren: AccountRouteChildren = {
+  AccountOrdersRoute: AccountOrdersRoute,
+}
+
+const AccountRouteWithChildren =
+  AccountRoute._addFileChildren(AccountRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CartRoute: CartRoute,
+  CatalogRoute: CatalogRoute,
+  CheckoutRoute: CheckoutRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  LegalAboutRoute: LegalAboutRoute,
+  LegalCancellationRoute: LegalCancellationRoute,
+  LegalContactRoute: LegalContactRoute,
+  LegalPrivacyRoute: LegalPrivacyRoute,
+  LegalReturnsRoute: LegalReturnsRoute,
+  LegalShippingRoute: LegalShippingRoute,
+  LegalTermsRoute: LegalTermsRoute,
+  ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
