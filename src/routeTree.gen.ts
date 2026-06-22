@@ -17,7 +17,12 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
+import { Route as LegalShippingRouteImport } from './routes/legal.shipping'
+import { Route as LegalReturnsRouteImport } from './routes/legal.returns'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as LegalContactRouteImport } from './routes/legal.contact'
+import { Route as LegalCancellationRouteImport } from './routes/legal.cancellation'
+import { Route as LegalAboutRouteImport } from './routes/legal.about'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
 
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -60,9 +65,34 @@ const LegalTermsRoute = LegalTermsRouteImport.update({
   path: '/legal/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalShippingRoute = LegalShippingRouteImport.update({
+  id: '/legal/shipping',
+  path: '/legal/shipping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalReturnsRoute = LegalReturnsRouteImport.update({
+  id: '/legal/returns',
+  path: '/legal/returns',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
   id: '/legal/privacy',
   path: '/legal/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalContactRoute = LegalContactRouteImport.update({
+  id: '/legal/contact',
+  path: '/legal/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalCancellationRoute = LegalCancellationRouteImport.update({
+  id: '/legal/cancellation',
+  path: '/legal/cancellation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalAboutRoute = LegalAboutRouteImport.update({
+  id: '/legal/about',
+  path: '/legal/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountOrdersRoute = AccountOrdersRouteImport.update({
@@ -79,7 +109,12 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/legal/about': typeof LegalAboutRoute
+  '/legal/cancellation': typeof LegalCancellationRoute
+  '/legal/contact': typeof LegalContactRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/returns': typeof LegalReturnsRoute
+  '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
 }
@@ -91,7 +126,12 @@ export interface FileRoutesByTo {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/legal/about': typeof LegalAboutRoute
+  '/legal/cancellation': typeof LegalCancellationRoute
+  '/legal/contact': typeof LegalContactRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/returns': typeof LegalReturnsRoute
+  '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
 }
@@ -104,7 +144,12 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/legal/about': typeof LegalAboutRoute
+  '/legal/cancellation': typeof LegalCancellationRoute
+  '/legal/contact': typeof LegalContactRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/returns': typeof LegalReturnsRoute
+  '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
 }
@@ -118,7 +163,12 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/account/orders'
+    | '/legal/about'
+    | '/legal/cancellation'
+    | '/legal/contact'
     | '/legal/privacy'
+    | '/legal/returns'
+    | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -130,7 +180,12 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/account/orders'
+    | '/legal/about'
+    | '/legal/cancellation'
+    | '/legal/contact'
     | '/legal/privacy'
+    | '/legal/returns'
+    | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
   id:
@@ -142,7 +197,12 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/account/orders'
+    | '/legal/about'
+    | '/legal/cancellation'
+    | '/legal/contact'
     | '/legal/privacy'
+    | '/legal/returns'
+    | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
   fileRoutesById: FileRoutesById
@@ -154,7 +214,12 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CatalogRoute: typeof CatalogRoute
   CheckoutRoute: typeof CheckoutRoute
+  LegalAboutRoute: typeof LegalAboutRoute
+  LegalCancellationRoute: typeof LegalCancellationRoute
+  LegalContactRoute: typeof LegalContactRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalReturnsRoute: typeof LegalReturnsRoute
+  LegalShippingRoute: typeof LegalShippingRoute
   LegalTermsRoute: typeof LegalTermsRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
@@ -217,11 +282,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/shipping': {
+      id: '/legal/shipping'
+      path: '/legal/shipping'
+      fullPath: '/legal/shipping'
+      preLoaderRoute: typeof LegalShippingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/returns': {
+      id: '/legal/returns'
+      path: '/legal/returns'
+      fullPath: '/legal/returns'
+      preLoaderRoute: typeof LegalReturnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/legal/privacy': {
       id: '/legal/privacy'
       path: '/legal/privacy'
       fullPath: '/legal/privacy'
       preLoaderRoute: typeof LegalPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/contact': {
+      id: '/legal/contact'
+      path: '/legal/contact'
+      fullPath: '/legal/contact'
+      preLoaderRoute: typeof LegalContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/cancellation': {
+      id: '/legal/cancellation'
+      path: '/legal/cancellation'
+      fullPath: '/legal/cancellation'
+      preLoaderRoute: typeof LegalCancellationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/about': {
+      id: '/legal/about'
+      path: '/legal/about'
+      fullPath: '/legal/about'
+      preLoaderRoute: typeof LegalAboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/orders': {
@@ -252,7 +352,12 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CatalogRoute: CatalogRoute,
   CheckoutRoute: CheckoutRoute,
+  LegalAboutRoute: LegalAboutRoute,
+  LegalCancellationRoute: LegalCancellationRoute,
+  LegalContactRoute: LegalContactRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
+  LegalReturnsRoute: LegalReturnsRoute,
+  LegalShippingRoute: LegalShippingRoute,
   LegalTermsRoute: LegalTermsRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
