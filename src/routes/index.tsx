@@ -101,7 +101,7 @@ function Index() {
               <li className="flex items-center gap-3"><span className="material-symbols-outlined text-base">check_circle</span> Tactile QWERTY & T9 Options</li>
               <li className="flex items-center gap-3"><span className="material-symbols-outlined text-base">check_circle</span> Privacy-Hardened Firmware</li>
             </ul>
-            <Link to="/catalog" search={{ category: "phones" } as never} className="inline-block bg-primary text-on-primary px-10 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all">
+            <Link to="/catalog" className="inline-block bg-primary text-on-primary px-10 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all">
               SHOP THE KEYPADS
             </Link>
           </div>
