@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { getProductBySlug, PRODUCTS } from "@/lib/products";
+import { getProductBySlug, PRODUCTS, type Product } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { toast } from "sonner";
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductPage() {
-  const { product } = Route.useLoaderData();
+  const { product } = Route.useLoaderData() as { product: Product };
   const [variant, setVariant] = useState(product.variants?.[0]?.id);
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);

@@ -6,10 +6,10 @@ export const Route = createFileRoute("/account")({
   component: AccountLayout,
 });
 
-const TABS = [
+const TABS: { to: "/account" | "/account/orders"; label: string; exact?: boolean }[] = [
   { to: "/account", label: "Profile", exact: true },
   { to: "/account/orders", label: "Orders" },
-] as const;
+];
 
 function AccountLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
