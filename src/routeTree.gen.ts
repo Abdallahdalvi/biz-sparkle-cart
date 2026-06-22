@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as CartRouteImport } from './routes/cart'
@@ -25,6 +26,11 @@ import { Route as LegalCancellationRouteImport } from './routes/legal.cancellati
 import { Route as LegalAboutRouteImport } from './routes/legal.about'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/orders': typeof AccountOrdersRoute
   '/legal/about': typeof LegalAboutRoute
   '/legal/cancellation': typeof LegalCancellationRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/orders': typeof AccountOrdersRoute
   '/legal/about': typeof LegalAboutRoute
   '/legal/cancellation': typeof LegalCancellationRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/orders': typeof AccountOrdersRoute
   '/legal/about': typeof LegalAboutRoute
   '/legal/cancellation': typeof LegalCancellationRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/catalog'
     | '/checkout'
+    | '/sitemap.xml'
     | '/account/orders'
     | '/legal/about'
     | '/legal/cancellation'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/catalog'
     | '/checkout'
+    | '/sitemap.xml'
     | '/account/orders'
     | '/legal/about'
     | '/legal/cancellation'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/catalog'
     | '/checkout'
+    | '/sitemap.xml'
     | '/account/orders'
     | '/legal/about'
     | '/legal/cancellation'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CatalogRoute: typeof CatalogRoute
   CheckoutRoute: typeof CheckoutRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LegalAboutRoute: typeof LegalAboutRoute
   LegalCancellationRoute: typeof LegalCancellationRoute
   LegalContactRoute: typeof LegalContactRoute
@@ -226,6 +239,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout': {
       id: '/checkout'
       path: '/checkout'
@@ -352,6 +372,7 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CatalogRoute: CatalogRoute,
   CheckoutRoute: CheckoutRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   LegalAboutRoute: LegalAboutRoute,
   LegalCancellationRoute: LegalCancellationRoute,
   LegalContactRoute: LegalContactRoute,
