@@ -8,11 +8,11 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const TABS = [
+const TABS: { to: "/admin" | "/admin/products" | "/admin/orders"; label: string; exact?: boolean }[] = [
   { to: "/admin", label: "Overview", exact: true },
   { to: "/admin/products", label: "Products" },
   { to: "/admin/orders", label: "Orders" },
-] as const;
+];
 
 function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
