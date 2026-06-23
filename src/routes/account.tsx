@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { useAuth, signOut } from "@/lib/use-auth";
 
 export const Route = createFileRoute("/account")({
   head: () => ({ meta: [{ title: "Account — TECHLAB" }, { name: "robots", content: "noindex" }] }),
@@ -35,14 +36,35 @@ function AccountLayout() {
 }
 
 function ProfileStub() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="bg-white shopify-border p-8 text-on-surface-variant">Loading…</div>;
+  if (!user) {
+    return (
+      <div className="bg-white shopify-border p-8">
+        <p className="text-on-surface-variant mb-4">You're not signed in.</p>
+        <Link to="/auth" className="inline-block bg-primary text-on-primary px-6 py-3 font-bold text-sm uppercase tracking-widest">
+          Sign In / Create Account
+        </Link>
+      </div>
+    );
+  }
   return (
     <div className="bg-white shopify-border p-8">
-      <p className="text-on-surface-variant mb-4">You're not signed in.</p>
-      <Link to="/auth" className="inline-block bg-primary text-on-primary px-6 py-3 font-bold text-sm uppercase tracking-widest">
-        Sign In / Create Account
-      </Link>
+      <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Signed in as</p>
+      <p className="text-xl font-bold text-primary mb-6">{user.email}</p>
+      <div className="flex gap-3">
+        <Link to="/account/orders" className="bg-primary text-on-primary px-6 py-3 font-bold text-sm uppercase tracking-widest">
+          View Orders
+        </Link>
+        <button
+          onClick={() => signOut()}
+          className="border border-outline px-6 py-3 font-bold text-sm uppercase tracking-widest hover:bg-surface-container"
+        >
+          Sign Out
+        </button>
+      </div>
       <p className="text-[11px] text-on-surface-variant mt-6 uppercase tracking-widest">
-        Account, addresses & order tracking will activate when Lovable Cloud is wired up in Phase 2.
+        This account works across all dalvi.cloud websites.
       </p>
     </div>
   );

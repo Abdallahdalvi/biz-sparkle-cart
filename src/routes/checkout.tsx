@@ -4,6 +4,8 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { useCart } from "@/lib/cart-store";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/use-auth";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — TECHLAB" }, { name: "robots", content: "noindex" }] }),
@@ -16,6 +18,7 @@ function Checkout() {
   const clear = useCart((s) => s.clear);
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const { user } = useAuth();
 
   if (items.length === 0) {
     return (
@@ -33,15 +36,53 @@ function Checkout() {
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12">
         <h1 className="text-4xl font-bold text-primary mb-8">Checkout</h1>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
+            const fd = new FormData(e.currentTarget);
             setBusy(true);
-            // Razorpay integration will replace this in Phase 4.
-            setTimeout(() => {
+            try {
+              const shipping_address = {
+                first_name: fd.get("firstName"),
+                last_name: fd.get("lastName"),
+                line1: fd.get("line1"),
+                line2: fd.get("line2"),
+                city: fd.get("city"),
+                state: fd.get("state"),
+                pincode: fd.get("pincode"),
+                country: "IN",
+              };
+              const { data: order, error } = await supabase
+                .from("orders")
+                .insert({
+                  user_id: user?.id ?? null,
+                  email: String(fd.get("email") ?? ""),
+                  phone: String(fd.get("phone") ?? ""),
+                  shipping_address,
+                  subtotal_paise: total,
+                  total_paise: total,
+                  status: "pending",
+                })
+                .select("id, order_number")
+                .single();
+              if (error) throw error;
+              const orderItems = items.map((i) => ({
+                order_id: order.id,
+                name: i.name,
+                variant_label: i.variantLabel ?? null,
+                unit_price_paise: i.pricePaise,
+                qty: i.qty,
+                image_url: i.image,
+              }));
+              const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
+              if (itemsErr) throw itemsErr;
               clear();
-              toast.success("Order placed (demo). Razorpay will be wired in Phase 4.");
+              toast.success(`Order ${order.order_number} placed. Razorpay payment opens in Phase 4.`);
               navigate({ to: "/account/orders" });
-            }, 600);
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Checkout failed");
+            } finally {
+              setBusy(false);
+            }
           }}
           className="grid grid-cols-1 lg:grid-cols-3 gap-8"
         >
