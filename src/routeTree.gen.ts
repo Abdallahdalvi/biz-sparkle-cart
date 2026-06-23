@@ -25,6 +25,7 @@ import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LegalContactRouteImport } from './routes/legal.contact'
 import { Route as LegalCancellationRouteImport } from './routes/legal.cancellation'
 import { Route as LegalAboutRouteImport } from './routes/legal.about'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -107,6 +108,11 @@ const LegalAboutRoute = LegalAboutRouteImport.update({
   path: '/legal/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AccountOrdersRoute = AccountOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -116,13 +122,14 @@ const AccountOrdersRoute = AccountOrdersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/admin/products': typeof AdminProductsRoute
   '/legal/about': typeof LegalAboutRoute
   '/legal/cancellation': typeof LegalCancellationRoute
   '/legal/contact': typeof LegalContactRoute
@@ -135,13 +142,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/admin/products': typeof AdminProductsRoute
   '/legal/about': typeof LegalAboutRoute
   '/legal/cancellation': typeof LegalCancellationRoute
   '/legal/contact': typeof LegalContactRoute
@@ -155,13 +163,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/admin/products': typeof AdminProductsRoute
   '/legal/about': typeof LegalAboutRoute
   '/legal/cancellation': typeof LegalCancellationRoute
   '/legal/contact': typeof LegalContactRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/sitemap.xml'
     | '/account/orders'
+    | '/admin/products'
     | '/legal/about'
     | '/legal/cancellation'
     | '/legal/contact'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/sitemap.xml'
     | '/account/orders'
+    | '/admin/products'
     | '/legal/about'
     | '/legal/cancellation'
     | '/legal/contact'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/sitemap.xml'
     | '/account/orders'
+    | '/admin/products'
     | '/legal/about'
     | '/legal/cancellation'
     | '/legal/contact'
@@ -234,7 +246,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRouteWithChildren
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   CartRoute: typeof CartRoute
   CatalogRoute: typeof CatalogRoute
@@ -364,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalAboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/account/orders': {
       id: '/account/orders'
       path: '/orders'
@@ -385,10 +404,20 @@ const AccountRouteChildren: AccountRouteChildren = {
 const AccountRouteWithChildren =
   AccountRoute._addFileChildren(AccountRouteChildren)
 
+interface AdminRouteChildren {
+  AdminProductsRoute: typeof AdminProductsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminProductsRoute: AdminProductsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRouteWithChildren,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   CartRoute: CartRoute,
   CatalogRoute: CatalogRoute,
