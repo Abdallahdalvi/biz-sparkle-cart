@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useCart } from "@/lib/cart-store";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/use-auth";
 
 const NAV = [
   { to: "/", label: "Store" },
@@ -15,6 +16,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const count = mounted ? items.reduce((a, i) => a + i.qty, 0) : 0;
+  const { isAdmin } = useAuth();
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-white border-b border-outline-variant/30">
@@ -55,6 +57,14 @@ export function Header() {
           <Link to="/account" aria-label="Account" className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity">
             account_circle
           </Link>
+          {mounted && isAdmin && (
+            <Link
+              to="/admin"
+              className="text-[10px] font-bold uppercase tracking-widest border border-primary px-2 py-1 hover:bg-primary hover:text-on-primary transition-colors"
+            >
+              Admin
+            </Link>
+          )}
         </div>
       </div>
     </nav>
