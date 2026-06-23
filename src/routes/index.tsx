@@ -28,8 +28,8 @@ function Index() {
     <SiteShell>
       {/* Hero */}
       <section className="relative bg-surface-container-low overflow-hidden border-b border-outline-variant/20">
-        <div className="relative z-10 w-full px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-xl md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-lg items-center">
-          <div className="space-y-lg">
+        <div className="relative z-10 w-full px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-8 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+          <div className="space-y-6">
             <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2 py-1 rounded-sm inline-block">
               LIMITED RELEASE ENGINE
             </span>
@@ -39,7 +39,7 @@ function Index() {
             <p className="text-lg text-on-surface-variant max-w-lg leading-relaxed">
               Engineering the return of tactile precision. Experience the Qin F22 Pro and Blackberry Android hybrids — where modern power meets the unboxing thrill of classic hardware.
             </p>
-            <div className="flex flex-wrap gap-md pt-sm">
+            <div className="flex flex-wrap gap-4 pt-2">
               <Link to="/catalog" className="bg-primary text-on-primary px-10 py-4 rounded-none font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2">
                 EXPLORE THE LAB <span className="material-symbols-outlined text-base">trending_flat</span>
               </Link>
@@ -48,21 +48,21 @@ function Index() {
               </Link>
             </div>
           </div>
-          <div className="hidden lg:grid grid-cols-2 gap-md h-[500px]">
+          <div className="hidden lg:grid grid-cols-2 gap-4 h-[500px]">
             <Link to="/product/$slug" params={{ slug: "qin-f22-pro" }} className="relative overflow-hidden shopify-border group h-full">
               <img className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" src={PRODUCTS[0].images[0]} alt="Qin F22 Pro" />
               <div className="absolute bottom-4 left-4 glass-panel px-3 py-1">
                 <p className="text-[10px] font-bold tracking-widest text-primary uppercase">QIN F22 PRO</p>
               </div>
             </Link>
-            <div className="grid grid-rows-2 gap-md h-full">
+            <div className="grid grid-rows-2 gap-4 h-full">
               <Link to="/product/$slug" params={{ slug: "qin-f22-pro" }} className="relative overflow-hidden shopify-border group">
                 <img className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" src={PRODUCTS[0].images[1] ?? PRODUCTS[0].images[0]} alt="Keyboard hybrid" />
                 <div className="absolute bottom-4 left-4 glass-panel px-3 py-1">
                   <p className="text-[10px] font-bold tracking-widest text-primary uppercase">KEYBOARD HYBRID</p>
                 </div>
               </Link>
-              <div className="relative shopify-border bg-white flex flex-col justify-center items-center text-center p-md">
+              <div className="relative shopify-border bg-white flex flex-col justify-center items-center text-center p-4">
                 <div className="material-symbols-outlined text-primary text-3xl mb-2">box_add</div>
                 <p className="font-bold text-lg uppercase tracking-tight">WEEKLY DROPS</p>
                 <p className="text-[11px] font-bold text-on-surface-variant tracking-widest uppercase">JOIN THE WAITLIST</p>
@@ -91,12 +91,12 @@ function Index() {
       {/* Keypad Android Collection */}
       <section className="bg-white py-24 border-y border-outline-variant/30">
         <div className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto flex flex-col md:flex-row items-center gap-20">
-          <div className="w-full md:w-1/2 space-y-lg">
+          <div className="w-full md:w-1/2 space-y-6">
             <h2 className="text-4xl text-primary font-bold">Keypad Android Collection</h2>
             <p className="text-lg text-on-surface-variant leading-relaxed">
               Ditch the glass slab. Our curated collection of keypad-driven Android devices offers full app support with physical feedback that touchscreens can't match.
             </p>
-            <ul className="space-y-sm text-[13px] font-bold uppercase tracking-wider text-primary">
+            <ul className="space-y-2 text-[13px] font-bold uppercase tracking-wider text-primary">
               <li className="flex items-center gap-3"><span className="material-symbols-outlined text-base">check_circle</span> Full Google Play Support</li>
               <li className="flex items-center gap-3"><span className="material-symbols-outlined text-base">check_circle</span> Tactile QWERTY & T9 Options</li>
               <li className="flex items-center gap-3"><span className="material-symbols-outlined text-base">check_circle</span> Privacy-Hardened Firmware</li>
@@ -105,9 +105,9 @@ function Index() {
               SHOP THE KEYPADS
             </Link>
           </div>
-          <div className="w-full md:w-1/2 grid grid-cols-2 gap-md">
+          <div className="w-full md:w-1/2 grid grid-cols-2 gap-4">
             {keypads.map((p, i) => (
-              <Link key={p.slug} to="/product/$slug" params={{ slug: p.slug }} className={"aspect-[4/5] bg-surface-container-low shopify-border overflow-hidden " + (i === 1 ? "mt-xl" : "")}>
+              <Link key={p.slug} to="/product/$slug" params={{ slug: p.slug }} className={"aspect-[4/5] bg-surface-container-low shopify-border overflow-hidden " + (i === 1 ? "mt-8" : "")}>
                 <img className="object-cover w-full h-full" src={p.images[0]} alt={p.name} />
               </Link>
             ))}
@@ -137,7 +137,7 @@ function Index() {
 
       {/* Newsletter */}
       <section className="py-24 px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto">
-        <div className="bg-white shopify-border p-margin-desktop flex flex-col md:flex-row justify-between items-center gap-lg relative overflow-hidden">
+        <div className="bg-white shopify-border p-margin-desktop flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
           <div className="relative z-10 max-w-md text-center md:text-left">
             <h2 className="text-3xl text-primary mb-4 font-bold">Join the TechLab Alpha</h2>
             <p className="text-on-surface-variant uppercase tracking-widest text-[11px] font-bold opacity-80">

@@ -22,7 +22,7 @@ export function Header() {
         <Link to="/" className="font-bold text-2xl tracking-tighter text-primary">
           TECHLAB
         </Link>
-        <div className="hidden md:flex items-center gap-xl font-medium text-sm uppercase tracking-wider">
+        <div className="hidden md:flex items-center gap-8 font-medium text-sm uppercase tracking-wider">
           {NAV.map((n) => {
             const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
             return (
@@ -40,7 +40,7 @@ export function Header() {
             );
           })}
         </div>
-        <div className="flex items-center gap-md">
+        <div className="flex items-center gap-4">
           <Link to="/catalog" aria-label="Search" className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity">
             search
           </Link>
