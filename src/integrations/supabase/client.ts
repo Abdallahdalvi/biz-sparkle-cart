@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 const url =
   import.meta.env.VITE_SUPABASE_URL ||
@@ -18,7 +18,7 @@ if (!url || !anonKey) {
  * Auth lives in the global `auth.users` table — so signing up here logs the
  * user into every dalvi.cloud site sharing this Supabase instance.
  */
-export const supabase: SupabaseClient = createClient(url ?? "http://invalid", anonKey ?? "invalid", {
+export const supabase = createClient(url ?? "http://invalid", anonKey ?? "invalid", {
   db: { schema: "electronic_shop" },
   auth: {
     persistSession: true,
