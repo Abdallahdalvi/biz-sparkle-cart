@@ -1,11 +1,31 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useCart } from "@/lib/cart-store";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { createRazorpayOrder, verifyRazorpayPayment } from "@/lib/razorpay.functions";
+
+declare global {
+  interface Window {
+    Razorpay?: new (opts: Record<string, unknown>) => { open: () => void };
+  }
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — TECHLAB" }, { name: "robots", content: "noindex" }] }),
@@ -19,6 +39,10 @@ function Checkout() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const { user } = useAuth();
+  const createRzp = useServerFn(createRazorpayOrder);
+  const verifyRzp = useServerFn(verifyRazorpayPayment);
+
+  useEffect(() => { loadRazorpayScript(); }, []);
 
   if (items.length === 0) {
     return (
@@ -75,12 +99,49 @@ function Checkout() {
               }));
               const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
               if (itemsErr) throw itemsErr;
-              clear();
-              toast.success(`Order ${order.order_number} placed. Razorpay payment opens in Phase 4.`);
-              navigate({ to: "/account/orders" });
+
+              // Create Razorpay order on server
+              const ok = await loadRazorpayScript();
+              if (!ok || !window.Razorpay) throw new Error("Razorpay SDK failed to load");
+              const rzp = await createRzp({ data: { orderId: order.id } });
+
+              const checkout = new window.Razorpay({
+                key: rzp.keyId,
+                amount: rzp.amountPaise,
+                currency: rzp.currency,
+                name: "TECHLAB",
+                description: `Order ${rzp.orderNumber}`,
+                order_id: rzp.rzpOrderId,
+                prefill: {
+                  email: rzp.email,
+                  contact: String(fd.get("phone") ?? ""),
+                  name: `${fd.get("firstName")} ${fd.get("lastName")}`.trim(),
+                },
+                theme: { color: "#000000" },
+                handler: async (resp: {
+                  razorpay_order_id: string;
+                  razorpay_payment_id: string;
+                  razorpay_signature: string;
+                }) => {
+                  try {
+                    await verifyRzp({ data: { orderId: order.id, ...resp } });
+                    clear();
+                    toast.success(`Payment received. Order ${rzp.orderNumber} confirmed.`);
+                    navigate({ to: "/account/orders" });
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Verification failed");
+                  }
+                },
+                modal: {
+                  ondismiss: () => {
+                    toast.message(`Order ${rzp.orderNumber} saved as pending — you can pay from your account.`);
+                    setBusy(false);
+                  },
+                },
+              });
+              checkout.open();
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Checkout failed");
-            } finally {
               setBusy(false);
             }
           }}
