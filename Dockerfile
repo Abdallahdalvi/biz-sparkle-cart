@@ -23,11 +23,11 @@ ENV PORT=9999
 ENV HOST=0.0.0.0
 
 # Copy necessary production build outputs and package files
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 9999
 
 # Run the standalone TanStack Start server
-CMD ["node", "dist/server/index.mjs"]
+CMD ["node", ".output/server/index.mjs"]
