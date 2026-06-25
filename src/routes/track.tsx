@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/track")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    orderId: search.orderId as string | undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Track Your Order — TECHLAB" },
@@ -31,18 +34,25 @@ interface TrackingData {
   estimatedDelivery: string;
   statusText: string;
   paymentMode: string;
+  shippingAddress?: Record<string, any> | null;
   milestones: TrackingMilestone[];
 }
 
 function TrackPage() {
-  const [orderId, setOrderId] = useState("");
+  const searchParams = Route.useSearch();
+  const [orderId, setOrderId] = useState(searchParams.orderId || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<TrackingData | null>(null);
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!orderId.trim()) {
+  React.useEffect(() => {
+    if (searchParams.orderId) {
+      fetchTracking(searchParams.orderId);
+    }
+  }, [searchParams.orderId]);
+
+  async function fetchTracking(idToSearch: string) {
+    if (!idToSearch.trim()) {
       setError("Please enter a valid Order ID or AWB Tracking Number");
       return;
     }
@@ -52,12 +62,17 @@ function TrackPage() {
     setData(null);
 
     try {
-      // Check supabase orders table
-      const { data: order } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", orderId.trim())
-        .maybeSingle();
+      const cleanId = idToSearch.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cleanId);
+
+      let query = supabase.from("orders").select("*");
+      if (isUuid) {
+        query = query.eq("id", cleanId);
+      } else {
+        query = query.eq("order_number", cleanId);
+      }
+      const { data: orders } = await query;
+      const order = orders?.[0];
 
       // We will construct rich tracking data whether found in DB or using deterministic fallback for demo
       const today = new Date();
@@ -70,12 +85,13 @@ function TrackPage() {
       const estDeliveryStr = estDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
       const mockData: TrackingData = {
-        orderId: order ? order.id : orderId.trim(),
+        orderId: order ? order.id : cleanId,
         awb: order?.tracking_number || `SR-AWB-${Math.floor(10000000 + Math.random() * 90000000)}`,
         carrier: order?.courier_name || "Bluedart Air Express (Shiprocket Assured)",
         estimatedDelivery: estDeliveryStr,
         statusText: order?.status || "In Transit",
-        paymentMode: order?.payment_method?.toUpperCase() || "PREPAID / EXPRESS",
+        paymentMode: order?.payment_method?.toUpperCase() || (order?.notes === "cod" ? "CASH ON DELIVERY (COD)" : "PREPAID / EXPRESS"),
+        shippingAddress: order?.shipping_address,
         milestones: [
           {
             time: formatTime(2, "10:30 AM"),
@@ -117,6 +133,11 @@ function TrackPage() {
     }
   }
 
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    await fetchTracking(orderId);
+  }
+
   return (
     <SiteShell>
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12 md:py-16">
@@ -150,7 +171,7 @@ function TrackPage() {
                     value={orderId}
                     onChange={(e) => setOrderId(e.target.value)}
                     placeholder="e.g. TECHLAB-99482 or SR-AWB-..."
-                    className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-primary shadow-sm"
+                    className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-medium focus:outline-none font-mono focus:border-primary shadow-sm"
                   />
                 </div>
                 <button
@@ -220,6 +241,52 @@ function TrackPage() {
                     <span className="text-xs font-bold text-primary">{data.estimatedDelivery}</span>
                   </div>
                 </div>
+
+                {/* Shipping Address & GSTIN Compliance Banner */}
+                {data.shippingAddress && (
+                  <div className="p-6 sm:p-8 border-b border-outline-variant/40 bg-surface-container-lowest/50 grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                    <div>
+                      <span className="font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                        Delivery Address
+                      </span>
+                      <p className="font-bold text-primary">
+                        {data.shippingAddress.first_name} {data.shippingAddress.last_name}
+                      </p>
+                      <p className="text-on-surface-variant mt-1">
+                        {data.shippingAddress.line1} {data.shippingAddress.line2 ? `, ${data.shippingAddress.line2}` : ""}
+                      </p>
+                      <p className="text-on-surface-variant">
+                        {data.shippingAddress.city}, {data.shippingAddress.state} - {data.shippingAddress.pincode}
+                      </p>
+                      <p className="text-on-surface-variant mt-1">Country: {data.shippingAddress.country || "IN"}</p>
+                    </div>
+                    <div>
+                      <span className="font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                        Billing & GST Compliance
+                      </span>
+                      {data.shippingAddress.gstin ? (
+                        <div className="bg-white p-3 border border-outline-variant/40 rounded space-y-1 shadow-sm">
+                          <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded uppercase tracking-widest">
+                            B2B GST Registered
+                          </span>
+                          <p className="text-xs font-bold text-primary pt-1">GSTIN: {data.shippingAddress.gstin}</p>
+                          <p className="text-[11px] text-on-surface-variant">
+                            Eligible for 18% Input Tax Credit (ITC). Tax invoice generated.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-white p-3 border border-outline-variant/40 rounded space-y-1 shadow-sm">
+                          <span className="text-[10px] bg-surface-container-high text-on-surface-variant font-bold px-2 py-0.5 rounded uppercase tracking-widest">
+                            B2C Retail Customer
+                          </span>
+                          <p className="text-xs text-on-surface-variant pt-1">
+                            No GSTIN provided. Standard retail e-waybill generated.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Vertical Timeline */}
                 <div className="p-6 sm:p-8">

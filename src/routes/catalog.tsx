@@ -17,6 +17,42 @@ export const Route = createFileRoute("/catalog")({
       { property: "og:title", content: "Catalog — TECHLAB" },
       { property: "og:description", content: "Browse boutique phones, audio, accessories and more." },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "TECHLAB Hardware Catalog",
+          description: "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India.",
+          url: "https://techlab.dalvi.cloud/catalog",
+          mainEntity: {
+            "@type": "ItemList",
+            name: "Boutique Tech Gadgets",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "The Minimalist Phone 2a",
+                url: "https://techlab.dalvi.cloud/product/minimalist-phone-2a"
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "CyberDeck QWERTY Companion",
+                url: "https://techlab.dalvi.cloud/product/cyberdeck-qwerty"
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: "E-Ink Pocket Communicator",
+                url: "https://techlab.dalvi.cloud/product/eink-pocket-comm"
+              }
+            ]
+          }
+        }),
+      },
+    ],
   }),
   component: Catalog,
 });

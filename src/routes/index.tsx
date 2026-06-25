@@ -35,6 +35,51 @@ export const Route = createFileRoute("/")({
       { property: "og:image", content: PRODUCTS[0].images[0] },
       { name: "twitter:image", content: PRODUCTS[0].images[0] },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              "@id": "https://techlab.dalvi.cloud/#website",
+              url: "https://techlab.dalvi.cloud/",
+              name: "TECHLAB",
+              description: "Boutique keypad Androids, transparent audio, and minimalist daily drivers. Shipped across India.",
+              potentialAction: [
+                {
+                  "@type": "SearchAction",
+                  target: "https://techlab.dalvi.cloud/catalog?q={search_term_string}",
+                  "query-input": "required name=search_term_string"
+                }
+              ]
+            },
+            {
+              "@type": "Organization",
+              "@id": "https://techlab.dalvi.cloud/#organization",
+              name: "TECHLAB Hardware Co.",
+              url: "https://techlab.dalvi.cloud/",
+              logo: PRODUCTS[0].images[0],
+              contactPoint: [
+                {
+                  "@type": "ContactPoint",
+                  telephone: "+91-9876543210",
+                  contactType: "customer service",
+                  areaServed: "IN",
+                  availableLanguage: ["en", "hi"]
+                }
+              ],
+              sameAs: [
+                "https://whatsapp.com/channel/0029Vaexample",
+                "https://twitter.com/TECHLAB",
+                "https://instagram.com/TECHLAB.hardware"
+              ]
+            }
+          ]
+        }),
+      },
+    ],
   }),
   component: Index,
 });

@@ -133,7 +133,11 @@ function Checkout() {
               if (!res.rzpRequired) {
                 clear();
                 toast.success(`Order ${res.orderNumber} confirmed with Cash on Delivery.`);
-                navigate({ to: "/account/orders" });
+                if (!token) {
+                  navigate({ to: "/track", search: { orderId: res.orderNumber } });
+                } else {
+                  navigate({ to: "/account/orders" });
+                }
                 return;
               }
 
@@ -169,7 +173,11 @@ function Checkout() {
                         ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} received. Order ${res.orderNumber} confirmed.`
                         : `Payment received. Order ${res.orderNumber} confirmed.`,
                     );
-                    navigate({ to: "/account/orders" });
+                    if (!token) {
+                      navigate({ to: "/track", search: { orderId: res.orderNumber } });
+                    } else {
+                      navigate({ to: "/account/orders" });
+                    }
                   } catch (err) {
                     toast.error(err instanceof Error ? err.message : "Verification failed");
                   }
