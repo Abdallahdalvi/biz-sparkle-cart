@@ -6,15 +6,17 @@ services:
     container_name: techlab-storefront
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "9999:9999"
     environment:
-      - PORT=3000
+      - PORT=9999
       - NODE_ENV=production
       - VITE_SUPABASE_URL=https://your-supabase-domain.com
       - VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
       - SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
       - RAZORPAY_KEY_ID=your_razorpay_key_id
       - RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+      - SHIPROCKET_EMAIL=your_shiprocket_email@example.com
+      - SHIPROCKET_PASSWORD=your_shiprocket_password
     network_mode: bridge
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
