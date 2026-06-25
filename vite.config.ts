@@ -12,9 +12,12 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    preset: "node-server",
+  },
   vite: {
     server: {
-      port: 9999,
+      port: 9998,
       strictPort: true,
     },
   },
