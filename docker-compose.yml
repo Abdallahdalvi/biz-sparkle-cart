@@ -10,13 +10,18 @@ services:
     environment:
       - PORT=9999
       - NODE_ENV=production
-      - VITE_SUPABASE_URL=https://your-supabase-domain.com
-      - VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-      - SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-      - RAZORPAY_KEY_ID=your_razorpay_key_id
-      - RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-      - SHIPROCKET_EMAIL=your_shiprocket_email@example.com
-      - SHIPROCKET_PASSWORD=your_shiprocket_password
+      - VITE_SUPABASE_URL=https://supabase.dalvi.cloud
+      - VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgwNTE2MDU5LCJleHAiOjQxMDI0NDQ4MDB9.pnle16TS5HXFkORp9nrU5GMbTU3BaNf8XzLfguweAUg
+      - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgwNTE2MDU5LCJleHAiOjQxMDI0NDQ4MDB9.pnle16TS5HXFkORp9nrU5GMbTU3BaNf8XzLfguweAUg
+      - SUPABASE_URL=https://supabase.dalvi.cloud
+      - SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgwNTE2MDU5LCJleHAiOjQxMDI0NDQ4MDB9.pnle16TS5HXFkORp9nrU5GMbTU3BaNf8XzLfguweAUg
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3ODA1MTYwNTksImV4cCI6NDEwMjQ0NDgwMH0.ppjSFKACErgEsMw-jx-mEyY6-ifFqQlkpPQjQVKYrX8
+      - RAZORPAY_KEY_ID=
+      - RAZORPAY_KEY_SECRET=
+      - RAZORPAY_WEBHOOK_SECRET=
+      - SHIPROCKET_EMAIL=
+      - SHIPROCKET_PASSWORD=
+      - SHIPROCKET_PICKUP_LOCATION=Primary
     network_mode: bridge
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
