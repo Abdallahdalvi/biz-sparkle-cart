@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { createRazorpayOrder, verifyRazorpayPayment } from "@/lib/razorpay.functions";
-import { createShiprocketOrder } from "@/lib/shiprocket.functions";
+import { verifyRazorpayPayment } from "@/lib/razorpay.functions";
+import { createSecureOrder } from "@/lib/orders.functions";
 import { getStorefrontCms } from "@/lib/products";
 
 declare global {
@@ -47,9 +47,8 @@ function Checkout() {
   const [busy, setBusy] = useState(false);
   const [payMode, setPayMode] = useState<"prepaid" | "cod">("prepaid");
   const { user } = useAuth();
-  const createRzp = useServerFn(createRazorpayOrder);
+  const createOrderFn = useServerFn(createSecureOrder);
   const verifyRzp = useServerFn(verifyRazorpayPayment);
-  const createShiprocket = useServerFn(createShiprocketOrder);
 
   useEffect(() => {
     loadRazorpayScript();
@@ -102,73 +101,57 @@ function Checkout() {
             setBusy(true);
             try {
               const shipping_address = {
-                first_name: fd.get("firstName"),
-                last_name: fd.get("lastName"),
-                line1: fd.get("line1"),
-                line2: fd.get("line2"),
-                city: fd.get("city"),
-                state: fd.get("state"),
-                pincode: fd.get("pincode"),
+                first_name: String(fd.get("firstName") || ""),
+                last_name: String(fd.get("lastName") || ""),
+                line1: String(fd.get("line1") || ""),
+                line2: String(fd.get("line2") || ""),
+                city: String(fd.get("city") || ""),
+                state: String(fd.get("state") || ""),
+                pincode: String(fd.get("pincode") || ""),
                 country: "IN",
-                gstin: fd.get("gstin") || "",
+                gstin: String(fd.get("gstin") || ""),
               };
 
-              const { data: order, error } = await supabase
-                .from("orders")
-                .insert({
-                  user_id: user?.id ?? null,
-                  email: String(fd.get("email") ?? ""),
-                  phone: String(fd.get("phone") ?? ""),
-                  shipping_address,
-                  subtotal_paise: total,
-                  total_paise: rzpAmountPaise,
-                  status: rzpAmountPaise === 0 ? "processing" : "pending",
-                  notes: payMode,
-                })
-                .select("id, order_number")
-                .single();
-              if (error) throw error;
+              const { data: sessionData } = await supabase.auth.getSession();
+              const token = sessionData.session?.access_token;
 
-              const orderItems = items.map((i) => ({
-                order_id: order.id,
-                name: i.name,
-                variant_label: i.variantLabel ?? null,
-                unit_price_paise: i.pricePaise,
-                qty: i.qty,
-                image_url: i.image,
-              }));
-              const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
-              if (itemsErr) throw itemsErr;
+              const orderPayload = {
+                token,
+                items: items.map((i) => ({
+                  slug: i.slug,
+                  variantId: i.variantId,
+                  qty: i.qty,
+                })),
+                shippingAddress: shipping_address,
+                payMode: payMode,
+                email: String(fd.get("email") ?? ""),
+                phone: String(fd.get("phone") ?? ""),
+              };
 
-              if (rzpAmountPaise === 0) {
-                try {
-                  await createShiprocket({ data: { orderId: order.id } });
-                } catch (err) {
-                  console.error("[cod→shiprocket]", err);
-                }
+              const res = await createOrderFn({ data: orderPayload });
+
+              if (!res.rzpRequired) {
                 clear();
-                toast.success(`Order ${order.order_number} confirmed with Cash on Delivery.`);
+                toast.success(`Order ${res.orderNumber} confirmed with Cash on Delivery.`);
                 navigate({ to: "/account/orders" });
                 return;
               }
 
-              // Create Razorpay order on server
               const ok = await loadRazorpayScript();
               if (!ok || !window.Razorpay) throw new Error("Razorpay SDK failed to load");
-              const rzp = await createRzp({ data: { orderId: order.id } });
 
               const checkout = new window.Razorpay({
-                key: rzp.keyId,
-                amount: rzp.amountPaise,
-                currency: rzp.currency,
+                key: res.keyId,
+                amount: res.amountPaise,
+                currency: res.currency,
                 name: "TECHLAB",
                 description:
                   payMode === "cod"
-                    ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} Order ${rzp.orderNumber}`
-                    : `Order ${rzp.orderNumber}`,
-                order_id: rzp.rzpOrderId,
+                    ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} Order ${res.orderNumber}`
+                    : `Order ${res.orderNumber}`,
+                order_id: res.rzpOrderId,
                 prefill: {
-                  email: rzp.email,
+                  email: res.email,
                   contact: String(fd.get("phone") ?? ""),
                   name: `${fd.get("firstName")} ${fd.get("lastName")}`.trim(),
                 },
@@ -179,12 +162,12 @@ function Checkout() {
                   razorpay_signature: string;
                 }) => {
                   try {
-                    await verifyRzp({ data: { orderId: order.id, ...resp } });
+                    await verifyRzp({ data: { orderId: res.orderId, ...resp } });
                     clear();
                     toast.success(
                       payMode === "cod"
-                        ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} received. Order ${rzp.orderNumber} confirmed.`
-                        : `Payment received. Order ${rzp.orderNumber} confirmed.`,
+                        ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} received. Order ${res.orderNumber} confirmed.`
+                        : `Payment received. Order ${res.orderNumber} confirmed.`,
                     );
                     navigate({ to: "/account/orders" });
                   } catch (err) {
@@ -194,7 +177,7 @@ function Checkout() {
                 modal: {
                   ondismiss: () => {
                     toast.message(
-                      `Order ${rzp.orderNumber} saved as pending — you can complete payment from your account.`,
+                      `Order ${res.orderNumber} saved as pending — you can complete payment from your account.`,
                     );
                     setBusy(false);
                   },

@@ -297,6 +297,37 @@ drop policy if exists "product-images auth upload" on storage.objects;
 create policy "product-images public read" on storage.objects for select to anon, authenticated using (bucket_id = 'product-images');
 create policy "product-images auth upload" on storage.objects for insert to authenticated using (bucket_id = 'product-images');
 
+-- ---------- 16. Webhook Idempotency Table ----------
+create table if not exists electronic_shop.webhook_events (
+  event_id text primary key,
+  created_at timestamptz not null default now()
+);
+grant select, insert on electronic_shop.webhook_events to service_role;
+
+-- ---------- 17. Atomic Stock Decrement RPC ----------
+create or replace function electronic_shop.decrement_stock(p_product_id uuid, p_variant_id uuid, p_qty int)
+returns boolean
+language plpgsql security definer
+set search_path = electronic_shop, public
+as $$
+begin
+  if p_variant_id is not null then
+    update electronic_shop.product_variants
+    set stock = stock - p_qty
+    where id = p_variant_id and stock >= p_qty;
+  end if;
+
+  if p_product_id is not null then
+    update electronic_shop.products
+    set stock = stock - p_qty
+    where id = p_product_id and stock >= p_qty;
+  end if;
+
+  return true;
+end;
+$$;
+grant execute on function electronic_shop.decrement_stock(uuid, uuid, int) to service_role;
+
 -- =====================================================================
 -- AFTER signing up once at /auth, promote yourself to admin:
 --   insert into electronic_shop.user_roles (user_id, role)

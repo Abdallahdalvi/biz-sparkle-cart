@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorefrontCms, DEFAULT_STOREFRONT_CMS, type StorefrontCms } from "@/lib/products";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { updateStoreSettings } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/cms")({
   component: AdminCmsPage,
@@ -14,6 +16,7 @@ function AdminCmsPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("checkout");
+  const updateCmsFn = useServerFn(updateStoreSettings);
 
   useEffect(() => {
     async function fetchCms() {
@@ -119,12 +122,15 @@ function AdminCmsPage() {
       };
 
       try {
-        const { error } = await supabase.from("store_settings").upsert(payload);
-        if (error && !error.message.includes("schema cache")) {
-          throw error;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) throw new Error("Not logged in");
+
+        await updateCmsFn({ data: { token, ...payload } });
+      } catch (dbErr: any) {
+        if (dbErr.message && !dbErr.message.includes("schema cache")) {
+          throw dbErr;
         }
-      } catch (dbErr) {
-        // Silently handle schema cache errors since localStorage persistence is active
       }
 
       toast.success("Storefront CMS settings published successfully!");

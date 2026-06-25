@@ -97,13 +97,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       .eq("id", data.orderId);
     if (error) throw new Error(error.message);
 
-    // Fire-and-forget Shiprocket create (don't block UI on it)
-    try {
-      const { createShiprocketOrder } = await import("./shiprocket.functions");
-      await createShiprocketOrder({ data: { orderId: data.orderId } });
-    } catch (err) {
-      console.error("[razorpay→shiprocket]", err);
-    }
+    // Shiprocket order creation and atomic stock decrement are handled by the Razorpay webhook to prevent race conditions.
 
     return { ok: true };
   });

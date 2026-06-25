@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
 import { PRODUCTS } from "@/lib/products";
+import { useServerFn } from "@tanstack/react-start";
+import { createProduct, updateProduct, updateProductStatus, deleteProduct } from "@/lib/admin.functions";
 
 interface Row {
   id: string;
@@ -33,6 +35,8 @@ function AdminProducts() {
   const [cats, setCats] = useState<Category[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Row | null>(null);
+  const updateStatusFn = useServerFn(updateProductStatus);
+  const deleteProdFn = useServerFn(deleteProduct);
 
   async function refresh() {
     const { data, error } = await supabase
@@ -80,53 +84,84 @@ function AdminProducts() {
   }, []);
 
   async function toggle(r: Row) {
-    if (r.id.startsWith("static-")) {
-      const { error } = await supabase.from("products").insert({
-        slug: r.slug,
-        name: r.name,
-        tagline: r.tagline || "",
-        description: r.description || "",
-        price_paise: r.price_paise,
-        compare_at_paise: r.compare_at_paise,
-        stock: r.stock,
-        is_active: false,
-        metadata: r.metadata,
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not logged in");
+
+      if (r.id.startsWith("static-")) {
+        await updateStatusFn({
+          data: {
+            token,
+            id: r.id,
+            is_active: false,
+            staticRow: {
+              slug: r.slug,
+              name: r.name,
+              tagline: r.tagline || null,
+              description: r.description || null,
+              price_paise: r.price_paise,
+              compare_at_paise: r.compare_at_paise || null,
+              stock: r.stock,
+              metadata: r.metadata,
+            },
+          },
+        });
+        refresh();
+        return;
+      }
+      await updateStatusFn({
+        data: {
+          token,
+          id: r.id,
+          is_active: !r.is_active,
+        },
       });
-      if (error) return toast.error(error.message);
       refresh();
-      return;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update product status");
     }
-    const { error } = await supabase
-      .from("products")
-      .update({ is_active: !r.is_active })
-      .eq("id", r.id);
-    if (error) return toast.error(error.message);
-    refresh();
   }
 
   async function remove(r: Row) {
     if (!confirm("Delete this product?")) return;
-    if (r.id.startsWith("static-")) {
-      const { error } = await supabase.from("products").insert({
-        slug: r.slug,
-        name: r.name,
-        tagline: r.tagline || "",
-        description: r.description || "",
-        price_paise: r.price_paise,
-        compare_at_paise: r.compare_at_paise,
-        stock: r.stock,
-        is_active: false,
-        metadata: r.metadata,
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not logged in");
+
+      if (r.id.startsWith("static-")) {
+        await deleteProdFn({
+          data: {
+            token,
+            id: r.id,
+            staticRow: {
+              slug: r.slug,
+              name: r.name,
+              tagline: r.tagline || null,
+              description: r.description || null,
+              price_paise: r.price_paise,
+              compare_at_paise: r.compare_at_paise || null,
+              stock: r.stock,
+              metadata: r.metadata,
+            },
+          },
+        });
+        toast.success("Hidden from active catalog");
+        refresh();
+        return;
+      }
+      await deleteProdFn({
+        data: {
+          token,
+          id: r.id,
+        },
       });
-      if (error) return toast.error(error.message);
-      toast.success("Hidden from active catalog");
+      toast.success("Deleted");
       refresh();
-      return;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete product");
     }
-    const { error } = await supabase.from("products").delete().eq("id", r.id);
-    if (error) return toast.error(error.message);
-    toast.success("Deleted");
-    refresh();
   }
 
   return (
@@ -286,6 +321,7 @@ function NewProductForm({
   onDone: () => void;
   onCancel: () => void;
 }) {
+  const createProdFn = useServerFn(createProduct);
   const [busy, setBusy] = useState(false);
   const [specs, setSpecs] = useState<{ label: string; value: string }[]>([
     { label: "Display", value: '3.54" 640×960 IPS' },
@@ -388,54 +424,34 @@ function NewProductForm({
           faqs: faqs.filter((f) => f.question && f.answer),
         };
 
-        const { data: newProd, error } = await supabase
-          .from("products")
-          .insert({
-            slug: String(fd.get("slug")),
-            name: String(fd.get("name")),
-            tagline: String(fd.get("tagline") ?? ""),
-            description: String(fd.get("description") ?? ""),
-            price_paise: Math.round(priceRupees * 100),
-            compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
-            stock: Number(fd.get("stock") ?? 0),
-            category_id: (fd.get("category") as string) || null,
-            is_active: true,
-            metadata: metadata,
-          })
-          .select()
-          .single();
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData.session?.access_token;
+          if (!token) throw new Error("Not logged in");
 
-        if (error) {
-          setBusy(false);
-          return toast.error(`Database Error: ${error.message}`);
-        }
-
-        // Insert images into product_images table if possible
-        if (newProd && metadata.images.length > 0) {
-          await supabase.from("product_images").insert(
-            metadata.images.map((url, index) => ({
-              product_id: newProd.id,
-              url: url,
-              sort_order: index,
-            })),
-          );
-        }
-
-        // Insert variants into product_variants table if possible
-        if (newProd && metadata.variants.length > 0) {
-          await supabase.from("product_variants").insert(
-            metadata.variants.map((v) => ({
-              product_id: newProd.id,
-              label: v.label,
-              price_delta_paise: 0,
+          await createProdFn({
+            data: {
+              token,
+              slug: String(fd.get("slug")),
+              name: String(fd.get("name")),
+              tagline: String(fd.get("tagline") ?? ""),
+              description: String(fd.get("description") ?? ""),
+              price_paise: Math.round(priceRupees * 100),
+              compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
               stock: Number(fd.get("stock") ?? 0),
-            })),
-          );
-        }
+              category_id: (fd.get("category") as string) || null,
+              is_active: true,
+              metadata: metadata,
+            },
+          });
 
-        setBusy(false);
-        toast.success("Product successfully created with Specs, Variants, FAQs, and Images!");
-        onDone();
+          setBusy(false);
+          toast.success("Product successfully created with Specs, Variants, FAQs, and Images!");
+          onDone();
+        } catch (error: any) {
+          setBusy(false);
+          toast.error(`Database Error: ${error.message || "Creation failed"}`);
+        }
       }}
       className="bg-surface-container-low shopify-border p-8 space-y-8"
     >
@@ -888,6 +904,7 @@ function EditProductForm({
   onDone: () => void;
   onCancel: () => void;
 }) {
+  const updateProdFn = useServerFn(updateProduct);
   const [busy, setBusy] = useState(false);
   const [specs, setSpecs] = useState<{ label: string; value: string }[]>(
     prod.metadata?.specs || [],
@@ -972,36 +989,35 @@ function EditProductForm({
           faqs: faqs.filter((f) => f.question && f.answer),
         };
 
-        const payload = {
-          slug: String(fd.get("slug")),
-          name: String(fd.get("name")),
-          tagline: String(fd.get("tagline") ?? ""),
-          description: String(fd.get("description") ?? ""),
-          price_paise: Math.round(priceRupees * 100),
-          compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
-          stock: Number(fd.get("stock") ?? 0),
-          category_id: (fd.get("category") as string) || null,
-          is_active: prod.is_active,
-          metadata: metadata,
-        };
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData.session?.access_token;
+          if (!token) throw new Error("Not logged in");
 
-        if (prod.id.startsWith("static-")) {
-          const { error } = await supabase.from("products").insert(payload);
-          if (error) {
-            setBusy(false);
-            return toast.error(`Database Error: ${error.message}`);
-          }
-        } else {
-          const { error } = await supabase.from("products").update(payload).eq("id", prod.id);
-          if (error) {
-            setBusy(false);
-            return toast.error(`Database Error: ${error.message}`);
-          }
+          await updateProdFn({
+            data: {
+              token,
+              id: prod.id,
+              slug: String(fd.get("slug")),
+              name: String(fd.get("name")),
+              tagline: String(fd.get("tagline") ?? ""),
+              description: String(fd.get("description") ?? ""),
+              price_paise: Math.round(priceRupees * 100),
+              compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
+              stock: Number(fd.get("stock") ?? 0),
+              category_id: (fd.get("category") as string) || null,
+              is_active: prod.is_active,
+              metadata: metadata,
+            },
+          });
+
+          setBusy(false);
+          toast.success("Product successfully updated!");
+          onDone();
+        } catch (error: any) {
+          setBusy(false);
+          toast.error(`Database Error: ${error.message || "Update failed"}`);
         }
-
-        setBusy(false);
-        toast.success("Product successfully updated!");
-        onDone();
       }}
       className="bg-surface-container-low shopify-border p-8 space-y-8"
     >

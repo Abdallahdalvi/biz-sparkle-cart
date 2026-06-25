@@ -36,6 +36,16 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         try {
+          // Webhook Idempotency Check
+          const rzpEventId = request.headers.get("x-razorpay-event-id") ?? `${event.event}_${event.payload.payment?.entity.id ?? event.payload.order?.entity.id ?? Date.now()}`;
+          const { error: idempErr } = await supabaseAdmin
+            .from("webhook_events")
+            .insert({ event_id: rzpEventId });
+          if (idempErr) {
+            // Duplicate event, return 200 OK immediately
+            return new Response("ok");
+          }
+
           if (event.event === "payment.captured" || event.event === "order.paid") {
             const rzpOrderId =
               event.payload.payment?.entity.order_id ?? event.payload.order?.entity.id;
@@ -48,6 +58,22 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
                 .select("id")
                 .single();
               if (o?.id) {
+                // Decrement stock atomically
+                const { data: items } = await supabaseAdmin
+                  .from("order_items")
+                  .select("qty, product_id, variant_id")
+                  .eq("order_id", o.id);
+                
+                if (items) {
+                  for (const item of items) {
+                    await supabaseAdmin.rpc("decrement_stock", {
+                      p_product_id: item.product_id,
+                      p_variant_id: item.variant_id,
+                      p_qty: item.qty,
+                    });
+                  }
+                }
+
                 const { createShiprocketOrder } = await import("@/lib/shiprocket.functions");
                 createShiprocketOrder({ data: { orderId: o.id } }).catch((e) =>
                   console.error("[webhook→shiprocket]", e),

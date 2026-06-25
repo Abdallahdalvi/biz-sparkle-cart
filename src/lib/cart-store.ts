@@ -21,7 +21,7 @@ interface CartState {
   totalItems: () => number;
 }
 
-const key = (slug: string, variantId?: string) => `${slug}::${variantId ?? ""}`;
+const key = (slug: string, variantId?: string) => `${slug.trim()}###${(variantId ?? "").trim()}`;
 
 export const useCart = create<CartState>()(
   persist(
