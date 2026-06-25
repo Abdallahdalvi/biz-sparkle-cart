@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  techlab-storefront:
+    image: ghcr.io/abdallahdalvi/biz-sparkle-cart:latest
+    container_name: techlab-storefront
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - VITE_SUPABASE_URL=https://your-supabase-domain.com
+      - VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+      - SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+      - RAZORPAY_KEY_ID=your_razorpay_key_id
+      - RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+    network_mode: bridge
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Optional Watchtower service to automatically update CasaOS container when new images are pushed to GitHub Container Registry
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower-updater
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 techlab-storefront
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=false

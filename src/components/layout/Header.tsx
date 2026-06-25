@@ -16,6 +16,7 @@ export function Header() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = useCart((s) => s.items);
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => setMounted(true), []);
   const count = mounted ? items.reduce((a, i) => a + i.qty, 0) : 0;
   const { isAdmin } = useAuth();
@@ -67,8 +68,36 @@ export function Header() {
               Admin
             </Link>
           )}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+            className="md:hidden material-symbols-outlined text-primary hover:opacity-70 transition-opacity flex items-center justify-center p-1"
+          >
+            {mobileMenuOpen ? "close" : "menu"}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-outline-variant/30 px-6 py-4 space-y-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+          {NAV.map((n) => {
+            const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+            return (
+              <Link
+                key={n.to}
+                to={n.to}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block font-bold text-base uppercase tracking-wider py-1.5 ${
+                  active ? "text-primary border-l-4 border-primary pl-3" : "text-on-surface-variant hover:text-primary pl-3"
+                }`}
+              >
+                {n.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }
