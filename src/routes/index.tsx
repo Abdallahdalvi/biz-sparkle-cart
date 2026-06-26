@@ -95,20 +95,20 @@ function Index() {
     <SiteShell>
       {/* Hero */}
       <section className="relative bg-white overflow-hidden border-b border-outline-variant/20">
-        <div className="relative z-10 w-full px-6 sm:px-12 lg:px-16 max-w-[1320px] mx-auto pt-10 pb-24 md:pt-16 md:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-16 items-center">
-          <div className="flex flex-col gap-6">
-            <div>
+        <div className="relative z-10 w-full px-6 sm:px-12 lg:px-16 max-w-[1320px] mx-auto pt-10 pb-24 md:pt-16 md:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-16 items-center">
+          <div className="flex flex-col">
+            <div className="mb-3">
               <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2.5 py-1 rounded-sm inline-block shadow-sm bg-primary/5">
                 LIMITED RELEASE ENGINE
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl text-primary leading-tight font-bold">
+            <h1 className="text-4xl md:text-6xl text-primary leading-tight font-bold mb-4">
               {cms.hero_title}
             </h1>
-            <p className="text-lg text-on-surface-variant max-w-lg leading-relaxed">
+            <p className="text-lg text-on-surface-variant max-w-lg leading-relaxed mb-6">
               {cms.hero_subtitle}
             </p>
-            <div className="pt-2 hidden lg:block">
+            <div className="hidden lg:block">
               <Link
                 to="/catalog"
                 className="inline-flex bg-primary text-on-primary px-12 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all items-center gap-2 shadow-sm"
@@ -211,11 +211,11 @@ function Index() {
 
       {/* Keypad Android Collection */}
       <section className="bg-white py-12 md:py-16 border-y border-outline-variant/30">
-        <div className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto flex flex-col md:flex-row items-center gap-6 md:gap-20">
-          <div className="w-full md:w-1/2 flex flex-col gap-6">
-            <h2 className="text-4xl text-primary font-bold">{cms.keypad_title}</h2>
-            <p className="text-lg text-on-surface-variant leading-relaxed">{cms.keypad_desc}</p>
-            <ul className="space-y-2 text-[13px] font-bold uppercase tracking-wider text-primary">
+        <div className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto flex flex-col md:flex-row items-center gap-0 md:gap-20">
+          <div className="w-full md:w-1/2 flex flex-col">
+            <h2 className="text-4xl text-primary font-bold mb-4">{cms.keypad_title}</h2>
+            <p className="text-lg text-on-surface-variant leading-relaxed mb-6">{cms.keypad_desc}</p>
+            <ul className="space-y-2 text-[13px] font-bold uppercase tracking-wider text-primary mb-6">
               <li className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-base">check_circle</span> Full
                 Google Play Support
@@ -229,7 +229,7 @@ function Index() {
                 Privacy-Hardened Firmware
               </li>
             </ul>
-            <div className="hidden md:block pt-2">
+            <div className="hidden md:block">
               <Link
                 to="/catalog"
                 className="inline-block bg-primary text-on-primary px-10 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-sm"
