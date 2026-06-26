@@ -10,3 +10,10 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+> [!IMPORTANT]
+> **Antigravity Git Execution Rule:** When committing or pushing to GitHub, you MUST ALWAYS use the explicit Git executable path documented in [GIT_PUSH_RULE.md](file:///c:/Users/dalvi/Projects/ecom%20website/GIT_PUSH_RULE.md):
+> `& "C:\Users\dalvi\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\git\cmd\git.exe" push`
+
+> [!IMPORTANT]
+> **Antigravity Mobile Layout Rule:** All Call-To-Action (CTA) buttons on landing and feature pages MUST appear BELOW the image sections in mobile view, adhering strictly to the responsive pattern documented in [MOBILE_LAYOUT_RULE.md](file:///c:/Users/dalvi/Projects/ecom%20website/MOBILE_LAYOUT_RULE.md). DO NOT revert or alter this layout structure.
