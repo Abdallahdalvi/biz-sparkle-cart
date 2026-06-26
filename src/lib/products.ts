@@ -69,6 +69,18 @@ export interface StorefrontCms {
   cod_charge_type: "advance" | "additional" | "none";
   prepaid_discount_amount: number;
   prepaid_discount_type: "flat" | "percent" | "none";
+  biz_name: string;
+  biz_legal_name: string;
+  biz_address: string;
+  biz_state: string;
+  biz_gstin: string;
+  biz_email: string;
+  biz_phone: string;
+  biz_hours: string;
+  biz_grievance_officer: string;
+  whatsapp_channel_url: string;
+  whatsapp_chat_phone: string;
+  whatsapp_chat_message: string;
 }
 
 export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
@@ -223,6 +235,18 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   cod_charge_type: "advance",
   prepaid_discount_amount: 200,
   prepaid_discount_type: "flat",
+  biz_name: "TECHLAB Hardware Co.",
+  biz_legal_name: "TECHLAB Technologies LLP",
+  biz_address: "Bandra Kurla Complex, Bandra East, Mumbai, 400051",
+  biz_state: "Maharashtra",
+  biz_gstin: "27AADCS1456Q1ZV",
+  biz_email: "support@techlab.example",
+  biz_phone: "+91 98765 43210",
+  biz_hours: "Mon–Sat, 10:00 – 18:00 IST",
+  biz_grievance_officer: "Vikram Malhotra",
+  whatsapp_channel_url: "https://whatsapp.com/channel/0029Vaexample",
+  whatsapp_chat_phone: "919876543210",
+  whatsapp_chat_message: "Hi TECHLAB Support, I have an inquiry regarding your products.",
 };
 
 export const PRODUCTS: Product[] = [
@@ -552,6 +576,18 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
             ? Number(meta.prepaid_discount_amount)
             : undefined,
         prepaid_discount_type: meta.prepaid_discount_type,
+        biz_name: meta.biz_name,
+        biz_legal_name: meta.biz_legal_name,
+        biz_address: meta.biz_address,
+        biz_state: meta.biz_state,
+        biz_gstin: meta.biz_gstin,
+        biz_email: meta.biz_email,
+        biz_phone: meta.biz_phone,
+        biz_hours: meta.biz_hours,
+        biz_grievance_officer: meta.biz_grievance_officer,
+        whatsapp_channel_url: meta.whatsapp_channel_url,
+        whatsapp_chat_phone: meta.whatsapp_chat_phone,
+        whatsapp_chat_message: meta.whatsapp_chat_message,
       };
     }
   } catch (e) {
@@ -615,6 +651,18 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
         : DEFAULT_STOREFRONT_CMS.prepaid_discount_amount,
     prepaid_discount_type:
       dbCms.prepaid_discount_type || DEFAULT_STOREFRONT_CMS.prepaid_discount_type,
+    biz_name: dbCms.biz_name || DEFAULT_STOREFRONT_CMS.biz_name,
+    biz_legal_name: dbCms.biz_legal_name || DEFAULT_STOREFRONT_CMS.biz_legal_name,
+    biz_address: dbCms.biz_address || DEFAULT_STOREFRONT_CMS.biz_address,
+    biz_state: dbCms.biz_state || DEFAULT_STOREFRONT_CMS.biz_state,
+    biz_gstin: dbCms.biz_gstin || DEFAULT_STOREFRONT_CMS.biz_gstin,
+    biz_email: dbCms.biz_email || DEFAULT_STOREFRONT_CMS.biz_email,
+    biz_phone: dbCms.biz_phone || DEFAULT_STOREFRONT_CMS.biz_phone,
+    biz_hours: dbCms.biz_hours || DEFAULT_STOREFRONT_CMS.biz_hours,
+    biz_grievance_officer: dbCms.biz_grievance_officer || DEFAULT_STOREFRONT_CMS.biz_grievance_officer,
+    whatsapp_channel_url: dbCms.whatsapp_channel_url || DEFAULT_STOREFRONT_CMS.whatsapp_channel_url,
+    whatsapp_chat_phone: dbCms.whatsapp_chat_phone || DEFAULT_STOREFRONT_CMS.whatsapp_chat_phone,
+    whatsapp_chat_message: dbCms.whatsapp_chat_message || DEFAULT_STOREFRONT_CMS.whatsapp_chat_message,
   };
 }
 

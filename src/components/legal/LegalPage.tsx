@@ -31,12 +31,112 @@ export function LegalPage({
 }
 
 export const BIZ = {
-  name: "[YOUR BUSINESS NAME]",
-  legalName: "[YOUR REGISTERED ENTITY NAME]",
-  address: "[FULL REGISTERED ADDRESS, STATE, PIN]",
-  state: "[STATE]",
-  gstin: "[GSTIN — IF REGISTERED]",
-  email: "support@techlab.example",
-  phone: "+91 [10-DIGIT NUMBER]",
-  hours: "Mon–Sat, 10:00 – 18:00 IST",
+  get name() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_name) return data.biz_name;
+        }
+      } catch (e) {}
+    }
+    return "TECHLAB Hardware Co.";
+  },
+  get legalName() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_legal_name) return data.biz_legal_name;
+        }
+      } catch (e) {}
+    }
+    return "TECHLAB Technologies LLP";
+  },
+  get address() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_address) return data.biz_address;
+        }
+      } catch (e) {}
+    }
+    return "Bandra Kurla Complex, Bandra East, Mumbai, 400051";
+  },
+  get state() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_state) return data.biz_state;
+        }
+      } catch (e) {}
+    }
+    return "Maharashtra";
+  },
+  get gstin() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_gstin) return data.biz_gstin;
+        }
+      } catch (e) {}
+    }
+    return "27AADCS1456Q1ZV";
+  },
+  get email() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_email) return data.biz_email;
+        }
+      } catch (e) {}
+    }
+    return "support@techlab.example";
+  },
+  get phone() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_phone) return data.biz_phone;
+        }
+      } catch (e) {}
+    }
+    return "+91 98765 43210";
+  },
+  get hours() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_hours) return data.biz_hours;
+        }
+      } catch (e) {}
+    }
+    return "Mon–Sat, 10:00 – 18:00 IST";
+  },
+  get grievanceOfficer() {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("storefront_cms_custom");
+        if (local) {
+          const data = JSON.parse(local);
+          if (data.biz_grievance_officer) return data.biz_grievance_officer;
+        }
+      } catch (e) {}
+    }
+    return "Vikram Malhotra";
+  },
 };

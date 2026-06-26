@@ -149,7 +149,7 @@ function Index() {
                 </div>
               </a>
               <a
-                href="https://whatsapp.com/channel/0029Vaexample"
+                href={cms.whatsapp_channel_url || "https://whatsapp.com/channel/0029Vaexample"}
                 target="_blank"
                 rel="noreferrer"
                 className="relative border-2 border-emerald-500 bg-white hover:bg-emerald-50/50 flex flex-col justify-center items-center text-center p-4 shadow-sm w-full h-full transition-colors group block"

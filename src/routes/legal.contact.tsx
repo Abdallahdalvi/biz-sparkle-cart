@@ -2,8 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { BIZ } from "@/components/legal/LegalPage";
+import { getStorefrontCms, type StorefrontCms } from "@/lib/products";
 
 export const Route = createFileRoute("/legal/contact")({
+  loader: async () => {
+    const cms = await getStorefrontCms();
+    return { cms };
+  },
   head: () => ({
     meta: [
       { title: "Contact Us — TECHLAB" },
@@ -17,6 +22,7 @@ export const Route = createFileRoute("/legal/contact")({
 });
 
 function ContactPage() {
+  const { cms } = Route.useLoaderData() as { cms: StorefrontCms };
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,11 +34,29 @@ function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate successful form submission
+    if (typeof window !== "undefined") {
+      try {
+        const existingStr = localStorage.getItem("techlab_contact_messages");
+        const existing = existingStr ? JSON.parse(existingStr) : [];
+        const newMessage = {
+          id: `MSG-${Math.floor(100000 + Math.random() * 900000)}`,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject,
+          message: formData.message,
+          date: new Date().toISOString(),
+          status: "unread",
+        };
+        localStorage.setItem("techlab_contact_messages", JSON.stringify([newMessage, ...existing]));
+      } catch (err) {
+        console.error("Failed to save message", err);
+      }
+    }
     setSubmitted(true);
   };
 
-  const whatsappUrl = `https://wa.me/919876543210?text=${encodeURIComponent("Hi TECHLAB Support, I have an inquiry regarding your products.")}`;
+  const whatsappUrl = `https://wa.me/${cms.whatsapp_chat_phone || "919876543210"}?text=${encodeURIComponent(cms.whatsapp_chat_message || "Hi TECHLAB Support, I have an inquiry regarding your products.")}`;
 
   return (
     <SiteShell>
@@ -209,9 +233,9 @@ function ContactPage() {
                   Customer Support
                 </h3>
                 <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                  <span className="block"><strong>Email:</strong> <a href={`mailto:${BIZ.email}`} className="text-primary hover:underline">{BIZ.email}</a></span>
-                  <span className="block"><strong>Phone:</strong> {BIZ.phone}</span>
-                  <span className="block"><strong>Operating Hours:</strong> {BIZ.hours}</span>
+                  <span className="block"><strong>Email:</strong> <a href={`mailto:${cms.biz_email || BIZ.email}`} className="text-primary hover:underline">{cms.biz_email || BIZ.email}</a></span>
+                  <span className="block"><strong>Phone:</strong> {cms.biz_phone || BIZ.phone}</span>
+                  <span className="block"><strong>Operating Hours:</strong> {cms.biz_hours || BIZ.hours}</span>
                 </p>
               </div>
 
@@ -223,9 +247,9 @@ function ContactPage() {
                   Registered Office
                 </h3>
                 <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                  <span className="block font-medium text-on-surface">{BIZ.legalName}</span>
-                  <span className="block">{BIZ.address}</span>
-                  <span className="block"><strong>GSTIN:</strong> {BIZ.gstin}</span>
+                  <span className="block font-medium text-on-surface">{cms.biz_legal_name || BIZ.legalName}</span>
+                  <span className="block">{cms.biz_address || BIZ.address}</span>
+                  <span className="block"><strong>GSTIN:</strong> {cms.biz_gstin || BIZ.gstin}</span>
                 </p>
               </div>
 
@@ -240,9 +264,9 @@ function ContactPage() {
                   As required under Rule 5(9) of the IT Rules, 2011 and the Consumer Protection (E-Commerce) Rules, 2020:
                 </p>
                 <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                  <span className="block"><strong>Name:</strong> [Grievance Officer Name]</span>
-                  <span className="block"><strong>Email:</strong> <a href={`mailto:${BIZ.email}`} className="text-primary hover:underline">{BIZ.email}</a></span>
-                  <span className="block"><strong>Phone:</strong> {BIZ.phone}</span>
+                  <span className="block"><strong>Name:</strong> {cms.biz_grievance_officer || BIZ.grievanceOfficer}</span>
+                  <span className="block"><strong>Email:</strong> <a href={`mailto:${cms.biz_email || BIZ.email}`} className="text-primary hover:underline">{cms.biz_email || BIZ.email}</a></span>
+                  <span className="block"><strong>Phone:</strong> {cms.biz_phone || BIZ.phone}</span>
                 </p>
                 <p className="text-[11px] text-on-surface-variant/80 mt-3 italic">
                   We acknowledge complaints within 48 hours and resolve them within 30 days.
