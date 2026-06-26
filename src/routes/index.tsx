@@ -116,7 +116,7 @@ function Index() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-7">
             <div className="grid grid-cols-2 gap-4 h-[380px] sm:h-[500px] w-full">
               <a
                 href={cms.hero_1_link}
@@ -236,7 +236,7 @@ function Index() {
               </Link>
             </div>
           </div>
-          <div className="w-full md:w-1/2 flex flex-col gap-3">
+          <div className="w-full md:w-1/2 flex flex-col gap-7">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
               <a
                 href={cms.keypad_banner_1_link}
