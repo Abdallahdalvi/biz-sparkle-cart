@@ -16,4 +16,4 @@
 > `& "C:\Users\dalvi\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\git\cmd\git.exe" push`
 
 > [!IMPORTANT]
-> **Antigravity Mobile Layout Rule:** All Call-To-Action (CTA) buttons on landing and feature pages MUST appear BELOW the image sections in mobile view, adhering strictly to the responsive pattern documented in [MOBILE_LAYOUT_RULE.md](file:///c:/Users/dalvi/Projects/ecom%20website/MOBILE_LAYOUT_RULE.md). DO NOT revert or alter this layout structure.
+> **Antigravity Mobile Layout Rule:** In mobile view, call-to-action buttons (e.g. View Catalog, Shop Keypads) MUST ALWAYS appear below the image sections, never above them. Always follow [MOBILE_LAYOUT_RULE.md](file:///c:/Users/dalvi/Projects/ecom%20website/MOBILE_LAYOUT_RULE.md) and never revert this structure.
