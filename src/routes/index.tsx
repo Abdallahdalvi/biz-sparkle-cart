@@ -95,7 +95,7 @@ function Index() {
     <SiteShell>
       {/* Hero */}
       <section className="relative bg-white overflow-hidden border-b border-outline-variant/20">
-        <div className="relative z-10 w-full px-6 sm:px-12 lg:px-16 max-w-[1320px] mx-auto pt-10 pb-24 md:pt-16 md:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="relative z-10 w-full px-6 sm:px-12 lg:px-16 max-w-[1320px] mx-auto pt-10 pb-24 md:pt-16 md:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-16 items-center">
           <div className="space-y-6">
             <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2.5 py-1 rounded-sm inline-block shadow-sm bg-primary/5">
               LIMITED RELEASE ENGINE
@@ -116,7 +116,7 @@ function Index() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-col gap-12">
+          <div className="flex flex-col gap-6">
             <div className="grid grid-cols-2 gap-4 h-[380px] sm:h-[500px] w-full">
               <a
                 href={cms.hero_1_link}
@@ -209,7 +209,7 @@ function Index() {
 
       {/* Keypad Android Collection */}
       <section className="bg-white py-12 md:py-16 border-y border-outline-variant/30">
-        <div className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20">
+        <div className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto flex flex-col md:flex-row items-center gap-6 md:gap-20">
           <div className="w-full md:w-1/2 space-y-6">
             <h2 className="text-4xl text-primary font-bold">{cms.keypad_title}</h2>
             <p className="text-lg text-on-surface-variant leading-relaxed">{cms.keypad_desc}</p>
@@ -236,7 +236,7 @@ function Index() {
               </Link>
             </div>
           </div>
-          <div className="w-full md:w-1/2 flex flex-col gap-12">
+          <div className="w-full md:w-1/2 flex flex-col gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
               <a
                 href={cms.keypad_banner_1_link}
