@@ -78,8 +78,8 @@ function ProductPage() {
   // New trust & conversion states
   const [pincode, setPincode] = useState("");
   const [pinStatus, setPinStatus] = useState<string | null>(null);
-  const [bundleCharger, setBundleCharger] = useState(true);
-  const [bundleGlass, setBundleGlass] = useState(true);
+  const [bundleCharger, setBundleCharger] = useState(false);
+  const [bundleGlass, setBundleGlass] = useState(false);
   const [warranty, setWarranty] = useState("1yr");
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
@@ -127,7 +127,6 @@ function ProductPage() {
   }
 
   let finalPricePaise = product.pricePaise + baseAddonsPaise;
-  if (warranty === "2yr") finalPricePaise += 99900; // ₹999 Accidental Damage Protection
 
   return (
     <SiteShell>
@@ -157,21 +156,21 @@ function ProductPage() {
             )}
 
             {/* Trust Badges */}
-            <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-outline-variant/30 text-center">
-              <div className="bg-surface-container-lowest p-4 border border-outline-variant/40 rounded shadow-sm">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-8 pt-6 border-t border-outline-variant/30 text-center">
+              <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">
                 <span className="material-symbols-outlined text-2xl text-primary mb-1 block">cycle</span>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-primary">7-Day Replacement</p>
-                <p className="text-[10px] text-on-surface-variant mt-0.5">No questions asked</p>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">7-Day Replacement</p>
+                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">No questions asked</p>
               </div>
-              <div className="bg-surface-container-lowest p-4 border border-outline-variant/40 rounded shadow-sm">
+              <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">
                 <span className="material-symbols-outlined text-2xl text-blue-600 mb-1 block">verified</span>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-primary">100% Genuine</p>
-                <p className="text-[10px] text-on-surface-variant mt-0.5">Brand certified</p>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">100% Genuine</p>
+                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">Brand certified</p>
               </div>
-              <div className="bg-surface-container-lowest p-4 border border-outline-variant/40 rounded shadow-sm">
+              <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">
                 <span className="material-symbols-outlined text-2xl text-emerald-600 mb-1 block">shield</span>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Secure Checkout</p>
-                <p className="text-[10px] text-on-surface-variant mt-0.5">Secured by Razorpay</p>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">Secure Checkout</p>
+                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">Secured by Razorpay</p>
               </div>
             </div>
           </div>
@@ -271,35 +270,7 @@ function ProductPage() {
               </div>
             </div>
 
-            {/* Extended Warranty Selector */}
-            <div className="bg-white border border-outline-variant/40 p-6 rounded shadow-sm space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-primary border-b border-outline-variant/30 pb-2 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-blue-600">verified_user</span>
-                Extended Warranty & Protection
-              </h3>
-              <div className="space-y-3 text-xs">
-                <label className={`flex items-start justify-between p-3 border rounded cursor-pointer transition-colors ${warranty === '1yr' ? 'border-primary bg-primary/5' : 'border-outline-variant/40 bg-white'}`}>
-                  <div className="flex items-start gap-3">
-                    <input type="radio" name="wty" checked={warranty === '1yr'} onChange={() => setWarranty('1yr')} className="mt-1 cursor-pointer" />
-                    <div>
-                      <p className="font-bold text-primary">1 Year Brand Warranty</p>
-                      <p className="text-[11px] text-on-surface-variant mt-0.5">Covers all manufacturing defects</p>
-                    </div>
-                  </div>
-                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">INCLUDED</span>
-                </label>
-                <label className={`flex items-start justify-between p-3 border rounded cursor-pointer transition-colors ${warranty === '2yr' ? 'border-primary bg-primary/5' : 'border-outline-variant/40 bg-white'}`}>
-                  <div className="flex items-start gap-3">
-                    <input type="radio" name="wty" checked={warranty === '2yr'} onChange={() => setWarranty('2yr')} className="mt-1 cursor-pointer" />
-                    <div>
-                      <p className="font-bold text-primary">2 Years Accidental Damage Protection</p>
-                      <p className="text-[11px] text-on-surface-variant mt-0.5">Full liquid damage and screen replacement cover</p>
-                    </div>
-                  </div>
-                  <span className="font-bold text-primary">+₹999</span>
-                </label>
-              </div>
-            </div>
+            {/* Extended Warranty Selector Removed */}
 
             {product.variants && product.variants.length > 0 && (
               <div>
@@ -377,17 +348,17 @@ function ProductPage() {
                 )}
               </div>
             ) : (
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-2">
                 <button
                   disabled={product.stock === 0}
                   onClick={() => {
                     const v = product.variants?.find((x) => x.id === variant);
-                    // Add main product (with warranty price if selected)
+                    // Add main product
                     add(
                       {
                         slug: product.slug,
-                        name: `${product.name} ${warranty === '2yr' ? '(+ 2Yr Accidental Cover)' : ''}`,
-                        pricePaise: product.pricePaise + (warranty === '2yr' ? 99900 : 0),
+                        name: product.name,
+                        pricePaise: product.pricePaise,
                         image: product.images[0],
                         variantId: v?.id,
                         variantLabel: v?.label,
@@ -404,11 +375,12 @@ function ProductPage() {
                     }
                     toast.success(`Added ${qty} × ${product.name} (and selected add-ons) to cart`);
                   }}
-                  className="flex-1 bg-primary text-on-primary px-10 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center block"
+                  className="w-full bg-primary text-on-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2"
                 >
-                  Add to Cart — {formatINR(finalPricePaise * qty)}
+                  <span>Add to Cart</span>
+                  <span className="text-[11px] sm:text-sm font-bold opacity-90">({formatINR(finalPricePaise * qty)})</span>
                 </button>
-                <Link to="/cart" className="border border-outline text-primary px-10 py-4 font-bold text-sm uppercase tracking-widest hover:bg-surface-container transition-all shadow-sm bg-white text-center block">
+                <Link to="/cart" className="w-full border border-outline text-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:bg-surface-container transition-all shadow-sm bg-white text-center flex items-center justify-center">
                   View Cart
                 </Link>
               </div>
