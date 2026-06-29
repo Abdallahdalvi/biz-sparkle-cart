@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
 const LEGAL = [
-  { to: "/legal/about", label: "About Us" },
   { to: "/legal/contact", label: "Contact Us" },
   { to: "/legal/terms", label: "Terms & Conditions" },
   { to: "/legal/privacy", label: "Privacy Policy" },
