@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
 
 const LEGAL = [
-  { to: "/legal/about", label: "About" },
-  { to: "/legal/contact", label: "Contact" },
-  { to: "/legal/terms", label: "Terms" },
-  { to: "/legal/privacy", label: "Privacy" },
-  { to: "/legal/shipping", label: "Shipping" },
-  { to: "/legal/returns", label: "Returns" },
-  { to: "/legal/cancellation", label: "Cancellation" },
+  { to: "/legal/about", label: "About Us" },
+  { to: "/legal/contact", label: "Contact Us" },
+  { to: "/legal/terms", label: "Terms & Conditions" },
+  { to: "/legal/privacy", label: "Privacy Policy" },
+  { to: "/legal/shipping", label: "Shipping & Delivery Policy" },
+  { to: "/legal/returns", label: "Return & Refund Policy" },
+  { to: "/legal/cancellation", label: "Cancellation Policy" },
 ] as const;
 
 export function Footer() {

@@ -71,7 +71,7 @@ export const Route = createFileRoute("/legal/privacy")({
       </p>
       <h2>8. Grievance Officer</h2>
       <p>
-        Name: [Grievance Officer Name]
+        Name: {BIZ.grievanceOfficer}
         <br />
         Email: <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a>
         <br />
