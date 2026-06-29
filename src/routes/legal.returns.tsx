@@ -13,6 +13,9 @@ export const Route = createFileRoute("/legal/returns")({
   }),
   component: () => (
     <LegalPage title="Return & Refund Policy" updated="June 2026">
+      <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
+        {BIZ.legalReturnsText}
+      </p>
       <h2>7-day return window</h2>
       <p>
         We accept returns within <strong>7 days</strong> of delivery for items that are unused, in

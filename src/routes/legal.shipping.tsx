@@ -13,6 +13,9 @@ export const Route = createFileRoute("/legal/shipping")({
   }),
   component: () => (
     <LegalPage title="Shipping & Delivery Policy" updated="June 2026">
+      <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
+        {BIZ.legalShippingText}
+      </p>
       <h2>Where we ship</h2>
       <p>
         We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery,

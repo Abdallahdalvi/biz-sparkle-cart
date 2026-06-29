@@ -13,10 +13,8 @@ export const Route = createFileRoute("/legal/terms")({
   }),
   component: () => (
     <LegalPage title="Terms & Conditions" updated="June 2026">
-      <p>
-        These Terms & Conditions ("Terms") govern your access to and use of the TECHLAB website (the
-        "Site") operated by {BIZ.legalName} ("we", "us", "our"), and any purchase of products listed
-        on the Site. By using the Site you agree to these Terms.
+      <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
+        {BIZ.legalTermsText}
       </p>
       <h2>1. Eligibility</h2>
       <p>

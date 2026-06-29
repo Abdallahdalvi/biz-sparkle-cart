@@ -81,6 +81,15 @@ export interface StorefrontCms {
   whatsapp_channel_url: string;
   whatsapp_chat_phone: string;
   whatsapp_chat_message: string;
+  legal_terms_text?: string;
+  legal_privacy_text?: string;
+  legal_shipping_text?: string;
+  legal_returns_text?: string;
+  legal_cancellation_text?: string;
+  footer_tagline?: string;
+  footer_copyright?: string;
+  reviews_api_key?: string;
+  reviews_place_id?: string;
 }
 
 export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
@@ -247,6 +256,15 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   whatsapp_channel_url: "https://whatsapp.com/channel/0029Vaexample",
   whatsapp_chat_phone: "919876543210",
   whatsapp_chat_message: "Hi TECHLAB Support, I have an inquiry regarding your products.",
+  legal_terms_text: "These Terms & Conditions (\"Terms\") govern your access to and use of the TECHLAB website operated by our company, and any purchase of products listed on the Site. By using the Site you agree to these Terms. All prices are in Indian Rupees (INR) and are inclusive of applicable GST. We accept the offer when we dispatch the product and email an order confirmation with tracking.",
+  legal_privacy_text: "We respect your privacy. This Policy explains what we collect, how we use it, and your rights under the Digital Personal Data Protection Act, 2023 (DPDP Act). We share data only with processors needed to deliver your order: Razorpay (payments), Shiprocket and the assigned courier (delivery). We do not sell your data.",
+  legal_shipping_text: "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. Shipping is free on all prepaid orders within India.",
+  legal_returns_text: "We accept returns within 7 days of delivery for items that are unused, in original condition, and with all original packaging. Approved refunds credit to the original payment method within 5–7 business days of receipt. For damaged-on-arrival (DOA) products, we offer a free replacement if reported within 48 hours of delivery.",
+  legal_cancellation_text: "You can cancel any time before your order is marked 'Shipped' — usually within 24 hours. A full refund is issued to your original payment method within 5–7 business days. Once handed to the courier we cannot cancel. You may refuse delivery and we'll process it as a return.",
+  footer_tagline: "TECHLAB. PRECISION ENGINEERED LOGISTICS.",
+  footer_copyright: "© 2026 TECHLAB. ALL RIGHTS RESERVED.",
+  reviews_api_key: "",
+  reviews_place_id: "ChIJwe754bS55zsRwb3Q4U1xd7g",
 };
 
 export const PRODUCTS: Product[] = [

@@ -13,10 +13,8 @@ export const Route = createFileRoute("/legal/privacy")({
   }),
   component: () => (
     <LegalPage title="Privacy Policy" updated="June 2026">
-      <p>
-        {BIZ.legalName} ("we") respects your privacy. This Policy explains what we collect, how we
-        use it, and your rights under the Digital Personal Data Protection Act, 2023 (DPDP Act) and
-        the IT Rules, 2011.
+      <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
+        {BIZ.legalPrivacyText}
       </p>
       <h2>1. Information we collect</h2>
       <ul>

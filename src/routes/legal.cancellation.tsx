@@ -10,6 +10,9 @@ export const Route = createFileRoute("/legal/cancellation")({
   }),
   component: () => (
     <LegalPage title="Cancellation Policy" updated="June 2026">
+      <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
+        {BIZ.legalCancellationText}
+      </p>
       <h2>Before dispatch</h2>
       <p>
         You can cancel any time before your order is marked "Shipped" — usually within 24 hours.
