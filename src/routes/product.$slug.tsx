@@ -85,6 +85,23 @@ function ProductPage() {
   const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
 
+  const [timer, setTimer] = useState({ hours: 11, minutes: 40, seconds: 50 });
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
+        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        return { hours: 11, minutes: 40, seconds: 50 };
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const dispatchDate = new Date();
+  dispatchDate.setDate(dispatchDate.getDate() + ((2 - dispatchDate.getDay() + 7) % 7 || 7));
+  const dispatchStr = dispatchDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", weekday: "long" });
+
   const add = useCart((s) => s.add);
 
   function checkPincode(e: React.FormEvent) {
@@ -130,7 +147,7 @@ function ProductPage() {
 
   return (
     <SiteShell>
-      <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12">
+      <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12 pb-28 md:pb-12">
         <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-8">
           <Link to="/" className="hover:text-primary">Home</Link> /{" "}
           <Link to="/catalog" className="hover:text-primary">Catalog</Link> /{" "}
@@ -457,6 +474,45 @@ function ProductPage() {
           </div>
         )}
       </section>
+
+      {/* Mobile Sticky Bottom Bar (Inspired by Titan UI/UX) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-outline-variant/30 shadow-[0_-4px_16px_rgba(0,0,0,0.12)] md:hidden">
+        <div className="bg-rose-50 border-b border-rose-100 text-rose-950 px-4 py-1.5 text-[11px] font-medium flex items-center justify-between">
+          <span>Dispatch By {dispatchStr} | Order within</span>
+          <span className="flex items-center gap-1 font-mono font-bold">
+            <span className="bg-black text-white px-1.5 py-0.5 rounded">{String(timer.hours).padStart(2, "0")}</span>:
+            <span className="bg-black text-white px-1.5 py-0.5 rounded">{String(timer.minutes).padStart(2, "0")}</span>:
+            <span className="bg-black text-white px-1.5 py-0.5 rounded">{String(timer.seconds).padStart(2, "0")}</span>
+          </span>
+        </div>
+        <div className="flex items-center p-2 gap-2">
+          <button
+            disabled={product.stock === 0}
+            onClick={() => {
+              const v = product.variants?.find((x) => x.id === variant);
+              add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, qty);
+              if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
+              if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+              toast.success(`Added ${qty} × ${product.name} to cart`);
+            }}
+            className="flex-1 bg-white border border-primary text-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-surface-container transition-all text-center disabled:opacity-40 shadow-sm"
+          >
+            ADD TO CART
+          </button>
+          <Link
+            to="/cart"
+            onClick={() => {
+              const v = product.variants?.find((x) => x.id === variant);
+              add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, qty);
+              if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
+              if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+            }}
+            className="flex-1 bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all text-center block shadow-sm"
+          >
+            BUY NOW
+          </Link>
+        </div>
+      </div>
     </SiteShell>
   );
 }
