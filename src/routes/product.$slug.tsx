@@ -365,7 +365,7 @@ function ProductPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-2">
+              <div className="hidden md:grid grid-cols-2 gap-2 sm:gap-3 pt-2">
                 <button
                   disabled={product.stock === 0}
                   onClick={() => {
