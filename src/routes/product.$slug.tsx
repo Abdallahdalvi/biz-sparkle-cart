@@ -71,7 +71,6 @@ export const Route = createFileRoute("/product/$slug")({
 function ProductPage() {
   const { product, related } = Route.useLoaderData() as { product: Product; related: Product[] };
   const [variant, setVariant] = useState(product.variants?.[0]?.id);
-  const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   
@@ -102,7 +101,13 @@ function ProductPage() {
   dispatchDate.setDate(dispatchDate.getDate() + ((2 - dispatchDate.getDay() + 7) % 7 || 7));
   const dispatchStr = dispatchDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", weekday: "long" });
 
+  const items = useCart((s) => s.items);
   const add = useCart((s) => s.add);
+  const setQty = useCart((s) => s.setQty);
+  const remove = useCart((s) => s.remove);
+
+  const cartItem = items.find((i) => i.slug === product.slug && i.variantId === variant);
+  const currentQty = cartItem ? cartItem.qty : 0;
 
   function checkPincode(e: React.FormEvent) {
     e.preventDefault();
@@ -310,12 +315,7 @@ function ProductPage() {
             )}
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center border border-outline bg-white shadow-sm">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 py-3 font-bold">−</button>
-                <span className="w-12 text-center font-bold">{qty}</span>
-                <button onClick={() => setQty(Math.min(product.stock, qty + 1))} className="px-4 py-3 font-bold">+</button>
-              </div>
-              <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-bold">
+              <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold">
                 {product.stock > 0 ? `${product.stock} in stock` : "Out of stock (Priority Waitlist Open)"}
               </p>
             </div>
@@ -331,7 +331,7 @@ function ProductPage() {
                     <p className="font-bold uppercase tracking-wider flex items-center gap-1">
                       <span className="material-symbols-outlined text-sm">check_circle</span> You are on the priority list!
                     </p>
-                    <p>We have reserved your queue spot. Our sourcing team will notify you immediately via Email/WhatsApp when the shipment clears customs.</p>
+                    <p>We have reserved your queue spot. Our sourcing team will notify you immediately via Email/WhatsApp when the shipment tracking clears customs.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleWaitlist} className="space-y-4">
@@ -366,37 +366,63 @@ function ProductPage() {
               </div>
             ) : (
               <div className="hidden md:grid grid-cols-2 gap-2 sm:gap-3 pt-2">
-                <button
-                  disabled={product.stock === 0}
-                  onClick={() => {
-                    const v = product.variants?.find((x) => x.id === variant);
-                    // Add main product
-                    add(
-                      {
-                        slug: product.slug,
-                        name: product.name,
-                        pricePaise: product.pricePaise,
-                        image: product.images[0],
-                        variantId: v?.id,
-                        variantLabel: v?.label,
-                      },
-                      qty,
-                    );
-                    // Add bundle charger if selected
-                    if (bundleCharger) {
-                      add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
-                    }
-                    // Add bundle glass if selected
-                    if (bundleGlass) {
-                      add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
-                    }
-                    toast.success(`Added ${qty} × ${product.name} (and selected add-ons) to cart`);
-                  }}
-                  className="w-full bg-primary text-on-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2"
-                >
-                  <span>Add to Cart</span>
-                  <span className="text-[11px] sm:text-sm font-bold opacity-90">({formatINR(finalPricePaise * qty)})</span>
-                </button>
+                {currentQty > 0 ? (
+                  <div className="flex items-center justify-between bg-primary text-on-primary font-bold text-sm shadow-sm w-full h-full min-h-[48px]">
+                    <button
+                      onClick={() => {
+                        if (currentQty === 1) {
+                          remove(product.slug, variant);
+                          toast.message(`Removed ${product.name} from cart`);
+                        } else {
+                          setQty(product.slug, currentQty - 1, variant);
+                        }
+                      }}
+                      className="px-6 py-3 font-bold text-lg hover:bg-white/10 transition-colors"
+                    >
+                      −
+                    </button>
+                    <span className="text-center font-bold text-sm">
+                      {currentQty} <span className="text-[10px] opacity-80 font-normal uppercase tracking-widest block sm:inline">({formatINR(finalPricePaise * currentQty)})</span>
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (currentQty < product.stock) {
+                          setQty(product.slug, currentQty + 1, variant);
+                        } else {
+                          toast.error(`Only ${product.stock} units available in stock`);
+                        }
+                      }}
+                      className="px-6 py-3 font-bold text-lg hover:bg-white/10 transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    disabled={product.stock === 0}
+                    onClick={() => {
+                      const v = product.variants?.find((x) => x.id === variant);
+                      add(
+                        {
+                          slug: product.slug,
+                          name: product.name,
+                          pricePaise: product.pricePaise,
+                          image: product.images[0],
+                          variantId: v?.id,
+                          variantLabel: v?.label,
+                        },
+                        1,
+                      );
+                      if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
+                      if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+                      toast.success(`Added ${product.name} (and selected add-ons) to cart`);
+                    }}
+                    className="w-full bg-primary text-on-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2"
+                  >
+                    <span>Add to Cart</span>
+                    <span className="text-[11px] sm:text-sm font-bold opacity-90">({formatINR(finalPricePaise)})</span>
+                  </button>
+                )}
                 <Link to="/cart" className="w-full border border-outline text-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:bg-surface-container transition-all shadow-sm bg-white text-center flex items-center justify-center">
                   View Cart
                 </Link>
@@ -486,26 +512,61 @@ function ProductPage() {
           </span>
         </div>
         <div className="flex items-center p-2 gap-2">
-          <button
-            disabled={product.stock === 0}
-            onClick={() => {
-              const v = product.variants?.find((x) => x.id === variant);
-              add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, qty);
-              if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
-              if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
-              toast.success(`Added ${qty} × ${product.name} to cart`);
-            }}
-            className="flex-1 bg-white border border-primary text-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-surface-container transition-all text-center disabled:opacity-40 shadow-sm"
-          >
-            ADD TO CART
-          </button>
+          {currentQty > 0 ? (
+            <div className="flex-1 flex items-center justify-between bg-white border border-primary text-primary font-bold text-xs shadow-sm h-11">
+              <button
+                onClick={() => {
+                  if (currentQty === 1) {
+                    remove(product.slug, variant);
+                    toast.message(`Removed ${product.name} from cart`);
+                  } else {
+                    setQty(product.slug, currentQty - 1, variant);
+                  }
+                }}
+                className="px-4 h-full font-bold text-base hover:bg-surface-container transition-colors flex items-center justify-center"
+              >
+                −
+              </button>
+              <span className="text-center font-bold text-xs">
+                {currentQty}
+              </span>
+              <button
+                onClick={() => {
+                  if (currentQty < product.stock) {
+                    setQty(product.slug, currentQty + 1, variant);
+                  } else {
+                    toast.error(`Only ${product.stock} units available in stock`);
+                  }
+                }}
+                className="px-4 h-full font-bold text-base hover:bg-surface-container transition-colors flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              disabled={product.stock === 0}
+              onClick={() => {
+                const v = product.variants?.find((x) => x.id === variant);
+                add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, 1);
+                if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
+                if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+                toast.success(`Added ${product.name} to cart`);
+              }}
+              className="flex-1 bg-white border border-primary text-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-surface-container transition-all text-center disabled:opacity-40 shadow-sm"
+            >
+              ADD TO CART
+            </button>
+          )}
           <Link
             to="/cart"
             onClick={() => {
-              const v = product.variants?.find((x) => x.id === variant);
-              add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, qty);
-              if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
-              if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+              if (currentQty === 0) {
+                const v = product.variants?.find((x) => x.id === variant);
+                add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, 1);
+                if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
+                if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+              }
             }}
             className="flex-1 bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all text-center block shadow-sm"
           >
