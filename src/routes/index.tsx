@@ -4,7 +4,6 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
 import { CookieBanner } from "@/components/CookieBanner";
 import {
-  PRODUCTS,
   getAllProducts,
   getStorefrontCms,
   type Product,
@@ -32,8 +31,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Boutique keypad Androids, transparent audio, and minimalist daily drivers.",
       },
-      { property: "og:image", content: PRODUCTS[0].images[0] },
-      { name: "twitter:image", content: PRODUCTS[0].images[0] },
+      { property: "og:image", content: "https://aghanims.dalvi.cloud/og-image.jpg" },
+      { name: "twitter:image", content: "https://aghanims.dalvi.cloud/og-image.jpg" },
     ],
     scripts: [
       {
