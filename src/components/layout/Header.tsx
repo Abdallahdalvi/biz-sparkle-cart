@@ -24,13 +24,12 @@ export function Header() {
   return (
     <nav className="fixed top-0 w-full z-50 bg-white border-b border-outline-variant/30">
       <div className="flex justify-between items-center w-full px-4 md:px-10 max-w-[1280px] mx-auto h-16 box-border">
-        <Link to="/" className="font-bold text-xl sm:text-2xl tracking-tighter text-primary flex-shrink-0 flex items-center gap-2.5">
+        <Link to="/" aria-label="Aghanims Phones and Gadgets Home" className="flex-shrink-0 flex items-center">
           <img 
             src="https://aghanims.dalvi.cloud/logo.png" 
             alt="Aghanims Logo" 
-            className="w-8 h-8 rounded-full object-cover" 
+            className="w-10 h-10 rounded-full object-cover" 
           />
-          <span>Aghanims Phones and Gadgets</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 font-medium text-sm uppercase tracking-wider">
           {NAV.map((n) => {
