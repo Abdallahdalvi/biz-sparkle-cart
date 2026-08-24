@@ -1,9 +1,9 @@
-﻿import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useAuth, signOut } from "@/lib/use-auth";
 
 export const Route = createFileRoute("/account")({
-  head: () => ({ meta: [{ title: "Account — Agahnim's Phones & Gadgets" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Account — Aghanims Phones and Gadgets" }, { name: "robots", content: "noindex" }] }),
   component: AccountLayout,
 });
 

@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getStorefrontCms, type StorefrontCms } from "@/lib/products";
 
@@ -9,13 +9,13 @@ export const Route = createFileRoute("/legal/about")({
   },
   head: () => ({
     meta: [
-      { title: "About Agahnim's Phones & Gadgets" },
+      { title: "About Aghanims Phones and Gadgets" },
       {
         name: "description",
         content:
-          "Agahnim's Phones & Gadgets is a premium tech store curating the best phones and gadgets.",
+          "Aghanims Phones and Gadgets is a premium tech store curating the best phones and gadgets.",
       },
-      { property: "og:title", content: "About Agahnim's Phones & Gadgets" },
+      { property: "og:title", content: "About Aghanims Phones and Gadgets" },
       {
         property: "og:description",
         content: "A boutique technology store curating niche, tactile hardware.",
@@ -36,7 +36,7 @@ function AboutPage() {
             <Link to="/" className="hover:text-primary">Home</Link> / About Us
           </p>
           <h1 className="text-4xl md:text-5xl font-bold text-primary max-w-2xl">
-            {cms.about_title || "About Agahnim's Phones & Gadgets"}
+            {cms.about_title || "About Aghanims Phones and Gadgets"}
           </h1>
           <p className="text-lg font-medium text-on-surface-variant mt-4 max-w-2xl leading-relaxed">
             {cms.about_subtitle}
@@ -47,7 +47,7 @@ function AboutPage() {
           <div className="my-12 aspect-[16/9] w-full overflow-hidden border border-outline-variant/40 bg-white shadow-sm rounded">
             <img
               src={cms.about_image}
-              alt="Agahnim's Phones & Gadgets Workspace"
+              alt="Aghanims Phones and Gadgets Workspace"
               className="w-full h-full object-cover"
             />
           </div>

@@ -1,13 +1,13 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/legal/returns")({
   head: () => ({
     meta: [
-      { title: "Return & Refund Policy — Agahnim's Phones & Gadgets" },
+      { title: "Return & Refund Policy — Aghanims Phones and Gadgets" },
       {
         name: "description",
-        content: "How to return a Agahnim's Phones & Gadgets order and how refunds are processed.",
+        content: "How to return a Aghanims Phones and Gadgets order and how refunds are processed.",
       },
     ],
   }),

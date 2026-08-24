@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useCart } from "@/lib/cart-store";
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/checkout")({
     const cms = await getStorefrontCms();
     return { cms };
   },
-  head: () => ({ meta: [{ title: "Checkout — Agahnim's Phones & Gadgets" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Checkout — Aghanims Phones and Gadgets" }, { name: "robots", content: "noindex" }] }),
   component: Checkout,
 });
 
@@ -169,7 +169,7 @@ function Checkout() {
                 key: res.keyId,
                 amount: res.amountPaise,
                 currency: res.currency,
-                name: "Agahnim's Phones & Gadgets",
+                name: "Aghanims Phones and Gadgets",
                 description:
                   payMode === "cod"
                     ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} Order ${res.orderNumber}`

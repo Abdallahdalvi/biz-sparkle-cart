@@ -1,11 +1,11 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useCart } from "@/lib/cart-store";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cart")({
-  head: () => ({ meta: [{ title: "Cart — Agahnim's Phones & Gadgets" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Cart — Aghanims Phones and Gadgets" }, { name: "robots", content: "noindex" }] }),
   component: CartPage,
 });
 

@@ -1,13 +1,13 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/legal/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Agahnim's Phones & Gadgets" },
+      { title: "Privacy Policy — Aghanims Phones and Gadgets" },
       {
         name: "description",
-        content: "How Agahnim's Phones & Gadgets collects, uses, and protects your personal data.",
+        content: "How Aghanims Phones and Gadgets collects, uses, and protects your personal data.",
       },
     ],
   }),

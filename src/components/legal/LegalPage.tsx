@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 
 export function LegalPage({
@@ -41,7 +41,7 @@ export const BIZ = {
         }
       } catch (e) {}
     }
-    return "Agahnim's Phones & Gadgets";
+    return "Aghanims Phones and Gadgets";
   },
   get legalName() {
     if (typeof window !== "undefined") {
@@ -53,7 +53,7 @@ export const BIZ = {
         }
       } catch (e) {}
     }
-    return "Agahnim's Phones & Gadgets Technologies LLP";
+    return "Aghanims Phones and Gadgets Technologies LLP";
   },
   get address() {
     if (typeof window !== "undefined") {
@@ -101,7 +101,7 @@ export const BIZ = {
         }
       } catch (e) {}
     }
-    return "support@Agahnim's Phones & Gadgets.example";
+    return "support@Aghanims Phones and Gadgets.example";
   },
   get phone() {
     if (typeof window !== "undefined") {
@@ -149,7 +149,7 @@ export const BIZ = {
         }
       } catch (e) {}
     }
-    return "These Terms & Conditions (\"Terms\") govern your access to and use of the Agahnim's Phones & Gadgets website operated by our company, and any purchase of products listed on the Site. By using the Site you agree to these Terms. All prices are in Indian Rupees (INR) and are inclusive of applicable GST. We accept the offer when we dispatch the product and email an order confirmation with tracking.";
+    return "These Terms & Conditions (\"Terms\") govern your access to and use of the Aghanims Phones and Gadgets website operated by our company, and any purchase of products listed on the Site. By using the Site you agree to these Terms. All prices are in Indian Rupees (INR) and are inclusive of applicable GST. We accept the offer when we dispatch the product and email an order confirmation with tracking.";
   },
   get legalPrivacyText() {
     if (typeof window !== "undefined") {
@@ -209,7 +209,7 @@ export const BIZ = {
         }
       } catch (e) {}
     }
-    return "Agahnim's Phones & Gadgets. PRECISION ENGINEERED LOGISTICS.";
+    return "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.";
   },
   get footerCopyright() {
     if (typeof window !== "undefined") {
@@ -221,6 +221,6 @@ export const BIZ = {
         }
       } catch (e) {}
     }
-    return `© ${new Date().getFullYear()} Agahnim's Phones & Gadgets. ALL RIGHTS RESERVED.`;
+    return `© ${new Date().getFullYear()} Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.`;
   },
 };

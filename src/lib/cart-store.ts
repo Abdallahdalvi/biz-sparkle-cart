@@ -1,4 +1,4 @@
-﻿import { create } from "zustand";
+import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface CartItem {
@@ -54,6 +54,6 @@ export const useCart = create<CartState>()(
       totalPaise: () => get().items.reduce((s, i) => s + i.pricePaise * i.qty, 0),
       totalItems: () => get().items.reduce((s, i) => s + i.qty, 0),
     }),
-    { name: "Agahnim's Phones & Gadgets-cart" },
+    { name: "Aghanims Phones and Gadgets-cart" },
   ),
 );

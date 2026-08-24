@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getAllProducts, type Product } from "@/lib/products";
@@ -12,9 +12,9 @@ export const Route = createFileRoute("/compare")({
   },
   head: () => ({
     meta: [
-      { title: "Device Comparison Engine — Agahnim's Phones & Gadgets" },
+      { title: "Device Comparison Engine — Aghanims Phones and Gadgets" },
       { name: "description", content: "Compare boutique phones, audio engines, and mechanical accessories side-by-side." },
-      { property: "og:title", content: "Device Comparison Engine — Agahnim's Phones & Gadgets" },
+      { property: "og:title", content: "Device Comparison Engine — Aghanims Phones and Gadgets" },
       { property: "og:description", content: "Compare boutique phones, audio engines, and mechanical accessories side-by-side." },
     ],
   }),
