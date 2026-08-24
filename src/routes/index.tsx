@@ -59,7 +59,7 @@ export const Route = createFileRoute("/")({
               "@id": "https://aghanims.dalvi.cloud/#organization",
               name: "Aghanims Phones and Gadgets",
               url: "https://aghanims.dalvi.cloud/",
-              logo: PRODUCTS[0].images[0],
+              logo: "https://aghanims.dalvi.cloud/logo.png",
               contactPoint: [
                 {
                   "@type": "ContactPoint",
@@ -71,8 +71,8 @@ export const Route = createFileRoute("/")({
               ],
               sameAs: [
                 "https://whatsapp.com/channel/0029Vaexample",
-                "https://twitter.com/Aghanims Phones and Gadgets",
-                "https://instagram.com/Aghanims Phones and Gadgets.hardware"
+                "https://twitter.com/AghanimsPhones",
+                "https://instagram.com/AghanimsPhones"
               ]
             }
           ]
