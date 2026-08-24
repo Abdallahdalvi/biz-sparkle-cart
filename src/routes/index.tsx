@@ -353,7 +353,7 @@ function Index() {
               <div className="bg-white p-6 shopify-border shadow-sm flex flex-col justify-between min-w-[280px] max-w-sm w-full lg:w-auto">
                 <div className="flex items-center gap-4">
                   <img
-                    src={PRODUCTS[0].images[0]}
+                    src="https://aghanims.dalvi.cloud/logo.png"
                     alt="Store review logo"
                     className="w-12 h-12 bg-surface-container-low shopify-border flex-shrink-0 object-cover"
                   />
