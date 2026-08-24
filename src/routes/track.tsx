@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import React, { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +10,9 @@ export const Route = createFileRoute("/track")({
   }),
   head: () => ({
     meta: [
-      { title: "Track Your Order — TECHLAB" },
+      { title: "Track Your Order — Agahnim's Phones & Gadgets" },
       { name: "description", content: "Check live delivery status for your boutique tech hardware." },
-      { property: "og:title", content: "Track Your Order — TECHLAB" },
+      { property: "og:title", content: "Track Your Order — Agahnim's Phones & Gadgets" },
       { property: "og:description", content: "Check live delivery status for your boutique tech hardware." },
     ],
   }),
@@ -98,12 +98,12 @@ function TrackPage() {
             title: "Order Confirmed & Payment Verified",
             location: "Online Gateway",
             status: "completed",
-            description: "Payment successful. Order transmitted to TechLab hardware dispatch queue.",
+            description: "Payment successful. Order transmitted to Agahnim's Phones & Gadgets dispatch queue.",
           },
           {
             time: formatTime(1, "04:15 PM"),
             title: "Packed & Quality Checked",
-            location: "TechLab Shenzhen / Bangalore Central Hub",
+            location: "Agahnim's Phones & Gadgets Dispatch Hub",
             status: "completed",
             description: "Item inspected for zero defects, packaged with heavy-duty shockproof wrapping.",
           },
@@ -170,7 +170,7 @@ function TrackPage() {
                     type="text"
                     value={orderId}
                     onChange={(e) => setOrderId(e.target.value)}
-                    placeholder="e.g. TECHLAB-99482 or SR-AWB-..."
+                    placeholder="e.g. Agahnim's Phones & Gadgets-99482 or SR-AWB-..."
                     className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-medium focus:outline-none font-mono focus:border-primary shadow-sm"
                   />
                 </div>
@@ -208,7 +208,7 @@ function TrackPage() {
                 Need urgent waybill modifications, address changes, or live dispatch operator intervention? Connect instantly with our support desk.
               </p>
               <a
-                href="https://wa.me/919876543210?text=Hello%20TechLab%20Support,%20I%20need%20assistance%20with%20my%20order%20tracking"
+                href="https://wa.me/919876543210?text=Hello%20Agahnim's%20Support,%20I%20need%20assistance%20with%20my%20order%20tracking"
                 target="_blank"
                 rel="noreferrer"
                 className="w-full bg-[#25D366] text-white py-3 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 rounded"
@@ -341,7 +341,7 @@ function TrackPage() {
                 <span className="material-symbols-outlined text-5xl opacity-80">swap_driving_apps_wheel</span>
                 <h3 className="text-base font-bold text-primary uppercase tracking-wider">Awaiting Telemetry Interrogation</h3>
                 <p className="text-xs max-w-md mx-auto leading-relaxed">
-                  Enter your assigned TechLab Order ID or Shiprocket AWB tracking credentials in the panel to pull live satellite and warehouse logistics milestones.
+                  Enter your assigned Agahnim's Phones & Gadgets Order ID or Shiprocket AWB tracking credentials in the panel to pull live satellite and warehouse logistics milestones.
                 </p>
               </div>
             )}

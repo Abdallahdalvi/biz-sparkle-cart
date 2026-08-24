@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
@@ -21,13 +21,13 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "TECHLAB — The Niche Tech Revolution" },
+      { title: "Agahnim's Phones & Gadgets — Premium Tech Store" },
       {
         name: "description",
         content:
           "Boutique keypad Androids, transparent audio, and minimalist daily drivers. Shipped across India.",
       },
-      { property: "og:title", content: "TECHLAB — The Niche Tech Revolution" },
+      { property: "og:title", content: "Agahnim's Phones & Gadgets — Premium Tech Store" },
       {
         property: "og:description",
         content: "Boutique keypad Androids, transparent audio, and minimalist daily drivers.",
@@ -43,23 +43,23 @@ export const Route = createFileRoute("/")({
           "@graph": [
             {
               "@type": "WebSite",
-              "@id": "https://techlab.dalvi.cloud/#website",
-              url: "https://techlab.dalvi.cloud/",
-              name: "TECHLAB",
+              "@id": "https://agahnims.dalvi.cloud/#website",
+              url: "https://agahnims.dalvi.cloud/",
+              name: "Agahnim's Phones & Gadgets",
               description: "Boutique keypad Androids, transparent audio, and minimalist daily drivers. Shipped across India.",
               potentialAction: [
                 {
                   "@type": "SearchAction",
-                  target: "https://techlab.dalvi.cloud/catalog?q={search_term_string}",
+                  target: "https://agahnims.dalvi.cloud/catalog?q={search_term_string}",
                   "query-input": "required name=search_term_string"
                 }
               ]
             },
             {
               "@type": "Organization",
-              "@id": "https://techlab.dalvi.cloud/#organization",
-              name: "TECHLAB Hardware Co.",
-              url: "https://techlab.dalvi.cloud/",
+              "@id": "https://agahnims.dalvi.cloud/#organization",
+              name: "Agahnim's Phones & Gadgets",
+              url: "https://agahnims.dalvi.cloud/",
               logo: PRODUCTS[0].images[0],
               contactPoint: [
                 {
@@ -72,8 +72,8 @@ export const Route = createFileRoute("/")({
               ],
               sameAs: [
                 "https://whatsapp.com/channel/0029Vaexample",
-                "https://twitter.com/TECHLAB",
-                "https://instagram.com/TECHLAB.hardware"
+                "https://twitter.com/Agahnim's Phones & Gadgets",
+                "https://instagram.com/Agahnim's Phones & Gadgets.hardware"
               ]
             }
           ]

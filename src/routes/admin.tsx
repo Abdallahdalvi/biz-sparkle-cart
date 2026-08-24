@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useAuth } from "@/lib/use-auth";
@@ -7,7 +7,7 @@ import { formatINR } from "@/lib/format";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — TECHLAB" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Admin — Agahnim's Phones & Gadgets" }, { name: "robots", content: "noindex" }] }),
   component: AdminLayout,
 });
 

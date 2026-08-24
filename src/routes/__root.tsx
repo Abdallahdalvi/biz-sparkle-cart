@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -84,14 +84,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TECHLAB — The Niche Tech Revolution" },
+      { title: "Agahnim's Phones & Gadgets — Premium Tech Store" },
       {
         name: "description",
         content:
           "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets. Shipping across India.",
       },
-      { name: "author", content: "TECHLAB" },
-      { property: "og:title", content: "TECHLAB — The Niche Tech Revolution" },
+      { name: "author", content: "Agahnim's Phones & Gadgets" },
+      { property: "og:title", content: "Agahnim's Phones & Gadgets — Premium Tech Store" },
       {
         property: "og:description",
         content:
@@ -100,7 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "TECHLAB — The Niche Tech Revolution" },
+      { name: "twitter:title", content: "Agahnim's Phones & Gadgets — Premium Tech Store" },
       {
         name: "twitter:description",
         content:

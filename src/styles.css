@@ -1,11 +1,11 @@
-@import "tailwindcss" source(none);
+﻿@import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * TECHLAB design system.
+ * Agahnim's Phones & Gadgets design system.
  * Minimalist black/white, Hanken Grotesk, Material Symbols.
  * Mirrors the reference mockup tokens exactly.
  */
@@ -74,7 +74,7 @@
 
 :root {
   --radius: 0.125rem;
-  /* TECHLAB palette — sourced from reference mockup */
+  /* Agahnim's Phones & Gadgets palette — sourced from reference mockup */
   --background: oklch(0.978 0 0); /* #f9f9f9 */
   --foreground: oklch(0.21 0 0); /* #1b1b1b */
   --card: oklch(1 0 0);

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import React, { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getProductBySlug, getAllProducts, type Product } from "@/lib/products";
@@ -16,12 +16,12 @@ export const Route = createFileRoute("/product/$slug")({
   },
   head: ({ loaderData }) => {
     const p = loaderData?.product;
-    if (!p) return { meta: [{ title: "Product — TECHLAB" }] };
+    if (!p) return { meta: [{ title: "Product — Agahnim's Phones & Gadgets" }] };
     return {
       meta: [
-        { title: `${p.name} — TECHLAB` },
+        { title: `${p.name} — Agahnim's Phones & Gadgets` },
         { name: "description", content: `${p.name}. ${p.tagline}. ${formatINR(p.pricePaise)}. ${p.description.slice(0, 120)}` },
-        { property: "og:title", content: `${p.name} — TECHLAB` },
+        { property: "og:title", content: `${p.name} — Agahnim's Phones & Gadgets` },
         { property: "og:description", content: p.tagline },
         { property: "og:image", content: p.images[0] },
         { name: "twitter:card", content: "summary_large_image" },
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/product/$slug")({
             description: p.description,
             image: p.images,
             sku: p.slug,
-            brand: { "@type": "Brand", name: "TECHLAB" },
+            brand: { "@type": "Brand", name: "Agahnim's Phones & Gadgets" },
             offers: {
               "@type": "Offer",
               priceCurrency: "INR",

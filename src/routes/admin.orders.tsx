@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
@@ -139,7 +139,7 @@ function AdminOrders() {
         </head>
         <body>
           <div class="header">
-            <div class="store-name">TECHLAB</div>
+            <div class="store-name">Agahnim's Phones & Gadgets</div>
             <div class="title">PACKING SLIP / INVOICE</div>
           </div>
           <div class="details-grid">
@@ -170,14 +170,14 @@ function AdminOrders() {
             </thead>
             <tbody>
               <tr>
-                <td>Techlab High-Fidelity Gadget / Accessory (${o.order_number})</td>
+                <td>Agahnim's Phones & Gadgets High-Fidelity Gadget / Accessory (${o.order_number})</td>
                 <td>1</td>
                 <td>${formatINR(o.total_paise)}</td>
               </tr>
             </tbody>
           </table>
           <div class="footer">
-            <p>Thank you for shopping with TECHLAB! If you have any questions about your order, please contact support.</p>
+            <p>Thank you for shopping with Agahnim's Phones & Gadgets! If you have any questions about your order, please contact support.</p>
             <p>Powered by Shiprocket & Razorpay Integration</p>
           </div>
         </body>

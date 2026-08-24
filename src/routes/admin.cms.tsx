@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorefrontCms, DEFAULT_STOREFRONT_CMS, type StorefrontCms } from "@/lib/products";
@@ -26,7 +26,7 @@ function AdminCmsPage() {
       setCms(data);
       if (typeof window !== "undefined") {
         try {
-          const msgsStr = localStorage.getItem("techlab_contact_messages");
+          const msgsStr = localStorage.getItem("agahnimsshop_contact_messages");
           if (msgsStr) {
             setMessages(JSON.parse(msgsStr));
           } else {
@@ -37,7 +37,7 @@ function AdminCmsPage() {
                 email: "rajesh.k@example.com",
                 phone: "+91 98210 12345",
                 subject: "Inquiry about Qin F22 Pro bulk order",
-                message: "Hi TECHLAB team, we are an IT consultancy looking to deploy 15 units of Qin F22 Pro for our field agents. Do you offer GST invoicing and bulk corporate discounts?",
+                message: "Hi Agahnim's Phones & Gadgets team, we are an IT consultancy looking to deploy 15 units of Qin F22 Pro for our field agents. Do you offer GST invoicing and bulk corporate discounts?",
                 date: new Date(Date.now() - 3600000 * 4).toISOString(),
                 status: "unread",
               },
@@ -52,7 +52,7 @@ function AdminCmsPage() {
                 status: "read",
               },
             ];
-            localStorage.setItem("techlab_contact_messages", JSON.stringify(mockMsgs));
+            localStorage.setItem("agahnimsshop_contact_messages", JSON.stringify(mockMsgs));
             setMessages(mockMsgs);
           }
         } catch (e) {}
@@ -66,7 +66,7 @@ function AdminCmsPage() {
     const updated = messages.filter((m) => m.id !== id);
     setMessages(updated);
     if (typeof window !== "undefined") {
-      localStorage.setItem("techlab_contact_messages", JSON.stringify(updated));
+      localStorage.setItem("agahnimsshop_contact_messages", JSON.stringify(updated));
     }
     toast.success("Message deleted successfully.");
   };
@@ -89,7 +89,7 @@ function AdminCmsPage() {
     );
     setMessages(updated);
     if (typeof window !== "undefined") {
-      localStorage.setItem("techlab_contact_messages", JSON.stringify(updated));
+      localStorage.setItem("agahnimsshop_contact_messages", JSON.stringify(updated));
     }
     toast.success("Message status updated.");
   };
@@ -400,7 +400,7 @@ function AdminCmsPage() {
 
                       <div className="pt-4 flex flex-wrap items-center gap-2.5">
                         <a
-                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${msg.email}&su=${encodeURIComponent(msg.subject || "TECHLAB Inquiry")}`}
+                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${msg.email}&su=${encodeURIComponent(msg.subject || "Agahnim's Phones & Gadgets Inquiry")}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-3.5 py-2 rounded text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity"
@@ -408,7 +408,7 @@ function AdminCmsPage() {
                           <span className="material-symbols-outlined text-xs">open_in_new</span> Gmail Web
                         </a>
                         <a
-                          href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject || "TECHLAB Inquiry")}`}
+                          href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject || "Agahnim's Phones & Gadgets Inquiry")}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 bg-surface-container-low text-primary border border-outline-variant/40 px-3.5 py-2 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container transition-colors"
@@ -475,7 +475,7 @@ function AdminCmsPage() {
                     type="text"
                     value={cms.biz_name || ""}
                     onChange={(e) => setCms({ ...cms, biz_name: e.target.value })}
-                    placeholder="TECHLAB Hardware Co."
+                    placeholder="Agahnim's Phones & Gadgets"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -487,7 +487,7 @@ function AdminCmsPage() {
                     type="text"
                     value={cms.biz_legal_name || ""}
                     onChange={(e) => setCms({ ...cms, biz_legal_name: e.target.value })}
-                    placeholder="TECHLAB Technologies LLP"
+                    placeholder="Agahnim's Phones & Gadgets Technologies LLP"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -535,7 +535,7 @@ function AdminCmsPage() {
                     type="email"
                     value={cms.biz_email || ""}
                     onChange={(e) => setCms({ ...cms, biz_email: e.target.value })}
-                    placeholder="support@techlab.example"
+                    placeholder="support@Agahnim's Phones & Gadgets.example"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -644,7 +644,7 @@ function AdminCmsPage() {
                         rows={2}
                         value={cms.whatsapp_chat_message || ""}
                         onChange={(e) => setCms({ ...cms, whatsapp_chat_message: e.target.value })}
-                        placeholder="Hi TECHLAB Support, I have an inquiry regarding your products."
+                        placeholder="Hi Agahnim's Support, I have an inquiry regarding your products."
                         className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                       />
                       <p className="text-[10px] text-on-surface-variant mt-1">
@@ -1676,7 +1676,7 @@ function AdminCmsPage() {
                       type="text"
                       value={cms.footer_tagline || ""}
                       onChange={(e) => setCms({ ...cms, footer_tagline: e.target.value })}
-                      placeholder="TECHLAB. PRECISION ENGINEERED LOGISTICS."
+                      placeholder="Agahnim's Phones & Gadgets. PRECISION ENGINEERED LOGISTICS."
                       className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                     />
                   </div>
@@ -1688,7 +1688,7 @@ function AdminCmsPage() {
                       type="text"
                       value={cms.footer_copyright || ""}
                       onChange={(e) => setCms({ ...cms, footer_copyright: e.target.value })}
-                      placeholder="© 2026 TECHLAB. ALL RIGHTS RESERVED."
+                      placeholder="© 2026 Agahnim's Phones & Gadgets. ALL RIGHTS RESERVED."
                       className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                     />
                   </div>

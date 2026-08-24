@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
@@ -12,9 +12,9 @@ export const Route = createFileRoute("/catalog")({
   },
   head: () => ({
     meta: [
-      { title: "Catalog — TECHLAB" },
+      { title: "Catalog — Agahnim's Phones & Gadgets" },
       { name: "description", content: "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India." },
-      { property: "og:title", content: "Catalog — TECHLAB" },
+      { property: "og:title", content: "Catalog — Agahnim's Phones & Gadgets" },
       { property: "og:description", content: "Browse boutique phones, audio, accessories and more." },
     ],
     scripts: [
@@ -23,9 +23,9 @@ export const Route = createFileRoute("/catalog")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: "TECHLAB Hardware Catalog",
+          name: "Agahnim's Phones & Gadgets Hardware Catalog",
           description: "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India.",
-          url: "https://techlab.dalvi.cloud/catalog",
+          url: "https://agahnims.dalvi.cloud/catalog",
           mainEntity: {
             "@type": "ItemList",
             name: "Boutique Tech Gadgets",
@@ -34,19 +34,19 @@ export const Route = createFileRoute("/catalog")({
                 "@type": "ListItem",
                 position: 1,
                 name: "The Minimalist Phone 2a",
-                url: "https://techlab.dalvi.cloud/product/minimalist-phone-2a"
+                url: "https://agahnims.dalvi.cloud/product/minimalist-phone-2a"
               },
               {
                 "@type": "ListItem",
                 position: 2,
                 name: "CyberDeck QWERTY Companion",
-                url: "https://techlab.dalvi.cloud/product/cyberdeck-qwerty"
+                url: "https://agahnims.dalvi.cloud/product/cyberdeck-qwerty"
               },
               {
                 "@type": "ListItem",
                 position: 3,
                 name: "E-Ink Pocket Communicator",
-                url: "https://techlab.dalvi.cloud/product/eink-pocket-comm"
+                url: "https://agahnims.dalvi.cloud/product/eink-pocket-comm"
               }
             ]
           }

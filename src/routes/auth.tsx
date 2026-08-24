@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/use-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign In — TECHLAB" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Sign In — Agahnim's Phones & Gadgets" }, { name: "robots", content: "noindex" }] }),
   component: Auth,
 });
 
@@ -62,7 +62,7 @@ function Auth() {
     <SiteShell>
       <section className="max-w-md mx-auto py-16 px-margin-mobile">
         <h1 className="text-3xl font-bold text-primary mb-2">
-          {mode === "signin" ? "Sign in to TECHLAB" : "Create your account"}
+          {mode === "signin" ? "Sign in to Agahnim's Phones & Gadgets" : "Create your account"}
         </h1>
         <p className="text-sm text-on-surface-variant mb-8">
           One account across every dalvi.cloud site — sign in once, you're in everywhere.

@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+﻿import { Link, useRouterState } from "@tanstack/react-router";
 import { useCart } from "@/lib/cart-store";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
@@ -25,7 +25,7 @@ export function Header() {
     <nav className="fixed top-0 w-full z-50 bg-white border-b border-outline-variant/30">
       <div className="flex justify-between items-center w-full px-4 md:px-10 max-w-[1280px] mx-auto h-16 box-border">
         <Link to="/" className="font-bold text-xl sm:text-2xl tracking-tighter text-primary flex-shrink-0">
-          TECHLAB
+          Agahnim's Phones & Gadgets
         </Link>
         <div className="hidden md:flex items-center gap-8 font-medium text-sm uppercase tracking-wider">
           {NAV.map((n) => {

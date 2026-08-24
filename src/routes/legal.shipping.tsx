@@ -1,13 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/legal/shipping")({
   head: () => ({
     meta: [
-      { title: "Shipping & Delivery — TECHLAB" },
+      { title: "Shipping & Delivery — Agahnim's Phones & Gadgets" },
       {
         name: "description",
-        content: "Shipping zones, delivery timelines, and tracking for TECHLAB orders.",
+        content: "Shipping zones, delivery timelines, and tracking for Agahnim's Phones & Gadgets orders.",
       },
     ],
   }),

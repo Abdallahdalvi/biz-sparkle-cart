@@ -1,13 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/legal/terms")({
   head: () => ({
     meta: [
-      { title: "Terms & Conditions — TECHLAB" },
+      { title: "Terms & Conditions — Agahnim's Phones & Gadgets" },
       {
         name: "description",
-        content: "Terms & Conditions governing the use of TECHLAB and purchases made on our store.",
+        content: "Terms & Conditions governing the use of Agahnim's Phones & Gadgets and purchases made on our store.",
       },
     ],
   }),
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>6. Intellectual Property</h2>
       <p>
-        All content on the Site — TECHLAB name, logos, product images, copy, code, and trade dress —
+        All content on the Site — Agahnim's Phones & Gadgets name, logos, product images, copy, code, and trade dress —
         is owned by {BIZ.legalName} or its licensors and is protected under Indian and international
         IP law.
       </p>

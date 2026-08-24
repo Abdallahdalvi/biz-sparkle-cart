@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { BIZ } from "@/components/legal/LegalPage";
@@ -11,10 +11,10 @@ export const Route = createFileRoute("/legal/contact")({
   },
   head: () => ({
     meta: [
-      { title: "Contact Us — TECHLAB" },
+      { title: "Contact Us — Agahnim's Phones & Gadgets" },
       {
         name: "description",
-        content: "Get in touch with TECHLAB support via WhatsApp, contact form, email, or visit our shop location.",
+        content: "Get in touch with Agahnim's Support via WhatsApp, contact form, email, or visit our shop location.",
       },
     ],
   }),
@@ -36,7 +36,7 @@ function ContactPage() {
     e.preventDefault();
     if (typeof window !== "undefined") {
       try {
-        const existingStr = localStorage.getItem("techlab_contact_messages");
+        const existingStr = localStorage.getItem("agahnimsshop_contact_messages");
         const existing = existingStr ? JSON.parse(existingStr) : [];
         const newMessage = {
           id: `MSG-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -48,7 +48,7 @@ function ContactPage() {
           date: new Date().toISOString(),
           status: "unread",
         };
-        localStorage.setItem("techlab_contact_messages", JSON.stringify([newMessage, ...existing]));
+        localStorage.setItem("agahnimsshop_contact_messages", JSON.stringify([newMessage, ...existing]));
       } catch (err) {
         console.error("Failed to save message", err);
       }
@@ -56,7 +56,7 @@ function ContactPage() {
     setSubmitted(true);
   };
 
-  const whatsappUrl = `https://wa.me/${cms.whatsapp_chat_phone || "919876543210"}?text=${encodeURIComponent(cms.whatsapp_chat_message || "Hi TECHLAB Support, I have an inquiry regarding your products.")}`;
+  const whatsappUrl = `https://wa.me/${cms.whatsapp_chat_phone || "919876543210"}?text=${encodeURIComponent(cms.whatsapp_chat_message || "Hi Agahnim's Support, I have an inquiry regarding your products.")}`;
 
   return (
     <SiteShell>
@@ -213,7 +213,7 @@ function ContactPage() {
               </p>
               <div className="w-full aspect-[16/11] rounded overflow-hidden border border-outline-variant/30 shadow-2xs">
                 <iframe
-                  title="TECHLAB Store Location"
+                  title="Agahnim's Phones & Gadgets Store Location"
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.792015099317!2d72.83311891147576!3d19.0728445520141!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c91131105373%3A0xb331d044f15d78d2!2sBandra%20Kurla%20Complex%2C%20Bandra%20East%2C%20Mumbai%2C%20Maharashtra%20400051!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
                   width="100%"
                   height="100%"
