@@ -36,13 +36,15 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         try {
-          // Webhook Idempotency Check
-          const rzpEventId = request.headers.get("x-razorpay-event-id") ?? `${event.event}_${event.payload.payment?.entity.id ?? event.payload.order?.entity.id ?? Date.now()}`;
-          const { error: idempErr } = await supabaseAdmin
+          const rzpEventId =
+            request.headers.get("x-razorpay-event-id") ??
+            `${event.event}_${event.payload.payment?.entity.id ?? event.payload.order?.entity.id ?? Date.now()}`;
+          const { data: existingEvent } = await supabaseAdmin
             .from("webhook_events")
-            .insert({ event_id: rzpEventId });
-          if (idempErr) {
-            // Duplicate event, return 200 OK immediately
+            .select("event_id")
+            .eq("event_id", rzpEventId)
+            .maybeSingle();
+          if (existingEvent) {
             return new Response("ok");
           }
 
@@ -51,34 +53,8 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
               event.payload.payment?.entity.order_id ?? event.payload.order?.entity.id;
             const paymentId = event.payload.payment?.entity.id;
             if (rzpOrderId) {
-              const { data: o } = await supabaseAdmin
-                .from("orders")
-                .update({ status: "paid", razorpay_payment_id: paymentId ?? null })
-                .eq("razorpay_order_id", rzpOrderId)
-                .select("id")
-                .single();
-              if (o?.id) {
-                // Decrement stock atomically
-                const { data: items } = await supabaseAdmin
-                  .from("order_items")
-                  .select("qty, product_id, variant_id")
-                  .eq("order_id", o.id);
-                
-                if (items) {
-                  for (const item of items) {
-                    await supabaseAdmin.rpc("decrement_stock", {
-                      p_product_id: item.product_id,
-                      p_variant_id: item.variant_id,
-                      p_qty: item.qty,
-                    });
-                  }
-                }
-
-                const { createShiprocketOrder } = await import("@/lib/shiprocket.functions");
-                createShiprocketOrder({ data: { orderId: o.id } }).catch((e) =>
-                  console.error("[webhook→shiprocket]", e),
-                );
-              }
+              const { completeRazorpayPaymentInternal } = await import("@/lib/razorpay.server");
+              await completeRazorpayPaymentInternal(rzpOrderId, paymentId);
             }
           } else if (event.event === "payment.failed") {
             const rzpOrderId = event.payload.payment?.entity.order_id;
@@ -86,7 +62,8 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
               await supabaseAdmin
                 .from("orders")
                 .update({ status: "cancelled" })
-                .eq("razorpay_order_id", rzpOrderId);
+                .eq("razorpay_order_id", rzpOrderId)
+                .eq("status", "pending");
             }
           } else if (event.event === "refund.processed") {
             const paymentId = event.payload.refund?.entity.payment_id;
@@ -96,6 +73,13 @@ export const Route = createFileRoute("/api/public/webhooks/razorpay")({
                 .update({ status: "refunded" })
                 .eq("razorpay_payment_id", paymentId);
             }
+          }
+
+          const { error: idempotencyError } = await supabaseAdmin
+            .from("webhook_events")
+            .insert({ event_id: rzpEventId });
+          if (idempotencyError && idempotencyError.code !== "23505") {
+            throw idempotencyError;
           }
         } catch (err) {
           console.error("[razorpay webhook]", err);

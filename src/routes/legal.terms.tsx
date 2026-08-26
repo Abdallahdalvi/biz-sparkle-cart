@@ -7,7 +7,8 @@ export const Route = createFileRoute("/legal/terms")({
       { title: "Terms & Conditions — Aghanims Phones and Gadgets" },
       {
         name: "description",
-        content: "Terms & Conditions governing the use of Aghanims Phones and Gadgets and purchases made on our store.",
+        content:
+          "Terms & Conditions governing the use of Aghanims Phones and Gadgets and purchases made on our store.",
       },
     ],
   }),
@@ -36,8 +37,9 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>4. Payments</h2>
       <p>
-        Payments are processed through Razorpay. We do not store your card or banking credentials.
-        By placing an order you also agree to Razorpay's terms.
+        Cash on Delivery is currently available where supported by the assigned courier. When online
+        payments are enabled, they will be processed by the payment provider identified at checkout.
+        We do not store card or banking credentials.
       </p>
       <h2>5. Shipping, Returns, Refunds, Cancellation</h2>
       <p>
@@ -48,9 +50,9 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>6. Intellectual Property</h2>
       <p>
-        All content on the Site — Aghanims Phones and Gadgets name, logos, product images, copy, code, and trade dress —
-        is owned by {BIZ.legalName} or its licensors and is protected under Indian and international
-        IP law.
+        All content on the Site — Aghanims Phones and Gadgets name, logos, product images, copy,
+        code, and trade dress — is owned by {BIZ.legalName} or its licensors and is protected under
+        Indian and international IP law.
       </p>
       <h2>7. User Conduct</h2>
       <p>
@@ -75,7 +77,8 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>11. Contact</h2>
       <p>
-        Questions? Reach us at <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> or {BIZ.phone}.
+        Questions? Use our <a href="/legal/contact">contact page</a> or the support channel shown
+        there.
       </p>
     </LegalPage>
   ),

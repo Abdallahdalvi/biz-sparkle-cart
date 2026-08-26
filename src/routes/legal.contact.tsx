@@ -3,6 +3,9 @@ import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { BIZ } from "@/components/legal/LegalPage";
 import { getStorefrontCms, type StorefrontCms } from "@/lib/products";
+import { useServerFn } from "@tanstack/react-start";
+import { submitContactMessage } from "@/lib/operations.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/legal/contact")({
   loader: async () => {
@@ -14,7 +17,8 @@ export const Route = createFileRoute("/legal/contact")({
       { title: "Contact Us — Aghanims Phones and Gadgets" },
       {
         name: "description",
-        content: "Get in touch with Aghanims Support via WhatsApp, contact form, email, or visit our shop location.",
+        content:
+          "Get in touch with Aghanims Support via WhatsApp, contact form, email, or visit our shop location.",
       },
     ],
   }),
@@ -31,45 +35,43 @@ function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const submitMessageFn = useServerFn(submitContactMessage);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (typeof window !== "undefined") {
-      try {
-        const existingStr = localStorage.getItem("aghanims_contact_messages");
-        const existing = existingStr ? JSON.parse(existingStr) : [];
-        const newMessage = {
-          id: `MSG-${Math.floor(100000 + Math.random() * 900000)}`,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          subject: formData.subject,
-          message: formData.message,
-          date: new Date().toISOString(),
-          status: "unread",
-        };
-        localStorage.setItem("aghanims_contact_messages", JSON.stringify([newMessage, ...existing]));
-      } catch (err) {
-        console.error("Failed to save message", err);
-      }
+    const website = String(new FormData(e.currentTarget).get("website") ?? "");
+    setSubmitting(true);
+    try {
+      await submitMessageFn({ data: { ...formData, website } });
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to submit your message");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitted(true);
   };
 
-  const whatsappUrl = `https://wa.me/${cms.whatsapp_chat_phone || "919876543210"}?text=${encodeURIComponent(cms.whatsapp_chat_message || "Hi Aghanims Support, I have an inquiry regarding your products.")}`;
+  const whatsappNumber = cms.whatsapp_chat_phone.replace(/\D/g, "");
+  const whatsappConfigured = /^\d{10,15}$/.test(whatsappNumber);
+  const whatsappUrl = whatsappConfigured
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(cms.whatsapp_chat_message || "Hi Aghanims Support, I have an inquiry regarding your products.")}`
+    : "/legal/contact#contact-form";
 
   return (
     <SiteShell>
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12 md:py-16">
         <div className="mb-12">
           <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-            <Link to="/" className="hover:text-primary">Home</Link> / Contact Us
+            <Link to="/" className="hover:text-primary">
+              Home
+            </Link>{" "}
+            / Contact Us
           </p>
-          <h1 className="text-4xl md:text-5xl font-bold text-primary max-w-2xl">
-            Contact Us
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-primary max-w-2xl">Contact Us</h1>
           <p className="text-lg font-medium text-on-surface-variant mt-4 max-w-2xl leading-relaxed">
-            We're a small, dedicated team and we read every single message. Connect with us instantly via WhatsApp, fill out our quick form, or visit our store.
+            We're a small, dedicated team and we read every message. Connect with us via WhatsApp or
+            send an inquiry through the form.
           </p>
         </div>
 
@@ -86,7 +88,8 @@ function ContactPage() {
                 WhatsApp Live Support
               </h2>
               <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
-                Need immediate assistance or want to discuss specific custom builds? Chat directly with our hardware specialists over WhatsApp.
+                Need immediate assistance or want to discuss specific custom builds? Chat directly
+                with our hardware specialists over WhatsApp.
               </p>
               <a
                 href={whatsappUrl}
@@ -100,7 +103,10 @@ function ContactPage() {
             </div>
 
             {/* Basic Contact Form */}
-            <div className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm">
+            <div
+              id="contact-form"
+              className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm"
+            >
               <h2 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">mail</span>
                 Send Us a Message
@@ -111,10 +117,13 @@ function ContactPage() {
 
               {submitted ? (
                 <div className="bg-surface-container-low border border-primary/30 p-6 rounded text-center space-y-3">
-                  <span className="material-symbols-outlined text-primary text-4xl">check_circle</span>
+                  <span className="material-symbols-outlined text-primary text-4xl">
+                    check_circle
+                  </span>
                   <h3 className="font-bold text-primary text-lg">Thank you for reaching out!</h3>
                   <p className="text-xs text-on-surface-variant">
-                    We have received your message and will get back to you at <strong>{formData.email}</strong> very soon.
+                    We have received your message and will get back to you at{" "}
+                    <strong>{formData.email}</strong> very soon.
                   </p>
                   <button
                     onClick={() => {
@@ -128,9 +137,19 @@ function ContactPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    className="hidden"
+                    aria-hidden="true"
+                  />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Your Name *</label>
+                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+                        Your Name *
+                      </label>
                       <input
                         type="text"
                         required
@@ -141,7 +160,9 @@ function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Email Address *</label>
+                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+                        Email Address *
+                      </label>
                       <input
                         type="email"
                         required
@@ -155,7 +176,9 @@ function ContactPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Phone Number</label>
+                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+                        Phone Number
+                      </label>
                       <input
                         type="tel"
                         value={formData.phone}
@@ -165,7 +188,9 @@ function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Subject</label>
+                      <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+                        Subject
+                      </label>
                       <input
                         type="text"
                         value={formData.subject}
@@ -177,7 +202,9 @@ function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Message *</label>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+                      Message *
+                    </label>
                     <textarea
                       required
                       rows={4}
@@ -190,10 +217,11 @@ function ContactPage() {
 
                   <button
                     type="submit"
-                    className="w-full bg-primary text-on-primary font-bold text-xs uppercase tracking-widest py-3 rounded shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                    disabled={submitting}
+                    className="w-full bg-primary text-on-primary font-bold text-xs uppercase tracking-widest py-3 rounded shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <span className="material-symbols-outlined text-base">send</span>
-                    Submit Message
+                    {submitting ? "Sending…" : "Submit Message"}
                   </button>
                 </form>
               )}
@@ -203,76 +231,121 @@ function ContactPage() {
           {/* Right Column: Google Map & Company Details */}
           <div className="space-y-8">
             {/* Google Map Embed */}
-            <div className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm space-y-4">
-              <h2 className="text-xl font-bold text-primary flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">location_on</span>
-                Our Shop Location
-              </h2>
-              <p className="text-on-surface-variant text-xs">
-                Visit our experience center to inspect our tactical hardware in person.
-              </p>
-              <div className="w-full aspect-[16/11] rounded overflow-hidden border border-outline-variant/30 shadow-2xs">
-                <iframe
-                  title="Aghanims Phones and Gadgets Store Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.792015099317!2d72.83311891147576!3d19.0728445520141!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c91131105373%3A0xb331d044f15d78d2!2sBandra%20Kurla%20Complex%2C%20Bandra%20East%2C%20Mumbai%2C%20Maharashtra%20400051!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen={false}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                ></iframe>
+            {cms.business_profile_verified && (
+              <div className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm space-y-4">
+                <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">location_on</span>
+                  Our Shop Location
+                </h2>
+                <p className="text-on-surface-variant text-xs">
+                  Visit our experience center to inspect our tactical hardware in person.
+                </p>
+                <div className="w-full aspect-[16/11] rounded overflow-hidden border border-outline-variant/30 shadow-2xs">
+                  <iframe
+                    title="Aghanims Phones and Gadgets Store Location"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.792015099317!2d72.83311891147576!3d19.0728445520141!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c91131105373%3A0xb331d044f15d78d2!2sBandra%20Kurla%20Complex%2C%20Bandra%20East%2C%20Mumbai%2C%20Maharashtra%20400051!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen={false}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Official Business Details */}
-            <div className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm space-y-6">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">support_agent</span>
-                  Customer Support
-                </h3>
-                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                  <span className="block"><strong>Email:</strong> <a href={`mailto:${cms.biz_email || BIZ.email}`} className="text-primary hover:underline">{cms.biz_email || BIZ.email}</a></span>
-                  <span className="block"><strong>Phone:</strong> {cms.biz_phone || BIZ.phone}</span>
-                  <span className="block"><strong>Operating Hours:</strong> {cms.biz_hours || BIZ.hours}</span>
+            {cms.business_profile_verified ? (
+              <div className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">support_agent</span>
+                    Customer Support
+                  </h3>
+                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
+                    <span className="block">
+                      <strong>Email:</strong>{" "}
+                      <a
+                        href={`mailto:${cms.biz_email || BIZ.email}`}
+                        className="text-primary hover:underline"
+                      >
+                        {cms.biz_email || BIZ.email}
+                      </a>
+                    </span>
+                    <span className="block">
+                      <strong>Phone:</strong> {cms.biz_phone || BIZ.phone}
+                    </span>
+                    <span className="block">
+                      <strong>Operating Hours:</strong> {cms.biz_hours || BIZ.hours}
+                    </span>
+                  </p>
+                </div>
+
+                <hr className="border-outline-variant/30" />
+
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">corporate_fare</span>
+                    Registered Office
+                  </h3>
+                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
+                    <span className="block font-medium text-on-surface">
+                      {cms.biz_legal_name || BIZ.legalName}
+                    </span>
+                    <span className="block">{cms.biz_address || BIZ.address}</span>
+                    <span className="block">
+                      <strong>GSTIN:</strong> {cms.biz_gstin || BIZ.gstin}
+                    </span>
+                  </p>
+                </div>
+
+                <hr className="border-outline-variant/30" />
+
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">gavel</span>
+                    Grievance Officer
+                  </h3>
+                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed mb-2">
+                    As required under Rule 5(9) of the IT Rules, 2011 and the Consumer Protection
+                    (E-Commerce) Rules, 2020:
+                  </p>
+                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
+                    <span className="block">
+                      <strong>Name:</strong> {cms.biz_grievance_officer || BIZ.grievanceOfficer}
+                    </span>
+                    <span className="block">
+                      <strong>Email:</strong>{" "}
+                      <a
+                        href={`mailto:${cms.biz_email || BIZ.email}`}
+                        className="text-primary hover:underline"
+                      >
+                        {cms.biz_email || BIZ.email}
+                      </a>
+                    </span>
+                    <span className="block">
+                      <strong>Phone:</strong> {cms.biz_phone || BIZ.phone}
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-on-surface-variant/80 mt-3 italic">
+                    We acknowledge complaints within 48 hours and resolve them within 30 days.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 p-8 rounded shadow-sm space-y-3">
+                <h2 className="text-xl font-bold text-amber-950 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-700">domain_disabled</span>
+                  Business details pending verification
+                </h2>
+                <p className="text-sm text-amber-900/80 leading-relaxed">
+                  A registered office, legal entity name, GSTIN, and grievance-officer details are
+                  not published until they have been verified. Use WhatsApp or the contact form for
+                  support in the meantime.
                 </p>
               </div>
-
-              <hr className="border-outline-variant/30" />
-
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">corporate_fare</span>
-                  Registered Office
-                </h3>
-                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                  <span className="block font-medium text-on-surface">{cms.biz_legal_name || BIZ.legalName}</span>
-                  <span className="block">{cms.biz_address || BIZ.address}</span>
-                  <span className="block"><strong>GSTIN:</strong> {cms.biz_gstin || BIZ.gstin}</span>
-                </p>
-              </div>
-
-              <hr className="border-outline-variant/30" />
-
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">gavel</span>
-                  Grievance Officer
-                </h3>
-                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed mb-2">
-                  As required under Rule 5(9) of the IT Rules, 2011 and the Consumer Protection (E-Commerce) Rules, 2020:
-                </p>
-                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                  <span className="block"><strong>Name:</strong> {cms.biz_grievance_officer || BIZ.grievanceOfficer}</span>
-                  <span className="block"><strong>Email:</strong> <a href={`mailto:${cms.biz_email || BIZ.email}`} className="text-primary hover:underline">{cms.biz_email || BIZ.email}</a></span>
-                  <span className="block"><strong>Phone:</strong> {cms.biz_phone || BIZ.phone}</span>
-                </p>
-                <p className="text-[11px] text-on-surface-variant/80 mt-3 italic">
-                  We acknowledge complaints within 48 hours and resolve them within 30 days.
-                </p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>

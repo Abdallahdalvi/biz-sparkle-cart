@@ -1,36 +1,60 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+function onlinePaymentsConfigured() {
+  return Boolean(
+    process.env.RAZORPAY_KEY_ID &&
+    process.env.RAZORPAY_KEY_SECRET &&
+    process.env.RAZORPAY_WEBHOOK_SECRET,
+  );
+}
+
+export const getCheckoutCapabilities = createServerFn({ method: "GET" }).handler(async () => ({
+  onlinePaymentsConfigured: onlinePaymentsConfigured(),
+  onlinePaymentProvider: onlinePaymentsConfigured() ? "razorpay" : null,
+  codAvailable: true,
+}));
+
 /**
  * Secure server function to create an order.
  * Completely eliminates client-side trust for pricing, discounts, and COD calculations.
  */
 export const createSecureOrder = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         token: z.string().optional(),
-        items: z.array(
-          z.object({
-            slug: z.string(),
-            variantId: z.string().optional(),
-            qty: z.number().min(1),
-          }),
-        ),
+        items: z
+          .array(
+            z.object({
+              slug: z.string().trim().min(1).max(160),
+              variantId: z.string().uuid().optional(),
+              qty: z.number().int().min(1).max(10),
+            }),
+          )
+          .min(1)
+          .max(20),
         shippingAddress: z.object({
-          first_name: z.string(),
-          last_name: z.string(),
-          line1: z.string(),
-          line2: z.string().optional(),
-          city: z.string(),
-          state: z.string(),
-          pincode: z.string(),
-          country: z.string().default("IN"),
-          gstin: z.string().optional(),
+          first_name: z.string().trim().min(1).max(80),
+          last_name: z.string().trim().min(1).max(80),
+          line1: z.string().trim().min(5).max(240),
+          line2: z.string().trim().max(240).optional(),
+          city: z.string().trim().min(2).max(100),
+          state: z.string().trim().min(2).max(100),
+          pincode: z.string().regex(/^\d{6}$/, "Enter a valid 6-digit PIN code"),
+          country: z.literal("IN").default("IN"),
+          gstin: z
+            .string()
+            .trim()
+            .refine(
+              (value) => !value || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(value),
+              "Enter a valid GSTIN",
+            )
+            .optional(),
         }),
         payMode: z.enum(["prepaid", "cod"]),
-        email: z.string().email(),
-        phone: z.string(),
+        email: z.string().trim().email().max(254),
+        phone: z.string().regex(/^[0-9+\-\s]{10,18}$/, "Enter a valid phone number"),
       })
       .parse(input),
   )
@@ -45,17 +69,37 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       }
     }
 
+    const normalizedItems = new Map<string, (typeof data.items)[number]>();
+    for (const item of data.items) {
+      const key = `${item.slug}:${item.variantId ?? ""}`;
+      const existing = normalizedItems.get(key);
+      const qty = (existing?.qty ?? 0) + item.qty;
+      if (qty > 10) throw new Error("A maximum of 10 units of one item can be ordered at once.");
+      normalizedItems.set(key, { ...item, qty });
+    }
+
     // Securely fetch prices and details for each item
     let subtotalPaise = 0;
-    const orderItemsToInsert: any[] = [];
+    const orderItemsToInsert: Array<{
+      name: string;
+      variant_label: string | null;
+      unit_price_paise: number;
+      qty: number;
+      image_url: string;
+      product_id: string;
+      variant_id: string | null;
+    }> = [];
 
-    for (const item of data.items) {
+    for (const item of normalizedItems.values()) {
       const { data: prod, error: prodErr } = await supabaseAdmin
         .from("products")
-        .select("id, name, price_paise, metadata")
+        .select("id, name, price_paise, metadata, stock, is_active")
         .eq("slug", item.slug)
         .single();
       if (prodErr || !prod) throw new Error(`Product not found: ${item.slug}`);
+      if (!prod.is_active) throw new Error(`${prod.name} is no longer available.`);
+      if (Number(prod.stock) < item.qty)
+        throw new Error(`Only ${prod.stock} unit(s) of ${prod.name} are available.`);
 
       let unitPricePaise = prod.price_paise;
       let variantLabel: string | null = null;
@@ -64,14 +108,18 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       if (item.variantId) {
         const { data: vData, error: vErr } = await supabaseAdmin
           .from("product_variants")
-          .select("id, label, price_delta_paise")
+          .select("id, product_id, label, price_delta_paise, stock")
           .eq("id", item.variantId)
           .single();
-        if (!vErr && vData) {
-          unitPricePaise += vData.price_delta_paise;
-          variantLabel = vData.label;
-          variantIdUuid = vData.id;
-        }
+        if (vErr || !vData || vData.product_id !== prod.id)
+          throw new Error(`Invalid variant for ${prod.name}.`);
+        if (Number(vData.stock) < item.qty)
+          throw new Error(
+            `Only ${vData.stock} unit(s) of ${prod.name} (${vData.label}) are available.`,
+          );
+        unitPricePaise += vData.price_delta_paise;
+        variantLabel = vData.label;
+        variantIdUuid = vData.id;
       }
 
       subtotalPaise += unitPricePaise * item.qty;
@@ -113,15 +161,24 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       prepaidDiscountPaise = Math.round((subtotalPaise * prepaidDiscountAmount) / 100);
     }
 
+    const paymentReady = onlinePaymentsConfigured();
+    if (data.payMode === "prepaid" && !paymentReady) {
+      throw new Error(
+        "Online payments are temporarily unavailable. Please choose Cash on Delivery.",
+      );
+    }
+
     let codChargePaise = 0;
-    if (codChargeType !== "none") {
+    if (paymentReady && codChargeType !== "none") {
       codChargePaise = codChargeAmount * 100;
     }
+
+    const effectiveCodChargeType = paymentReady ? codChargeType : "none";
 
     const effectiveTotal =
       data.payMode === "prepaid"
         ? Math.max(0, subtotalPaise - prepaidDiscountPaise)
-        : codChargeType === "additional"
+        : effectiveCodChargeType === "additional"
           ? subtotalPaise + codChargePaise
           : subtotalPaise;
 
@@ -136,7 +193,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         phone: data.phone,
         shipping_address: data.shippingAddress,
         subtotal_paise: subtotalPaise,
-        total_paise: rzpAmountPaise,
+        total_paise: effectiveTotal,
         status: rzpAmountPaise === 0 ? "processing" : "pending",
         notes: data.payMode,
       })
@@ -147,6 +204,8 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     // Insert order items
     const itemsWithOrderId = orderItemsToInsert.map((i) => ({
       order_id: order.id,
+      product_id: i.product_id,
+      variant_id: i.variant_id,
       name: i.name,
       variant_label: i.variant_label,
       unit_price_paise: i.unit_price_paise,
@@ -159,8 +218,8 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     if (rzpAmountPaise === 0) {
       // Free COD order -> invoke Shiprocket & decrement stock directly on server
       try {
-        const { createShiprocketOrder } = await import("./shiprocket.functions");
-        await createShiprocketOrder({ data: { orderId: order.id } });
+        const { createShiprocketOrderInternal } = await import("./shiprocket.server");
+        await createShiprocketOrderInternal(order.id);
       } catch (err) {
         console.error("[cod→shiprocket]", err);
       }
@@ -186,7 +245,9 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!keyId || !keySecret) {
-      throw new Error("Razorpay not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env.");
+      throw new Error(
+        "Razorpay not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env.",
+      );
     }
 
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");

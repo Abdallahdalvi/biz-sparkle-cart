@@ -78,6 +78,7 @@ export interface StorefrontCms {
   biz_phone: string;
   biz_hours: string;
   biz_grievance_officer: string;
+  business_profile_verified: boolean;
   whatsapp_channel_url: string;
   whatsapp_chat_phone: string;
   whatsapp_chat_message: string;
@@ -245,22 +246,28 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   prepaid_discount_amount: 200,
   prepaid_discount_type: "flat",
   biz_name: "Aghanims Phones and Gadgets",
-  biz_legal_name: "Aghanims Phones and Gadgets Technologies LLP",
-  biz_address: "Bandra Kurla Complex, Bandra East, Mumbai, 400051",
+  biz_legal_name: "",
+  biz_address: "",
   biz_state: "Maharashtra",
-  biz_gstin: "27AADCS1456Q1ZV",
-  biz_email: "support@aghanims.example",
-  biz_phone: "+91 98765 43210",
+  biz_gstin: "",
+  biz_email: "",
+  biz_phone: "",
   biz_hours: "Mon–Sat, 10:00 – 18:00 IST",
-  biz_grievance_officer: "Vikram Malhotra",
-  whatsapp_channel_url: "https://whatsapp.com/channel/0029Vaexample",
-  whatsapp_chat_phone: "919876543210",
+  biz_grievance_officer: "",
+  business_profile_verified: false,
+  whatsapp_channel_url: "",
+  whatsapp_chat_phone: "",
   whatsapp_chat_message: "Hi Aghanims Support, I have an inquiry regarding your products.",
-  legal_terms_text: "These Terms & Conditions (\"Terms\") govern your access to and use of the Aghanims Phones and Gadgets website operated by our company, and any purchase of products listed on the Site. By using the Site you agree to these Terms. All prices are in Indian Rupees (INR) and are inclusive of applicable GST. We accept the offer when we dispatch the product and email an order confirmation with tracking.",
-  legal_privacy_text: "We respect your privacy. This Policy explains what we collect, how we use it, and your rights under the Digital Personal Data Protection Act, 2023 (DPDP Act). We share data only with processors needed to deliver your order: Razorpay (payments), Shiprocket and the assigned courier (delivery). We do not sell your data.",
-  legal_shipping_text: "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. Shipping is free on all prepaid orders within India.",
-  legal_returns_text: "We accept returns within 7 days of delivery for items that are unused, in original condition, and with all original packaging. Approved refunds credit to the original payment method within 5–7 business days of receipt. For damaged-on-arrival (DOA) products, we offer a free replacement if reported within 48 hours of delivery.",
-  legal_cancellation_text: "You can cancel any time before your order is marked 'Shipped' — usually within 24 hours. A full refund is issued to your original payment method within 5–7 business days. Once handed to the courier we cannot cancel. You may refuse delivery and we'll process it as a return.",
+  legal_terms_text:
+    'These Terms & Conditions ("Terms") govern your access to and use of the Aghanims Phones and Gadgets website operated by our company, and any purchase of products listed on the Site. By using the Site you agree to these Terms. All prices are in Indian Rupees (INR) and are inclusive of applicable GST. We accept the offer when we dispatch the product and email an order confirmation with tracking.',
+  legal_privacy_text:
+    "We respect your privacy. This Policy explains what we collect, how we use it, and your rights. We share data only with service providers needed to process and deliver your order, and we do not sell your data.",
+  legal_shipping_text:
+    "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. Shipping is free on all prepaid orders within India.",
+  legal_returns_text:
+    "We accept returns within 7 days of delivery for items that are unused, in original condition, and with all original packaging. Approved refunds credit to the original payment method within 5–7 business days of receipt. For damaged-on-arrival (DOA) products, we offer a free replacement if reported within 48 hours of delivery.",
+  legal_cancellation_text:
+    "You can cancel any time before your order is marked 'Shipped' — usually within 24 hours. A full refund is issued to your original payment method within 5–7 business days. Once handed to the courier we cannot cancel. You may refuse delivery and we'll process it as a return.",
   footer_tagline: "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.",
   footer_copyright: "© 2026 Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.",
   reviews_api_key: "",
@@ -282,7 +289,7 @@ export async function getAllProducts(): Promise<Product[]> {
       return [];
     }
 
-    const dbProducts: Product[] = data.map((row: any) => ({
+    const dbProducts: Product[] = data.map((row) => ({
       id: row.id,
       slug: row.slug,
       name: row.name,
@@ -392,25 +399,21 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
         biz_phone: meta.biz_phone,
         biz_hours: meta.biz_hours,
         biz_grievance_officer: meta.biz_grievance_officer,
+        business_profile_verified: meta.business_profile_verified,
         whatsapp_channel_url: meta.whatsapp_channel_url,
         whatsapp_chat_phone: meta.whatsapp_chat_phone,
         whatsapp_chat_message: meta.whatsapp_chat_message,
+        legal_terms_text: meta.legal_terms_text,
+        legal_privacy_text: meta.legal_privacy_text,
+        legal_shipping_text: meta.legal_shipping_text,
+        legal_returns_text: meta.legal_returns_text,
+        legal_cancellation_text: meta.legal_cancellation_text,
+        footer_tagline: meta.footer_tagline,
+        footer_copyright: meta.footer_copyright,
       };
     }
   } catch (e) {
     // Ignore error
-  }
-
-  if (typeof window !== "undefined") {
-    try {
-      const localStr = localStorage.getItem("storefront_cms_custom");
-      if (localStr) {
-        const localData = JSON.parse(localStr);
-        dbCms = { ...dbCms, ...localData };
-      }
-    } catch (e) {
-      // Ignore
-    }
   }
 
   return {
@@ -466,10 +469,22 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     biz_email: dbCms.biz_email || DEFAULT_STOREFRONT_CMS.biz_email,
     biz_phone: dbCms.biz_phone || DEFAULT_STOREFRONT_CMS.biz_phone,
     biz_hours: dbCms.biz_hours || DEFAULT_STOREFRONT_CMS.biz_hours,
-    biz_grievance_officer: dbCms.biz_grievance_officer || DEFAULT_STOREFRONT_CMS.biz_grievance_officer,
+    biz_grievance_officer:
+      dbCms.biz_grievance_officer || DEFAULT_STOREFRONT_CMS.biz_grievance_officer,
+    business_profile_verified: dbCms.business_profile_verified === true,
     whatsapp_channel_url: dbCms.whatsapp_channel_url || DEFAULT_STOREFRONT_CMS.whatsapp_channel_url,
     whatsapp_chat_phone: dbCms.whatsapp_chat_phone || DEFAULT_STOREFRONT_CMS.whatsapp_chat_phone,
-    whatsapp_chat_message: dbCms.whatsapp_chat_message || DEFAULT_STOREFRONT_CMS.whatsapp_chat_message,
+    whatsapp_chat_message: (
+      dbCms.whatsapp_chat_message || DEFAULT_STOREFRONT_CMS.whatsapp_chat_message
+    ).replace(/TECHLAB/gi, "Aghanims"),
+    legal_terms_text: dbCms.legal_terms_text || DEFAULT_STOREFRONT_CMS.legal_terms_text,
+    legal_privacy_text: dbCms.legal_privacy_text || DEFAULT_STOREFRONT_CMS.legal_privacy_text,
+    legal_shipping_text: dbCms.legal_shipping_text || DEFAULT_STOREFRONT_CMS.legal_shipping_text,
+    legal_returns_text: dbCms.legal_returns_text || DEFAULT_STOREFRONT_CMS.legal_returns_text,
+    legal_cancellation_text:
+      dbCms.legal_cancellation_text || DEFAULT_STOREFRONT_CMS.legal_cancellation_text,
+    footer_tagline: dbCms.footer_tagline || DEFAULT_STOREFRONT_CMS.footer_tagline,
+    footer_copyright: dbCms.footer_copyright || DEFAULT_STOREFRONT_CMS.footer_copyright,
   };
 }
 

@@ -29,6 +29,7 @@ import { Route as LegalCancellationRouteImport } from './routes/legal.cancellati
 import { Route as LegalAboutRouteImport } from './routes/legal.about'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
+import { Route as AdminComplianceRouteImport } from './routes/admin.compliance'
 import { Route as AdminCmsRouteImport } from './routes/admin.cms'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
 import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
@@ -133,6 +134,11 @@ const AdminOrdersRoute = AdminOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminComplianceRoute = AdminComplianceRouteImport.update({
+  id: '/compliance',
+  path: '/compliance',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCmsRoute = AdminCmsRouteImport.update({
   id: '/cms',
   path: '/cms',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
   '/admin/cms': typeof AdminCmsRoute
+  '/admin/compliance': typeof AdminComplianceRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/legal/about': typeof LegalAboutRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
   '/admin/cms': typeof AdminCmsRoute
+  '/admin/compliance': typeof AdminComplianceRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/legal/about': typeof LegalAboutRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
   '/admin/cms': typeof AdminCmsRoute
+  '/admin/compliance': typeof AdminComplianceRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/legal/about': typeof LegalAboutRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/track'
     | '/account/orders'
     | '/admin/cms'
+    | '/admin/compliance'
     | '/admin/orders'
     | '/admin/products'
     | '/legal/about'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/track'
     | '/account/orders'
     | '/admin/cms'
+    | '/admin/compliance'
     | '/admin/orders'
     | '/admin/products'
     | '/legal/about'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/track'
     | '/account/orders'
     | '/admin/cms'
+    | '/admin/compliance'
     | '/admin/orders'
     | '/admin/products'
     | '/legal/about'
@@ -468,6 +480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrdersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/compliance': {
+      id: '/admin/compliance'
+      path: '/compliance'
+      fullPath: '/admin/compliance'
+      preLoaderRoute: typeof AdminComplianceRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cms': {
       id: '/admin/cms'
       path: '/cms'
@@ -505,12 +524,14 @@ const AccountRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminCmsRoute: typeof AdminCmsRoute
+  AdminComplianceRoute: typeof AdminComplianceRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProductsRoute: typeof AdminProductsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCmsRoute: AdminCmsRoute,
+  AdminComplianceRoute: AdminComplianceRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminProductsRoute: AdminProductsRoute,
 }

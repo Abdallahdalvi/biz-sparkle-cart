@@ -5,6 +5,12 @@ import { getStorefrontCms, DEFAULT_STOREFRONT_CMS, type StorefrontCms } from "@/
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { updateStoreSettings } from "@/lib/admin.functions";
+import {
+  deleteContactMessage,
+  getContactMessages,
+  updateContactMessageStatus,
+  type ContactMessage,
+} from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/admin/cms")({
   component: AdminCmsPage,
@@ -16,59 +22,40 @@ function AdminCmsPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("messages");
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
   const updateCmsFn = useServerFn(updateStoreSettings);
+  const getMessagesFn = useServerFn(getContactMessages);
+  const deleteMessageFn = useServerFn(deleteContactMessage);
+  const updateMessageStatusFn = useServerFn(updateContactMessageStatus);
 
   useEffect(() => {
     async function fetchCms() {
       setLoading(true);
       const data = await getStorefrontCms();
       setCms(data);
-      if (typeof window !== "undefined") {
-        try {
-          const msgsStr = localStorage.getItem("aghanims_contact_messages");
-          if (msgsStr) {
-            setMessages(JSON.parse(msgsStr));
-          } else {
-            const mockMsgs = [
-              {
-                id: "MSG-102934",
-                name: "Rajesh Kumar",
-                email: "rajesh.k@example.com",
-                phone: "+91 98210 12345",
-                subject: "Inquiry about Qin F22 Pro bulk order",
-                message: "Hi Aghanims Phones and Gadgets team, we are an IT consultancy looking to deploy 15 units of Qin F22 Pro for our field agents. Do you offer GST invoicing and bulk corporate discounts?",
-                date: new Date(Date.now() - 3600000 * 4).toISOString(),
-                status: "unread",
-              },
-              {
-                id: "MSG-102930",
-                name: "Ananya Sharma",
-                email: "ananya@example.com",
-                phone: "+91 99100 54321",
-                subject: "CyberSpeaker G1 stereo pairing question",
-                message: "Hello, I absolutely love the transparent design of the CyberSpeaker G1! If I buy two units, can they connect to my MacBook simultaneously in true wireless stereo?",
-                date: new Date(Date.now() - 3600000 * 28).toISOString(),
-                status: "read",
-              },
-            ];
-            localStorage.setItem("aghanims_contact_messages", JSON.stringify(mockMsgs));
-            setMessages(mockMsgs);
-          }
-        } catch (e) {}
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (token) setMessages(await getMessagesFn({ data: { token } }));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to load contact messages");
       }
       setLoading(false);
     }
     fetchCms();
-  }, []);
+  }, [getMessagesFn]);
 
-  const handleDeleteMessage = (id: string) => {
-    const updated = messages.filter((m) => m.id !== id);
-    setMessages(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("aghanims_contact_messages", JSON.stringify(updated));
+  const handleDeleteMessage = async (id: string) => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Your admin session has expired");
+      await deleteMessageFn({ data: { token, id } });
+      setMessages((current) => current.filter((message) => message.id !== id));
+      toast.success("Message deleted successfully.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to delete message");
     }
-    toast.success("Message deleted successfully.");
   };
 
   const getCleanWhatsAppNumber = (phone: string) => {
@@ -83,15 +70,22 @@ function AdminCmsPage() {
     return clean;
   };
 
-  const handleToggleMessageStatus = (id: string) => {
-    const updated = messages.map((m) =>
-      m.id === id ? { ...m, status: m.status === "unread" ? "read" : "unread" } : m
-    );
-    setMessages(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("aghanims_contact_messages", JSON.stringify(updated));
+  const handleToggleMessageStatus = async (id: string) => {
+    const message = messages.find((item) => item.id === id);
+    if (!message) return;
+    const status = message.status === "unread" ? "read" : "unread";
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Your admin session has expired");
+      await updateMessageStatusFn({ data: { token, id, status } });
+      setMessages((current) =>
+        current.map((item) => (item.id === id ? { ...item, status } : item)),
+      );
+      toast.success("Message status updated.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to update message");
     }
-    toast.success("Message status updated.");
   };
 
   const handleFileUpload = async (
@@ -116,7 +110,7 @@ function AdminCmsPage() {
           .getPublicUrl(fileName);
 
         if (publicUrlData?.publicUrl) {
-          setCms((prev) => ({ ...prev, [field]: publicUrlData.publicUrl }) as any);
+          setCms((prev) => ({ ...prev, [field]: publicUrlData.publicUrl }));
           toast.success("Image uploaded successfully to Supabase storage!");
           setUploadingField(null);
           return;
@@ -126,7 +120,7 @@ function AdminCmsPage() {
       // Fallback to Data URL (base64) if storage bucket isn't accessible
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCms((prev) => ({ ...prev, [field]: reader.result as string }) as any);
+        setCms((prev) => ({ ...prev, [field]: reader.result as string }));
         toast.success("Image loaded successfully from device storage!");
         setUploadingField(null);
       };
@@ -141,10 +135,6 @@ function AdminCmsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("storefront_cms_custom", JSON.stringify(cms));
-      }
-
       const payload = {
         id: "hero_banners",
         hero_1_image: cms.hero_1_image,
@@ -192,28 +182,29 @@ function AdminCmsPage() {
           biz_phone: cms.biz_phone,
           biz_hours: cms.biz_hours,
           biz_grievance_officer: cms.biz_grievance_officer,
+          business_profile_verified: cms.business_profile_verified,
           whatsapp_channel_url: cms.whatsapp_channel_url,
           whatsapp_chat_phone: cms.whatsapp_chat_phone,
           whatsapp_chat_message: cms.whatsapp_chat_message,
+          legal_terms_text: cms.legal_terms_text,
+          legal_privacy_text: cms.legal_privacy_text,
+          legal_shipping_text: cms.legal_shipping_text,
+          legal_returns_text: cms.legal_returns_text,
+          legal_cancellation_text: cms.legal_cancellation_text,
+          footer_tagline: cms.footer_tagline,
+          footer_copyright: cms.footer_copyright,
         },
         updated_at: new Date().toISOString(),
       };
 
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-        if (!token) throw new Error("Not logged in");
-
-        await updateCmsFn({ data: { token, ...payload } });
-      } catch (dbErr: any) {
-        if (dbErr.message && !dbErr.message.includes("schema cache")) {
-          throw dbErr;
-        }
-      }
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not logged in");
+      await updateCmsFn({ data: { token, ...payload } });
 
       toast.success("Storefront CMS settings published successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save CMS settings.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save CMS settings.");
     } finally {
       setSaving(false);
     }
@@ -246,7 +237,11 @@ function AdminCmsPage() {
   }
 
   const tabs = [
-    { id: "messages", label: `Contact Messages (${messages.filter((m) => m.status === "unread").length})`, icon: "inbox" },
+    {
+      id: "messages",
+      label: `Contact Messages (${messages.filter((m) => m.status === "unread").length})`,
+      icon: "inbox",
+    },
     { id: "biz", label: "Support & Business Details", icon: "corporate_fare" },
     { id: "whatsapp", label: "WhatsApp Channel & Chat", icon: "forum" },
     { id: "checkout", label: "Checkout & Charges", icon: "account_balance_wallet" },
@@ -322,13 +317,16 @@ function AdminCmsPage() {
                   </p>
                 </div>
                 <div className="bg-surface-container-low px-3 py-1.5 rounded text-xs font-bold text-primary">
-                  {messages.length} Total • {messages.filter((m) => m.status === "unread").length} Unread
+                  {messages.length} Total • {messages.filter((m) => m.status === "unread").length}{" "}
+                  Unread
                 </div>
               </div>
 
               {messages.length === 0 ? (
                 <div className="p-12 text-center bg-surface-container-lowest border border-outline-variant/40 rounded space-y-3">
-                  <span className="material-symbols-outlined text-4xl text-on-surface-variant/60">mark_email_read</span>
+                  <span className="material-symbols-outlined text-4xl text-on-surface-variant/60">
+                    mark_email_read
+                  </span>
                   <h4 className="font-bold text-primary text-base">Your inbox is clean!</h4>
                   <p className="text-xs text-on-surface-variant">
                     No new customer inquiries or messages have been received yet.
@@ -347,13 +345,21 @@ function AdminCmsPage() {
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-outline-variant/20">
                         <div className="flex items-center gap-3">
-                          <div className={`w-2.5 h-2.5 rounded-full ${msg.status === "unread" ? "bg-blue-600 animate-pulse" : "bg-outline-variant"}`}></div>
+                          <div
+                            className={`w-2.5 h-2.5 rounded-full ${msg.status === "unread" ? "bg-blue-600 animate-pulse" : "bg-outline-variant"}`}
+                          ></div>
                           <div>
                             <h4 className="font-bold text-sm text-primary flex items-center gap-2">
                               {msg.name}
-                              <span className="text-[11px] font-normal text-on-surface-variant">({msg.email})</span>
+                              <span className="text-[11px] font-normal text-on-surface-variant">
+                                ({msg.email})
+                              </span>
                             </h4>
-                            {msg.phone && <p className="text-xs text-on-surface-variant mt-0.5">Phone: {msg.phone}</p>}
+                            {msg.phone && (
+                              <p className="text-xs text-on-surface-variant mt-0.5">
+                                Phone: {msg.phone}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -405,7 +411,8 @@ function AdminCmsPage() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-3.5 py-2 rounded text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity"
                         >
-                          <span className="material-symbols-outlined text-xs">open_in_new</span> Gmail Web
+                          <span className="material-symbols-outlined text-xs">open_in_new</span>{" "}
+                          Gmail Web
                         </a>
                         <a
                           href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject || "Aghanims Phones and Gadgets Inquiry")}`}
@@ -423,7 +430,8 @@ function AdminCmsPage() {
                           }}
                           className="inline-flex items-center gap-1.5 bg-surface-container-low text-primary border border-outline-variant/40 px-3.5 py-2 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container transition-colors"
                         >
-                          <span className="material-symbols-outlined text-xs">content_copy</span> Copy Email
+                          <span className="material-symbols-outlined text-xs">content_copy</span>{" "}
+                          Copy Email
                         </button>
                         {msg.phone && (
                           <>
@@ -433,7 +441,8 @@ function AdminCmsPage() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 bg-[#25D366] text-white px-3.5 py-2 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-[#20ba59] transition-colors"
                             >
-                              <span className="material-symbols-outlined text-xs">forum</span> WhatsApp (Web)
+                              <span className="material-symbols-outlined text-xs">forum</span>{" "}
+                              WhatsApp (Web)
                             </a>
                             <a
                               href={`https://wa.me/${getCleanWhatsAppNumber(msg.phone)}`}
@@ -441,7 +450,8 @@ function AdminCmsPage() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 bg-[#128C7E] text-white px-3.5 py-2 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-[#075E54] transition-colors"
                             >
-                              <span className="material-symbols-outlined text-xs">chat_bubble</span> WhatsApp (App)
+                              <span className="material-symbols-outlined text-xs">chat_bubble</span>{" "}
+                              WhatsApp (App)
                             </a>
                           </>
                         )}
@@ -462,7 +472,8 @@ function AdminCmsPage() {
                   Support & Business Entity Settings
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Update your official company address, support phone number, email, operating hours, and legal registrations displayed on the Contact Us and Legal pages.
+                  Update your official company address, support phone number, email, operating
+                  hours, and legal registrations displayed on the Contact Us and Legal pages.
                 </p>
               </div>
 
@@ -487,7 +498,7 @@ function AdminCmsPage() {
                     type="text"
                     value={cms.biz_legal_name || ""}
                     onChange={(e) => setCms({ ...cms, biz_legal_name: e.target.value })}
-                    placeholder="Aghanims Phones and Gadgets Technologies LLP"
+                    placeholder="Enter the exact name from registration documents"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -499,7 +510,7 @@ function AdminCmsPage() {
                     rows={2}
                     value={cms.biz_address || ""}
                     onChange={(e) => setCms({ ...cms, biz_address: e.target.value })}
-                    placeholder="Bandra Kurla Complex, Bandra East, Mumbai, Maharashtra 400051"
+                    placeholder="Enter the verified registered or principal business address"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -523,7 +534,7 @@ function AdminCmsPage() {
                     type="text"
                     value={cms.biz_gstin || ""}
                     onChange={(e) => setCms({ ...cms, biz_gstin: e.target.value })}
-                    placeholder="27AADCS1456Q1ZV"
+                    placeholder="Leave blank if not registered"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -535,7 +546,7 @@ function AdminCmsPage() {
                     type="email"
                     value={cms.biz_email || ""}
                     onChange={(e) => setCms({ ...cms, biz_email: e.target.value })}
-                    placeholder="support@Aghanims Phones and Gadgets.example"
+                    placeholder="support@yourdomain.com"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -547,7 +558,7 @@ function AdminCmsPage() {
                     type="text"
                     value={cms.biz_phone || ""}
                     onChange={(e) => setCms({ ...cms, biz_phone: e.target.value })}
-                    placeholder="+91 98765 43210"
+                    placeholder="Enter a verified support number"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -571,10 +582,28 @@ function AdminCmsPage() {
                     type="text"
                     value={cms.biz_grievance_officer || ""}
                     onChange={(e) => setCms({ ...cms, biz_grievance_officer: e.target.value })}
-                    placeholder="Vikram Malhotra"
+                    placeholder="Enter the appointed officer's name"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
+                <label className="md:col-span-2 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cms.business_profile_verified}
+                    onChange={(event) =>
+                      setCms({ ...cms, business_profile_verified: event.target.checked })
+                    }
+                    className="mt-0.5"
+                  />
+                  <span className="text-xs text-amber-950 leading-relaxed">
+                    <strong className="block uppercase tracking-wider mb-1">
+                      Publish verified business details
+                    </strong>
+                    Enable only after the legal name, address, support contacts, registrations, and
+                    grievance contact above have been checked against current documents. Until then,
+                    the public site hides these fields.
+                  </span>
+                </label>
               </div>
             </div>
           )}
@@ -588,7 +617,8 @@ function AdminCmsPage() {
                   WhatsApp Channel & Live Chat Integration
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Configure your WhatsApp broadcast channel link (shown on the home page hero banner) and WhatsApp support chat number (shown on the Contact Us page).
+                  Configure your WhatsApp broadcast channel link (shown on the home page hero
+                  banner) and WhatsApp support chat number (shown on the Contact Us page).
                 </p>
               </div>
 
@@ -610,7 +640,8 @@ function AdminCmsPage() {
                       className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                     />
                     <p className="text-[10px] text-on-surface-variant mt-1">
-                      Customers clicking the green WhatsApp card on the home page hero section will be redirected to this channel to receive new product launch alerts.
+                      Customers clicking the green WhatsApp card on the home page hero section will
+                      be redirected to this channel to receive new product launch alerts.
                     </p>
                   </div>
                 </div>
@@ -648,7 +679,8 @@ function AdminCmsPage() {
                         className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                       />
                       <p className="text-[10px] text-on-surface-variant mt-1">
-                        This text will automatically prefill in the user's WhatsApp chat when they click `Start WhatsApp Chat`.
+                        This text will automatically prefill in the user's WhatsApp chat when they
+                        click `Start WhatsApp Chat`.
                       </p>
                     </div>
                   </div>
@@ -685,15 +717,17 @@ function AdminCmsPage() {
                       COD Charge Type
                     </label>
                     <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: "advance", label: "Advance Fee" },
-                        { id: "additional", label: "Extra Charge" },
-                        { id: "none", label: "Free COD" },
-                      ].map((t) => (
+                      {(
+                        [
+                          { id: "advance", label: "Advance Fee" },
+                          { id: "additional", label: "Extra Charge" },
+                          { id: "none", label: "Free COD" },
+                        ] as const
+                      ).map((t) => (
                         <button
                           key={t.id}
                           type="button"
-                          onClick={() => setCms({ ...cms, cod_charge_type: t.id as any })}
+                          onClick={() => setCms({ ...cms, cod_charge_type: t.id })}
                           className={`py-2 px-3 text-xs font-bold border rounded transition-all ${cms.cod_charge_type === t.id ? "bg-primary text-on-primary border-primary shadow-sm" : "bg-surface-container-low border-outline-variant/40 text-on-surface-variant hover:bg-surface-container"}`}
                         >
                           {t.label}
@@ -702,9 +736,9 @@ function AdminCmsPage() {
                     </div>
                     <p className="text-[10px] text-on-surface-variant mt-1">
                       {cms.cod_charge_type === "advance" &&
-                        "Advance Booking Fee (e.g. ₹99) collected via Razorpay now, deducted from total at delivery."}
+                        "Advance booking fee collected through the configured online payment provider and deducted from the amount due on delivery."}
                       {cms.cod_charge_type === "additional" &&
-                        "Extra handling fee added on top of order total, collected immediately via Razorpay."}
+                        "Extra handling fee collected through the configured online payment provider."}
                       {cms.cod_charge_type === "none" &&
                         "No advance fee. Customer pays full amount at delivery."}
                     </p>
@@ -750,9 +784,9 @@ function AdminCmsPage() {
                     </div>
                     <p className="text-[11px] text-on-surface-variant">
                       {cms.cod_charge_type === "advance"
-                        ? `Requires ₹${cms.cod_charge_amount} advance payment via Razorpay to prevent order cancellations`
+                        ? `Requires ₹${cms.cod_charge_amount} advance payment through the configured online provider`
                         : cms.cod_charge_type === "additional"
-                          ? `Includes ₹${cms.cod_charge_amount} additional COD handling fee (collected now via Razorpay)`
+                          ? `Includes ₹${cms.cod_charge_amount} additional COD handling fee collected online`
                           : "Pay via cash or UPI when your package arrives at your doorstep"}
                     </p>
                   </div>
@@ -769,15 +803,17 @@ function AdminCmsPage() {
                       Discount Type
                     </label>
                     <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: "flat", label: "Flat ₹ OFF" },
-                        { id: "percent", label: "Percent % OFF" },
-                        { id: "none", label: "No Discount" },
-                      ].map((t) => (
+                      {(
+                        [
+                          { id: "flat", label: "Flat ₹ OFF" },
+                          { id: "percent", label: "Percent % OFF" },
+                          { id: "none", label: "No Discount" },
+                        ] as const
+                      ).map((t) => (
                         <button
                           key={t.id}
                           type="button"
-                          onClick={() => setCms({ ...cms, prepaid_discount_type: t.id as any })}
+                          onClick={() => setCms({ ...cms, prepaid_discount_type: t.id })}
                           className={`py-2 px-3 text-xs font-bold border rounded transition-all ${cms.prepaid_discount_type === t.id ? "bg-primary text-on-primary border-primary shadow-sm" : "bg-surface-container-low border-outline-variant/40 text-on-surface-variant hover:bg-surface-container"}`}
                         >
                           {t.label}
@@ -786,9 +822,9 @@ function AdminCmsPage() {
                     </div>
                     <p className="text-[10px] text-on-surface-variant mt-1">
                       {cms.prepaid_discount_type === "flat" &&
-                        "Deducts a fixed amount (e.g. ₹200) instantly on choosing Razorpay."}
+                        "Deducts a fixed amount from an online prepaid order."}
                       {cms.prepaid_discount_type === "percent" &&
-                        "Deducts a percentage of cart total (e.g. 5%) instantly on choosing Razorpay."}
+                        "Deducts a percentage of the cart total from an online prepaid order."}
                       {cms.prepaid_discount_type === "none" && "No prepaid discount applied."}
                     </p>
                   </div>
@@ -826,7 +862,7 @@ function AdminCmsPage() {
                     </div>
                     <p className="text-[11px] text-on-surface-variant">
                       {cms.prepaid_discount_type === "none" || cms.prepaid_discount_amount === 0
-                        ? "Instant secure payment via Razorpay"
+                        ? "Secure online payment"
                         : `Instant ${cms.prepaid_discount_type === "flat" ? `₹${cms.prepaid_discount_amount}` : `${cms.prepaid_discount_amount}%`} Discount on Prepaid Orders`}
                     </p>
                   </div>
@@ -1662,7 +1698,8 @@ function AdminCmsPage() {
                   Footer Legal & Policy Pages
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Customize the full text of your mandatory payment gateway compliance pages (Terms, Privacy, Shipping, Returns, Cancellation) and footer copyright text.
+                  Customize the full text of your mandatory payment gateway compliance pages (Terms,
+                  Privacy, Shipping, Returns, Cancellation) and footer copyright text.
                 </p>
               </div>
 
@@ -1780,20 +1817,25 @@ function AdminCmsPage() {
                       setTimeout(() => {
                         setCms((prev) => ({
                           ...prev,
-                          reviews_heading: { ...prev.reviews_heading, total_reviews: prev.reviews_heading.total_reviews + 3 },
+                          reviews_heading: {
+                            ...prev.reviews_heading,
+                            total_reviews: prev.reviews_heading.total_reviews + 3,
+                          },
                           reviews: [
                             {
                               author: "Gaurav Verma",
                               time: "1 day ago",
                               stars: 5,
-                              snippet: "Verified Purchase via Outscraper API: Absolutely stunning build quality on the Qin F22 Pro. Keypad feels exceptionally tactile!",
+                              snippet:
+                                "Verified Purchase via Outscraper API: Absolutely stunning build quality on the Qin F22 Pro. Keypad feels exceptionally tactile!",
                               avatar: "G",
                             },
                             {
                               author: "Pooja Mehta",
                               time: "3 days ago",
                               stars: 5,
-                              snippet: "Verified Purchase via Google Places API: The customer support over WhatsApp was instant. Highly recommend their privacy firmware.",
+                              snippet:
+                                "Verified Purchase via Google Places API: The customer support over WhatsApp was instant. Highly recommend their privacy firmware.",
                               avatar: "P",
                             },
                             ...prev.reviews,
@@ -1804,7 +1846,8 @@ function AdminCmsPage() {
                     }}
                     className="bg-emerald-600 text-white px-4 py-2 font-bold text-xs uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-sm flex items-center gap-1.5"
                   >
-                    <span className="material-symbols-outlined text-sm">cloud_sync</span> Sync API Reviews
+                    <span className="material-symbols-outlined text-sm">cloud_sync</span> Sync API
+                    Reviews
                   </button>
                   <button
                     type="button"
@@ -1837,7 +1880,10 @@ function AdminCmsPage() {
                   Real Reviews Auto-Extraction API Settings
                 </div>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  Enter your <strong>Outscraper API Key</strong> or <strong>Google Business Profile API Key</strong> and Place ID below. When configured, the system automatically scrapes real, verified Google Maps & Trustpilot reviews so you never have to put them manually!
+                  Enter your <strong>Outscraper API Key</strong> or{" "}
+                  <strong>Google Business Profile API Key</strong> and Place ID below. When
+                  configured, the system automatically scrapes real, verified Google Maps &
+                  Trustpilot reviews so you never have to put them manually!
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

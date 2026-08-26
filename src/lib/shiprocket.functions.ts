@@ -1,152 +1,127 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { PublicTrackingResult, ShiprocketCourierQuotes } from "@/lib/shiprocket.server";
 
-const SHIPROCKET_API = "https://apiv2.shiprocket.in/v1/external";
-
-let cachedToken: { token: string; expiresAt: number } | null = null;
-
-async function getShiprocketToken(): Promise<string> {
-  const email = process.env.SHIPROCKET_EMAIL;
-  const password = process.env.SHIPROCKET_PASSWORD;
-  if (!email || !password) {
-    throw new Error(
-      "Shiprocket not configured. Set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD in .env.",
-    );
-  }
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
-    return cachedToken.token;
-  }
-  const res = await fetch(`${SHIPROCKET_API}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-  if (!res.ok) throw new Error(`Shiprocket auth failed: ${await res.text()}`);
-  const j = (await res.json()) as { token: string };
-  cachedToken = { token: j.token, expiresAt: Date.now() + 9 * 24 * 60 * 60 * 1000 };
-  return j.token;
+interface ServiceabilityResult {
+  status?: number;
+  data?: {
+    available_courier_companies?: Array<{
+      courier_company_id?: number;
+      courier_name?: string;
+      rate?: number;
+      etd?: string;
+    }>;
+  };
 }
 
-/**
- * Create a Shiprocket "adhoc" order for a paid electronic_shop order.
- * Pickup location must already exist in your Shiprocket account
- * (defaults to "Primary"). Stores the returned IDs on the order row.
- */
-export const createShiprocketOrder = createServerFn({ method: "POST" })
-  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: order, error } = await supabaseAdmin
-      .from("orders")
-      .select(
-        "id, order_number, email, phone, shipping_address, subtotal_paise, total_paise, shiprocket_order_id, status, created_at, notes",
-      )
-      .eq("id", data.orderId)
-      .single();
-    if (error || !order) throw new Error(error?.message ?? "Order not found");
-    if (order.shiprocket_order_id) {
-      return { ok: true, alreadyExists: true, id: order.shiprocket_order_id };
-    }
+const packageSchema = z.object({
+  weightKg: z.number().positive().max(50),
+  lengthCm: z.number().positive().max(200),
+  breadthCm: z.number().positive().max(200),
+  heightCm: z.number().positive().max(200),
+  pickupLocation: z.string().min(1).max(100).optional(),
+  courierId: z.number().int().positive().optional(),
+});
 
-    const { data: items, error: itErr } = await supabaseAdmin
-      .from("order_items")
-      .select("name, qty, unit_price_paise, variant_label")
-      .eq("order_id", order.id);
-    if (itErr) throw new Error(itErr.message);
-
-    const addr = order.shipping_address as Record<string, string>;
-    const token = await getShiprocketToken();
-    const isCod = order.notes === "cod";
-
-    const payload = {
-      order_id: order.order_number,
-      order_date: new Date(order.created_at).toISOString().slice(0, 10),
-      pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || "Primary",
-      billing_customer_name: addr.first_name || "Customer",
-      billing_last_name: addr.last_name || "",
-      billing_address: addr.line1,
-      billing_address_2: addr.line2 || "",
-      billing_city: addr.city,
-      billing_pincode: addr.pincode,
-      billing_state: addr.state,
-      billing_country: addr.country || "India",
-      billing_email: order.email,
-      billing_phone: order.phone,
-      shipping_is_billing: true,
-      order_items: (items || []).map((i) => ({
-        name: i.name + (i.variant_label ? ` (${i.variant_label})` : ""),
-        sku: i.name.toLowerCase().replace(/\s+/g, "-").slice(0, 40),
-        units: i.qty,
-        selling_price: (i.unit_price_paise / 100).toFixed(2),
-      })),
-      payment_method: isCod ? "COD" : "Prepaid",
-      sub_total: (order.subtotal_paise / 100).toFixed(2),
-      length: 20,
-      breadth: 15,
-      height: 10,
-      weight: 0.5,
-    };
-
-    const res = await fetch(`${SHIPROCKET_API}/orders/create/adhoc`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const j = (await res.json()) as {
-      order_id?: number;
-      shipment_id?: number;
-      status?: string;
-      message?: string;
-    };
-    if (!res.ok || !j.order_id) {
-      throw new Error(`Shiprocket create failed: ${j.message ?? JSON.stringify(j)}`);
-    }
-
-    await supabaseAdmin
-      .from("orders")
-      .update({
-        shiprocket_order_id: String(j.order_id),
-        shiprocket_shipment_id: j.shipment_id ? String(j.shipment_id) : null,
-        status: "processing",
+export const generateShiprocketAwb = createServerFn({ method: "POST" })
+  .validator((input) =>
+    z
+      .object({
+        token: z.string().min(1),
+        orderId: z.string().uuid(),
+        package: packageSchema.extend({ courierId: z.number().int().positive() }),
       })
-      .eq("id", order.id);
-
-    return { ok: true, id: j.order_id, shipmentId: j.shipment_id };
-  });
-
-/**
- * Fetch live tracking info for an order's shipment.
- */
-export const trackShipment = createServerFn({ method: "GET" })
-  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+      .parse(input),
+  )
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: order } = await supabaseAdmin
-      .from("orders")
-      .select("shiprocket_shipment_id, tracking_url")
-      .eq("id", data.orderId)
-      .single();
-    if (!order?.shiprocket_shipment_id) {
-      return { tracking: null, message: "Shipment not created yet" };
-    }
-    const token = await getShiprocketToken();
-    const res = await fetch(
-      `${SHIPROCKET_API}/courier/track/shipment/${order.shiprocket_shipment_id}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    const j = await res.json();
-    return { tracking: j, trackingUrl: order.tracking_url };
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { generateShiprocketAwbInternal } = await import("@/lib/shiprocket.server");
+    return generateShiprocketAwbInternal(data.orderId, data.package);
   });
 
-/**
- * Check courier serviceability + shipping rate for a PIN code.
- * Use from PDP / cart to surface "delivers to your PIN" badges.
- */
-export const checkServiceability = createServerFn({ method: "GET" })
-  .inputValidator((input) =>
+export const getShiprocketPickupLocations = createServerFn({ method: "POST" })
+  .validator((input) => z.object({ token: z.string().min(1) }).parse(input))
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { getShiprocketPickupLocationsInternal } = await import("@/lib/shiprocket.server");
+    return getShiprocketPickupLocationsInternal();
+  });
+
+export const getShiprocketCourierOptions = createServerFn({ method: "POST" })
+  .validator((input) =>
+    z
+      .object({
+        token: z.string().min(1),
+        orderId: z.string().uuid(),
+        package: packageSchema.omit({ courierId: true }),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<ShiprocketCourierQuotes> => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { getShiprocketCourierOptionsInternal } = await import("@/lib/shiprocket.server");
+    return getShiprocketCourierOptionsInternal(data.orderId, data.package);
+  });
+
+const adminOrderActionSchema = z.object({
+  token: z.string().min(1),
+  orderId: z.string().uuid(),
+});
+
+export const generateShiprocketDocument = createServerFn({ method: "POST" })
+  .validator((input) =>
+    adminOrderActionSchema
+      .extend({ type: z.enum(["label", "invoice", "manifest", "label-invoice"]) })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { generateShiprocketDocumentInternal } = await import("@/lib/shiprocket.server");
+    return generateShiprocketDocumentInternal(data.orderId, data.type);
+  });
+
+export const requestShiprocketPickup = createServerFn({ method: "POST" })
+  .validator((input) => adminOrderActionSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { requestShiprocketPickupInternal } = await import("@/lib/shiprocket.server");
+    return requestShiprocketPickupInternal(data.orderId);
+  });
+
+export const cancelShiprocketShipment = createServerFn({ method: "POST" })
+  .validator((input) => adminOrderActionSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { cancelShiprocketShipmentInternal } = await import("@/lib/shiprocket.server");
+    return cancelShiprocketShipmentInternal(data.orderId);
+  });
+
+export const trackPublicShipment = createServerFn({ method: "POST" })
+  .validator((input) =>
+    z
+      .object({
+        identifier: z
+          .string()
+          .trim()
+          .min(4)
+          .max(80)
+          .regex(/^[A-Za-z0-9-]+$/, "Use a valid order number or AWB"),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<PublicTrackingResult> => {
+    const { getPublicTrackingInternal } = await import("@/lib/shiprocket.server");
+    return getPublicTrackingInternal(data.identifier);
+  });
+
+export const checkServiceability = createServerFn({ method: "POST" })
+  .validator((input) =>
     z
       .object({
         pickupPincode: z.string().length(6),
@@ -157,14 +132,14 @@ export const checkServiceability = createServerFn({ method: "GET" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const token = await getShiprocketToken();
-    const url = new URL(`${SHIPROCKET_API}/courier/serviceability/`);
-    url.searchParams.set("pickup_postcode", data.pickupPincode);
-    url.searchParams.set("delivery_postcode", data.deliveryPincode);
-    url.searchParams.set("weight", String(data.weightKg));
-    url.searchParams.set("cod", data.cod ? "1" : "0");
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.json();
+    const { checkShiprocketServiceabilityInternal } = await import("@/lib/shiprocket.server");
+    const response = await checkShiprocketServiceabilityInternal(data);
+    return JSON.parse(JSON.stringify(response)) as ServiceabilityResult;
   });
+
+export type {
+  PublicTrackingResult,
+  PublicTrackingMilestone,
+  ShiprocketCourierOption,
+  ShiprocketCourierQuotes,
+} from "@/lib/shiprocket.server";

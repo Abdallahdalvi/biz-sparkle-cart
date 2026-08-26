@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyRazorpayPayment } from "@/lib/razorpay.functions";
-import { createSecureOrder } from "@/lib/orders.functions";
+import { createSecureOrder, getCheckoutCapabilities } from "@/lib/orders.functions";
 import { getStorefrontCms } from "@/lib/products";
 
 declare global {
@@ -31,30 +31,35 @@ function loadRazorpayScript(): Promise<boolean> {
 
 export const Route = createFileRoute("/checkout")({
   loader: async () => {
-    const cms = await getStorefrontCms();
-    return { cms };
+    const [cms, capabilities] = await Promise.all([getStorefrontCms(), getCheckoutCapabilities()]);
+    return { cms, capabilities };
   },
-  head: () => ({ meta: [{ title: "Checkout — Aghanims Phones and Gadgets" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [
+      { title: "Checkout — Aghanims Phones and Gadgets" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: Checkout,
 });
 
 function Checkout() {
-  const { cms } = Route.useLoaderData();
+  const { cms, capabilities } = Route.useLoaderData();
   const items = useCart((s) => s.items);
   const total = useCart((s) => s.totalPaise());
   const clear = useCart((s) => s.clear);
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [payMode, setPayMode] = useState<"prepaid" | "cod">("prepaid");
-  const [promoCode, setPromoCode] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPaise: number } | null>(null);
+  const [payMode, setPayMode] = useState<"prepaid" | "cod">(
+    capabilities.onlinePaymentsConfigured ? "prepaid" : "cod",
+  );
   const { user } = useAuth();
   const createOrderFn = useServerFn(createSecureOrder);
   const verifyRzp = useServerFn(verifyRazorpayPayment);
 
   useEffect(() => {
-    loadRazorpayScript();
-  }, []);
+    if (capabilities.onlinePaymentsConfigured) loadRazorpayScript();
+  }, [capabilities.onlinePaymentsConfigured]);
 
   if (items.length === 0) {
     return (
@@ -79,20 +84,16 @@ function Checkout() {
 
   // Calculate COD charge in paise
   let codChargePaise = 0;
-  if (cms.cod_charge_type !== "none") {
+  if (capabilities.onlinePaymentsConfigured && cms.cod_charge_type !== "none") {
     codChargePaise = cms.cod_charge_amount * 100;
   }
 
-  let baseEffective =
+  const baseEffective =
     payMode === "prepaid"
       ? Math.max(0, total - prepaidDiscountPaise)
       : cms.cod_charge_type === "additional"
         ? total + codChargePaise
         : total;
-
-  if (appliedPromo) {
-    baseEffective = Math.max(0, baseEffective - appliedPromo.discountPaise);
-  }
 
   const effectiveTotal = baseEffective;
 
@@ -102,18 +103,19 @@ function Checkout() {
     <SiteShell>
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12">
         <h1 className="text-4xl font-bold text-primary mb-6">Checkout</h1>
-        
-        {/* Abandoned Cart Recovery & Price Freeze Banner */}
-        <div className="bg-amber-50 border border-amber-500/30 p-4 rounded mb-8 flex items-center justify-between text-xs text-amber-950 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-amber-600 text-xl animate-pulse">lock_clock</span>
+
+        {!capabilities.onlinePaymentsConfigured && (
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-8 flex items-start gap-3 text-xs text-blue-950">
+            <span className="material-symbols-outlined text-blue-700 text-xl">payments</span>
             <div>
-              <p className="font-bold uppercase tracking-wider">Cart Reserved & Price Freeze Active</p>
-              <p className="text-on-surface-variant text-[11px]">Your boutique items are locked in high-demand queue for 30 minutes. If disconnected, your cart recovery discount will be sent via WhatsApp.</p>
+              <p className="font-bold uppercase tracking-wider">Cash on Delivery is active</p>
+              <p className="text-blue-900/80 mt-1">
+                Online payments will be enabled after business verification. No online advance or
+                COD fee is charged in the meantime.
+              </p>
             </div>
           </div>
-          <span className="hidden sm:inline-block bg-amber-600 text-white font-bold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded shadow-sm">HIGH DEMAND</span>
-        </div>
+        )}
 
         <form
           onSubmit={async (e) => {
@@ -251,7 +253,7 @@ function Checkout() {
               </div>
               <div className="pt-2 border-t border-outline-variant/30">
                 <label className="text-[11px] font-bold uppercase tracking-widest text-primary block mb-1">
-                  Business GSTIN (Optional for 18% ITC)
+                  Business GSTIN (Optional)
                 </label>
                 <Input
                   name="gstin"
@@ -266,32 +268,37 @@ function Checkout() {
                 Payment Mode
               </legend>
               <label
-                className={`flex items-start gap-3 p-4 border rounded cursor-pointer transition-colors ${payMode === "prepaid" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
+                className={`flex items-start gap-3 p-4 border rounded transition-colors ${capabilities.onlinePaymentsConfigured ? "cursor-pointer" : "cursor-not-allowed opacity-60"} ${payMode === "prepaid" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
               >
                 <input
                   type="radio"
                   name="pay"
                   checked={payMode === "prepaid"}
+                  disabled={!capabilities.onlinePaymentsConfigured}
                   onChange={() => setPayMode("prepaid")}
-                  className="mt-1 cursor-pointer"
+                  className="mt-1"
                 />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-sm text-primary">
-                      Razorpay (UPI / Cards / Net Banking)
+                      Online payment (UPI / Cards / Net Banking)
                     </p>
-                    {cms.prepaid_discount_type !== "none" && cms.prepaid_discount_amount > 0 && (
-                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                        {cms.prepaid_discount_type === "flat"
-                          ? `₹${cms.prepaid_discount_amount} OFF`
-                          : `${cms.prepaid_discount_amount}% OFF`}
-                      </span>
-                    )}
+                    {capabilities.onlinePaymentsConfigured &&
+                      cms.prepaid_discount_type !== "none" &&
+                      cms.prepaid_discount_amount > 0 && (
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                          {cms.prepaid_discount_type === "flat"
+                            ? `₹${cms.prepaid_discount_amount} OFF`
+                            : `${cms.prepaid_discount_amount}% OFF`}
+                        </span>
+                      )}
                   </div>
                   <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
-                    {cms.prepaid_discount_type === "none" || cms.prepaid_discount_amount === 0
-                      ? "Instant secure payment via Razorpay"
-                      : `Instant ${cms.prepaid_discount_type === "flat" ? `₹${cms.prepaid_discount_amount}` : `${cms.prepaid_discount_amount}%`} Discount on Prepaid Orders`}
+                    {!capabilities.onlinePaymentsConfigured
+                      ? "Available after business verification"
+                      : cms.prepaid_discount_type === "none" || cms.prepaid_discount_amount === 0
+                        ? "Secure online payment"
+                        : `Instant ${cms.prepaid_discount_type === "flat" ? `₹${cms.prepaid_discount_amount}` : `${cms.prepaid_discount_amount}%`} Discount on Prepaid Orders`}
                   </p>
                 </div>
               </label>
@@ -308,28 +315,36 @@ function Checkout() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-sm text-primary">Cash on Delivery (COD)</p>
-                    {cms.cod_charge_type === "advance" && cms.cod_charge_amount > 0 && (
-                      <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                        ₹{cms.cod_charge_amount} Advance
-                      </span>
-                    )}
-                    {cms.cod_charge_type === "additional" && cms.cod_charge_amount > 0 && (
-                      <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                        +₹{cms.cod_charge_amount} Fee
-                      </span>
-                    )}
-                    {(cms.cod_charge_type === "none" || cms.cod_charge_amount === 0) && (
+                    {capabilities.onlinePaymentsConfigured &&
+                      cms.cod_charge_type === "advance" &&
+                      cms.cod_charge_amount > 0 && (
+                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                          ₹{cms.cod_charge_amount} Advance
+                        </span>
+                      )}
+                    {capabilities.onlinePaymentsConfigured &&
+                      cms.cod_charge_type === "additional" &&
+                      cms.cod_charge_amount > 0 && (
+                        <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                          +₹{cms.cod_charge_amount} Fee
+                        </span>
+                      )}
+                    {(!capabilities.onlinePaymentsConfigured ||
+                      cms.cod_charge_type === "none" ||
+                      cms.cod_charge_amount === 0) && (
                       <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
                         FREE COD
                       </span>
                     )}
                   </div>
                   <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
-                    {cms.cod_charge_type === "advance" && cms.cod_charge_amount > 0
-                      ? `Requires ₹${cms.cod_charge_amount} advance payment via Razorpay to prevent order cancellations`
-                      : cms.cod_charge_type === "additional" && cms.cod_charge_amount > 0
-                        ? `Includes ₹${cms.cod_charge_amount} additional COD handling fee (collected now via Razorpay)`
-                        : "Pay via cash or UPI when your package arrives at your doorstep"}
+                    {!capabilities.onlinePaymentsConfigured
+                      ? "Pay the order total to the courier when the package arrives"
+                      : cms.cod_charge_type === "advance" && cms.cod_charge_amount > 0
+                        ? `Requires ₹${cms.cod_charge_amount} online advance payment to confirm the order`
+                        : cms.cod_charge_type === "additional" && cms.cod_charge_amount > 0
+                          ? `Includes ₹${cms.cod_charge_amount} additional COD handling fee collected online`
+                          : "Pay via cash or UPI when your package arrives at your doorstep"}
                   </p>
                 </div>
               </label>
@@ -367,15 +382,6 @@ function Checkout() {
                 <span>+{formatINR(codChargePaise)}</span>
               </div>
             )}
-            {appliedPromo && (
-              <div className="flex justify-between text-sm text-emerald-700 font-medium border-t border-outline-variant/30 pt-2">
-                <span className="flex items-center gap-1">
-                  <span>Promo ({appliedPromo.code})</span>
-                  <button type="button" onClick={() => { setAppliedPromo(null); toast.message("Promo code removed"); }} className="text-xs text-destructive hover:underline">(remove)</button>
-                </span>
-                <span>-{formatINR(appliedPromo.discountPaise)}</span>
-              </div>
-            )}
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">Shipping</span>
               <span className="font-bold">FREE</span>
@@ -385,44 +391,6 @@ function Checkout() {
               <span className="font-bold">{formatINR(effectiveTotal)}</span>
             </div>
 
-            {/* Promo Code Engine Input Box */}
-            <div className="pt-2 border-t border-outline-variant/30 space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-primary block">
-                Promo Code
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. TECH10 / DROP20"
-                  className="bg-surface-container-low border border-outline-variant/40 px-3 py-2 text-xs focus:outline-none focus:border-primary flex-1 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const code = promoCode.trim();
-                    if (!code) return;
-                    if (code === "TECH10") {
-                      setAppliedPromo({ code, discountPaise: Math.round(total * 0.10) });
-                      toast.success("TECH10 applied: 10% OFF!");
-                    } else if (code === "DROP20") {
-                      setAppliedPromo({ code, discountPaise: Math.round(total * 0.20) });
-                      toast.success("DROP20 applied: 20% OFF!");
-                    } else if (code === "FREESHIP") {
-                      setAppliedPromo({ code, discountPaise: 10000 });
-                      toast.success("FREESHIP applied: Free Express Delivery priority!");
-                    } else {
-                      toast.error("Invalid promo code. Try TECH10 or DROP20");
-                    }
-                    setPromoCode("");
-                  }}
-                  className="bg-surface-container text-primary border border-outline px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-surface-container-high transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
             <button
               disabled={busy}
               className="w-full bg-primary text-on-primary py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 disabled:opacity-50 shadow-sm"

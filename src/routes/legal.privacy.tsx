@@ -25,8 +25,8 @@ export const Route = createFileRoute("/legal/privacy")({
           <strong>Order:</strong> shipping address, items, order history.
         </li>
         <li>
-          <strong>Payment:</strong> processed by Razorpay; we receive only transaction status and
-          reference — never card details.
+          <strong>Payment:</strong> when online payment is enabled, we receive transaction status
+          and a provider reference — never card details.
         </li>
         <li>
           <strong>Usage:</strong> pages visited, device, IP, cookies.
@@ -42,9 +42,10 @@ export const Route = createFileRoute("/legal/privacy")({
       </ul>
       <h2>3. Sharing</h2>
       <p>
-        We share data only with processors needed to deliver your order: Razorpay (payments),
-        Shiprocket and the assigned courier (delivery), our email provider, our cloud infrastructure
-        provider, and lawful authorities when required. We do not sell your data.
+        We share data only with processors needed to operate the store and deliver your order,
+        including the selected payment provider (when used), Shiprocket and the assigned courier,
+        communications and infrastructure providers, and lawful authorities when required. We do not
+        sell your data.
       </p>
       <h2>4. Cookies</h2>
       <p>
@@ -58,9 +59,9 @@ export const Route = createFileRoute("/legal/privacy")({
       </p>
       <h2>6. Your rights</h2>
       <p>
-        Under the DPDP Act you have the right to access, correct, and erase your personal data,
-        withdraw consent, and nominate. Email <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> with
-        the subject "DPDP Request".
+        You may request access, correction, or deletion of personal data through our{" "}
+        <a href="/legal/contact">contact page</a>. Some order data may need to be retained where
+        required by law.
       </p>
       <h2>7. Security</h2>
       <p>
@@ -69,13 +70,9 @@ export const Route = createFileRoute("/legal/privacy")({
       </p>
       <h2>8. Grievance Officer</h2>
       <p>
-        Name: {BIZ.grievanceOfficer}
-        <br />
-        Email: <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a>
-        <br />
-        Phone: {BIZ.phone}
-        <br />
-        Address: {BIZ.address}
+        Verified grievance contact details will be published after the business profile is
+        completed. Until then, submit a request through the{" "}
+        <a href="/legal/contact">contact page</a>.
       </p>
     </LegalPage>
   ),

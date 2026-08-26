@@ -20,7 +20,10 @@ export const Route = createFileRoute("/product/$slug")({
     return {
       meta: [
         { title: `${p.name} — Aghanims Phones and Gadgets` },
-        { name: "description", content: `${p.name}. ${p.tagline}. ${formatINR(p.pricePaise)}. ${p.description.slice(0, 120)}` },
+        {
+          name: "description",
+          content: `${p.name}. ${p.tagline}. ${formatINR(p.pricePaise)}. ${p.description.slice(0, 120)}`,
+        },
         { property: "og:title", content: `${p.name} — Aghanims Phones and Gadgets` },
         { property: "og:description", content: p.tagline },
         { property: "og:image", content: p.images[0] },
@@ -42,7 +45,8 @@ export const Route = createFileRoute("/product/$slug")({
               "@type": "Offer",
               priceCurrency: "INR",
               price: (p.pricePaise / 100).toFixed(2),
-              availability: p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              availability:
+                p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
             },
           }),
         },
@@ -53,7 +57,9 @@ export const Route = createFileRoute("/product/$slug")({
     <SiteShell>
       <div className="max-w-xl mx-auto py-32 text-center">
         <h1 className="text-3xl font-bold mb-2">Product not found</h1>
-        <Link to="/catalog" className="text-primary underline">Back to catalog</Link>
+        <Link to="/catalog" className="text-primary underline">
+          Back to catalog
+        </Link>
       </div>
     </SiteShell>
   ),
@@ -73,7 +79,7 @@ function ProductPage() {
   const [variant, setVariant] = useState(product.variants?.[0]?.id);
   const [activeImg, setActiveImg] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  
+
   // New trust & conversion states
   const [pincode, setPincode] = useState("");
   const [pinStatus, setPinStatus] = useState<string | null>(null);
@@ -99,7 +105,11 @@ function ProductPage() {
 
   const dispatchDate = new Date();
   dispatchDate.setDate(dispatchDate.getDate() + ((2 - dispatchDate.getDay() + 7) % 7 || 7));
-  const dispatchStr = dispatchDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", weekday: "long" });
+  const dispatchStr = dispatchDate.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    weekday: "long",
+  });
 
   const items = useCart((s) => s.items);
   const add = useCart((s) => s.add);
@@ -120,10 +130,16 @@ function ProductPage() {
     const isMetro = metroPrefixes.some((prefix) => cleanPin.startsWith(prefix));
     const days = isMetro ? 2 : 4;
     const deliveryDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    const dateStr = deliveryDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+    const dateStr = deliveryDate.toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
     const carrier = isMetro ? "Bluedart Air Express" : "Delhivery Surface Priority";
 
-    setPinStatus(`⚡ FREE Express Delivery to ${cleanPin} by ${dateStr} via ${carrier} | COD Available`);
+    setPinStatus(
+      `⚡ FREE Express Delivery to ${cleanPin} by ${dateStr} via ${carrier} | COD Available`,
+    );
     toast.success(`Pincode verified! Assigned carrier: ${carrier}`);
   }
 
@@ -134,7 +150,9 @@ function ProductPage() {
       return;
     }
     setWaitlistSubmitted(true);
-    toast.success("Successfully added to priority waitlist! You will be alerted first upon restock.");
+    toast.success(
+      "Successfully added to priority waitlist! You will be alerted first upon restock.",
+    );
   }
 
   // Calculate total price including bundle and warranty add-ons
@@ -148,20 +166,29 @@ function ProductPage() {
     baseAddonsPaise = Math.round(baseAddonsPaise * 0.85);
   }
 
-  let finalPricePaise = product.pricePaise + baseAddonsPaise;
+  const finalPricePaise = product.pricePaise + baseAddonsPaise;
 
   return (
     <SiteShell>
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12 pb-28 md:pb-12">
         <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-8">
-          <Link to="/" className="hover:text-primary">Home</Link> /{" "}
-          <Link to="/catalog" className="hover:text-primary">Catalog</Link> /{" "}
-          <span className="text-primary">{product.name}</span>
+          <Link to="/" className="hover:text-primary">
+            Home
+          </Link>{" "}
+          /{" "}
+          <Link to="/catalog" className="hover:text-primary">
+            Catalog
+          </Link>{" "}
+          / <span className="text-primary">{product.name}</span>
         </p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           <div>
             <div className="aspect-square bg-white shopify-border overflow-hidden mb-4 shadow-sm">
-              <img src={product.images[activeImg]} alt={product.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-500" />
+              <img
+                src={product.images[activeImg]}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+              />
             </div>
             {product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
@@ -169,7 +196,10 @@ function ProductPage() {
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
-                    className={"aspect-square shopify-border overflow-hidden " + (i === activeImg ? "ring-2 ring-primary" : "")}
+                    className={
+                      "aspect-square shopify-border overflow-hidden " +
+                      (i === activeImg ? "ring-2 ring-primary" : "")
+                    }
                   >
                     <img src={src} alt="" className="w-full h-full object-cover" />
                   </button>
@@ -180,19 +210,37 @@ function ProductPage() {
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-8 pt-6 border-t border-outline-variant/30 text-center">
               <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">
-                <span className="material-symbols-outlined text-2xl text-primary mb-1 block">cycle</span>
-                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">7-Day Replacement</p>
-                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">No questions asked</p>
+                <span className="material-symbols-outlined text-2xl text-primary mb-1 block">
+                  cycle
+                </span>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">
+                  7-Day Replacement
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">
+                  No questions asked
+                </p>
               </div>
               <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">
-                <span className="material-symbols-outlined text-2xl text-blue-600 mb-1 block">verified</span>
-                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">100% Genuine</p>
-                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">Brand certified</p>
+                <span className="material-symbols-outlined text-2xl text-blue-600 mb-1 block">
+                  verified
+                </span>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">
+                  100% Genuine
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">
+                  Brand certified
+                </p>
               </div>
               <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">
-                <span className="material-symbols-outlined text-2xl text-emerald-600 mb-1 block">shield</span>
-                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">Secure Checkout</p>
-                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">Secured by Razorpay</p>
+                <span className="material-symbols-outlined text-2xl text-emerald-600 mb-1 block">
+                  shield
+                </span>
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">
+                  Secure Checkout
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">
+                  COD available at checkout
+                </p>
               </div>
             </div>
           </div>
@@ -204,28 +252,43 @@ function ProductPage() {
                   {product.badge}
                 </span>
               )}
-              <h1 className="text-4xl md:text-5xl font-bold text-on-surface leading-tight mb-2">{product.name}</h1>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-6">{product.tagline}</p>
-              
+              <h1 className="text-4xl md:text-5xl font-bold text-on-surface leading-tight mb-2">
+                {product.name}
+              </h1>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-6">
+                {product.tagline}
+              </p>
+
               <div className="flex items-center gap-3">
                 {product.compareAtPaise && product.compareAtPaise > product.pricePaise && (
-                  <span className="text-2xl text-on-surface-variant line-through font-medium">{formatINR(product.compareAtPaise)}</span>
+                  <span className="text-2xl text-on-surface-variant line-through font-medium">
+                    {formatINR(product.compareAtPaise)}
+                  </span>
                 )}
-                <span className="text-3xl font-bold text-primary">{formatINR(finalPricePaise)}</span>
+                <span className="text-3xl font-bold text-primary">
+                  {formatINR(finalPricePaise)}
+                </span>
                 {product.compareAtPaise && product.compareAtPaise > product.pricePaise && (
                   <span className="text-xs font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded">
-                    SAVE {Math.round((product.compareAtPaise - product.pricePaise) / product.compareAtPaise * 100)}%
+                    SAVE{" "}
+                    {Math.round(
+                      ((product.compareAtPaise - product.pricePaise) / product.compareAtPaise) *
+                        100,
+                    )}
+                    %
                   </span>
                 )}
               </div>
             </div>
-            
+
             <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
 
             {/* Pincode Serviceability Checker */}
             <div className="bg-surface-container-lowest border border-outline-variant/40 p-5 rounded shadow-sm space-y-3">
               <label className="text-xs font-bold uppercase tracking-widest text-primary block flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-primary">local_shipping</span>
+                <span className="material-symbols-outlined text-base text-primary">
+                  local_shipping
+                </span>
                 Check Pincode Serviceability & Delivery Time
               </label>
               <form onSubmit={checkPincode} className="flex gap-2">
@@ -233,11 +296,17 @@ function ProductPage() {
                   type="text"
                   maxLength={6}
                   value={pincode}
-                  onChange={(e) => { setPincode(e.target.value); setPinStatus(null); }}
+                  onChange={(e) => {
+                    setPincode(e.target.value);
+                    setPinStatus(null);
+                  }}
                   placeholder="Enter 6-digit PIN (e.g. 400001)"
                   className="bg-white border border-outline-variant/40 px-4 py-2.5 text-xs focus:outline-none focus:border-primary flex-1 font-mono"
                 />
-                <button type="submit" className="bg-primary text-on-primary px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm">
+                <button
+                  type="submit"
+                  className="bg-primary text-on-primary px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm"
+                >
                   Check
                 </button>
               </form>
@@ -252,7 +321,9 @@ function ProductPage() {
             <div className="bg-white border border-outline-variant/40 p-6 rounded shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-base text-amber-600">auto_awesome</span>
+                  <span className="material-symbols-outlined text-base text-amber-600">
+                    auto_awesome
+                  </span>
                   Frequently Bought Together
                 </h3>
                 {hasBundleDiscount && (
@@ -271,22 +342,36 @@ function ProductPage() {
                 </div>
                 <div className="flex items-center justify-between p-2 hover:bg-surface-container-lowest rounded transition-colors">
                   <label className="flex items-center gap-3 cursor-pointer font-medium text-primary">
-                    <input type="checkbox" checked={bundleCharger} onChange={(e) => setBundleCharger(e.target.checked)} className="cursor-pointer" />
+                    <input
+                      type="checkbox"
+                      checked={bundleCharger}
+                      onChange={(e) => setBundleCharger(e.target.checked)}
+                      className="cursor-pointer"
+                    />
                     <span>20W Fast Charger Adapter (PD Compatible)</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-on-surface-variant line-through text-[10px]">₹1,299</span>
-                    <span className="font-bold text-emerald-700">{hasBundleDiscount ? formatINR(Math.round(79900 * 0.85)) : '₹799'}</span>
+                    <span className="font-bold text-emerald-700">
+                      {hasBundleDiscount ? formatINR(Math.round(79900 * 0.85)) : "₹799"}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 hover:bg-surface-container-lowest rounded transition-colors">
                   <label className="flex items-center gap-3 cursor-pointer font-medium text-primary">
-                    <input type="checkbox" checked={bundleGlass} onChange={(e) => setBundleGlass(e.target.checked)} className="cursor-pointer" />
+                    <input
+                      type="checkbox"
+                      checked={bundleGlass}
+                      onChange={(e) => setBundleGlass(e.target.checked)}
+                      className="cursor-pointer"
+                    />
                     <span>Premium 9H Tempered Glass Screen Protector</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-on-surface-variant line-through text-[10px]">₹699</span>
-                    <span className="font-bold text-emerald-700">{hasBundleDiscount ? formatINR(Math.round(39900 * 0.85)) : '₹399'}</span>
+                    <span className="font-bold text-emerald-700">
+                      {hasBundleDiscount ? formatINR(Math.round(39900 * 0.85)) : "₹399"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -304,7 +389,9 @@ function ProductPage() {
                       onClick={() => setVariant(v.id)}
                       className={
                         "px-4 py-2 text-xs font-bold uppercase tracking-widest border transition-colors " +
-                        (variant === v.id ? "bg-primary text-on-primary border-primary shadow-sm" : "border-outline text-primary hover:bg-surface-container")
+                        (variant === v.id
+                          ? "bg-primary text-on-primary border-primary shadow-sm"
+                          : "border-outline text-primary hover:bg-surface-container")
                       }
                     >
                       {v.label}
@@ -316,29 +403,42 @@ function ProductPage() {
 
             <div className="flex items-center gap-4">
               <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold">
-                {product.stock > 0 ? `${product.stock} in stock` : "Out of stock (Priority Waitlist Open)"}
+                {product.stock > 0
+                  ? `${product.stock} in stock`
+                  : "Out of stock (Priority Waitlist Open)"}
               </p>
             </div>
 
             {product.stock === 0 ? (
               <div className="bg-surface-container-lowest border border-outline-variant/40 p-6 rounded shadow-sm space-y-4">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-base text-blue-600">hourglass_top</span>
+                  <span className="material-symbols-outlined text-base text-blue-600">
+                    hourglass_top
+                  </span>
                   Priority Waitlist for Next Import Drop
                 </h3>
                 {waitlistSubmitted ? (
                   <div className="bg-emerald-50 border border-emerald-200 p-4 rounded text-emerald-900 text-xs space-y-1">
                     <p className="font-bold uppercase tracking-wider flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">check_circle</span> You are on the priority list!
+                      <span className="material-symbols-outlined text-sm">check_circle</span> You
+                      are on the priority list!
                     </p>
-                    <p>We have reserved your queue spot. Our sourcing team will notify you immediately via Email/WhatsApp when the shipment tracking clears customs.</p>
+                    <p>
+                      We have reserved your queue spot. Our sourcing team will notify you
+                      immediately via Email/WhatsApp when the shipment tracking clears customs.
+                    </p>
                   </div>
                 ) : (
                   <form onSubmit={handleWaitlist} className="space-y-4">
-                    <p className="text-xs text-on-surface-variant">This boutique device is currently in high demand. Join the priority queue to secure yours from the upcoming factory drop.</p>
+                    <p className="text-xs text-on-surface-variant">
+                      This boutique device is currently in high demand. Join the priority queue to
+                      secure yours from the upcoming factory drop.
+                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">Email Address</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">
+                          Email Address
+                        </label>
                         <input
                           type="email"
                           value={waitlistEmail}
@@ -348,7 +448,9 @@ function ProductPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">WhatsApp Phone</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">
+                          WhatsApp Phone
+                        </label>
                         <input
                           type="text"
                           value={waitlistPhone}
@@ -358,8 +460,12 @@ function ProductPage() {
                         />
                       </div>
                     </div>
-                    <button type="submit" className="w-full bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2">
-                      <span className="material-symbols-outlined text-base">person_add</span> Join Priority Waitlist
+                    <button
+                      type="submit"
+                      className="w-full bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-base">person_add</span> Join
+                      Priority Waitlist
                     </button>
                   </form>
                 )}
@@ -382,7 +488,10 @@ function ProductPage() {
                       −
                     </button>
                     <span className="text-center font-bold text-sm">
-                      {currentQty} <span className="text-[10px] opacity-80 font-normal uppercase tracking-widest block sm:inline">({formatINR(finalPricePaise * currentQty)})</span>
+                      {currentQty}{" "}
+                      <span className="text-[10px] opacity-80 font-normal uppercase tracking-widest block sm:inline">
+                        ({formatINR(finalPricePaise * currentQty)})
+                      </span>
                     </span>
                     <button
                       onClick={() => {
@@ -413,17 +522,40 @@ function ProductPage() {
                         },
                         1,
                       );
-                      if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
-                      if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+                      if (bundleCharger)
+                        add(
+                          {
+                            slug: "bundle-charger",
+                            name: "20W Fast Charger Adapter",
+                            pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900,
+                            image: product.images[0],
+                          },
+                          1,
+                        );
+                      if (bundleGlass)
+                        add(
+                          {
+                            slug: "bundle-glass",
+                            name: "Premium 9H Tempered Glass",
+                            pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900,
+                            image: product.images[0],
+                          },
+                          1,
+                        );
                       toast.success(`Added ${product.name} (and selected add-ons) to cart`);
                     }}
                     className="w-full bg-primary text-on-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2"
                   >
                     <span>Add to Cart</span>
-                    <span className="text-[11px] sm:text-sm font-bold opacity-90">({formatINR(finalPricePaise)})</span>
+                    <span className="text-[11px] sm:text-sm font-bold opacity-90">
+                      ({formatINR(finalPricePaise)})
+                    </span>
                   </button>
                 )}
-                <Link to="/cart" className="w-full border border-outline text-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:bg-surface-container transition-all shadow-sm bg-white text-center flex items-center justify-center">
+                <Link
+                  to="/cart"
+                  className="w-full border border-outline text-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:bg-surface-container transition-all shadow-sm bg-white text-center flex items-center justify-center"
+                >
                   View Cart
                 </Link>
               </div>
@@ -437,8 +569,13 @@ function ProductPage() {
             <h2 className="text-2xl font-bold text-primary mb-8">Precision Specifications</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
               {product.specs.map((s) => (
-                <div key={s.label} className="flex justify-between border-b border-outline-variant/30 py-3">
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">{s.label}</span>
+                <div
+                  key={s.label}
+                  className="flex justify-between border-b border-outline-variant/30 py-3"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    {s.label}
+                  </span>
                   <span className="text-sm font-bold text-on-surface text-right">{s.value}</span>
                 </div>
               ))}
@@ -454,7 +591,10 @@ function ProductPage() {
             </h2>
             <div className="space-y-4">
               {product.faqs.map((faq, i) => (
-                <div key={i} className="border border-outline-variant/40 bg-surface-container-low/50 overflow-hidden transition-all">
+                <div
+                  key={i}
+                  className="border border-outline-variant/40 bg-surface-container-low/50 overflow-hidden transition-all"
+                >
                   <button
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     className="w-full py-4 px-6 text-left font-bold text-sm sm:text-base text-primary flex justify-between items-center gap-4 hover:bg-surface-container-low transition-colors"
@@ -483,13 +623,19 @@ function ProductPage() {
               {related.map((p) => (
                 <Link key={p.slug} to="/product/$slug" params={{ slug: p.slug }} className="group">
                   <div className="aspect-square overflow-hidden shopify-border bg-white mb-3 shadow-sm">
-                    <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="font-bold text-sm uppercase tracking-tight">{p.name}</p>
                     <div className="flex items-center gap-1.5">
                       {p.compareAtPaise && p.compareAtPaise > p.pricePaise && (
-                        <span className="text-[11px] text-on-surface-variant line-through">{formatINR(p.compareAtPaise)}</span>
+                        <span className="text-[11px] text-on-surface-variant line-through">
+                          {formatINR(p.compareAtPaise)}
+                        </span>
                       )}
                       <span className="font-bold text-sm">{formatINR(p.pricePaise)}</span>
                     </div>
@@ -506,9 +652,17 @@ function ProductPage() {
         <div className="bg-rose-50 border-b border-rose-100 text-rose-950 px-4 py-1.5 text-[11px] font-medium flex items-center justify-between">
           <span>Dispatch By {dispatchStr} | Order within</span>
           <span className="flex items-center gap-1 font-mono font-bold">
-            <span className="bg-black text-white px-1.5 py-0.5 rounded">{String(timer.hours).padStart(2, "0")}</span>:
-            <span className="bg-black text-white px-1.5 py-0.5 rounded">{String(timer.minutes).padStart(2, "0")}</span>:
-            <span className="bg-black text-white px-1.5 py-0.5 rounded">{String(timer.seconds).padStart(2, "0")}</span>
+            <span className="bg-black text-white px-1.5 py-0.5 rounded">
+              {String(timer.hours).padStart(2, "0")}
+            </span>
+            :
+            <span className="bg-black text-white px-1.5 py-0.5 rounded">
+              {String(timer.minutes).padStart(2, "0")}
+            </span>
+            :
+            <span className="bg-black text-white px-1.5 py-0.5 rounded">
+              {String(timer.seconds).padStart(2, "0")}
+            </span>
           </span>
         </div>
         <div className="flex items-center p-2 gap-2">
@@ -527,9 +681,7 @@ function ProductPage() {
               >
                 −
               </button>
-              <span className="text-center font-bold text-xs">
-                {currentQty}
-              </span>
+              <span className="text-center font-bold text-xs">{currentQty}</span>
               <button
                 onClick={() => {
                   if (currentQty < product.stock) {
@@ -548,9 +700,37 @@ function ProductPage() {
               disabled={product.stock === 0}
               onClick={() => {
                 const v = product.variants?.find((x) => x.id === variant);
-                add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, 1);
-                if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
-                if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+                add(
+                  {
+                    slug: product.slug,
+                    name: product.name,
+                    pricePaise: product.pricePaise,
+                    image: product.images[0],
+                    variantId: v?.id,
+                    variantLabel: v?.label,
+                  },
+                  1,
+                );
+                if (bundleCharger)
+                  add(
+                    {
+                      slug: "bundle-charger",
+                      name: "20W Fast Charger Adapter",
+                      pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900,
+                      image: product.images[0],
+                    },
+                    1,
+                  );
+                if (bundleGlass)
+                  add(
+                    {
+                      slug: "bundle-glass",
+                      name: "Premium 9H Tempered Glass",
+                      pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900,
+                      image: product.images[0],
+                    },
+                    1,
+                  );
                 toast.success(`Added ${product.name} to cart`);
               }}
               className="flex-1 bg-white border border-primary text-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-surface-container transition-all text-center disabled:opacity-40 shadow-sm"
@@ -563,9 +743,37 @@ function ProductPage() {
             onClick={() => {
               if (currentQty === 0) {
                 const v = product.variants?.find((x) => x.id === variant);
-                add({ slug: product.slug, name: product.name, pricePaise: product.pricePaise, image: product.images[0], variantId: v?.id, variantLabel: v?.label }, 1);
-                if (bundleCharger) add({ slug: "bundle-charger", name: "20W Fast Charger Adapter", pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900, image: product.images[0] }, 1);
-                if (bundleGlass) add({ slug: "bundle-glass", name: "Premium 9H Tempered Glass", pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900, image: product.images[0] }, 1);
+                add(
+                  {
+                    slug: product.slug,
+                    name: product.name,
+                    pricePaise: product.pricePaise,
+                    image: product.images[0],
+                    variantId: v?.id,
+                    variantLabel: v?.label,
+                  },
+                  1,
+                );
+                if (bundleCharger)
+                  add(
+                    {
+                      slug: "bundle-charger",
+                      name: "20W Fast Charger Adapter",
+                      pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900,
+                      image: product.images[0],
+                    },
+                    1,
+                  );
+                if (bundleGlass)
+                  add(
+                    {
+                      slug: "bundle-glass",
+                      name: "Premium 9H Tempered Glass",
+                      pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900,
+                      image: product.images[0],
+                    },
+                    1,
+                  );
               }
             }}
             className="flex-1 bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all text-center block shadow-sm"

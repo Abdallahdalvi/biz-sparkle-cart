@@ -12,6 +12,18 @@ interface OrderItemRow {
   image_url?: string | null;
 }
 
+interface ShippingAddress {
+  first_name?: string;
+  last_name?: string;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  country?: string;
+  gstin?: string;
+}
+
 interface OrderRow {
   id: string;
   order_number: string;
@@ -23,7 +35,7 @@ interface OrderRow {
   razorpay_payment_id?: string | null;
   shiprocket_order_id?: string | null;
   shiprocket_shipment_id?: string | null;
-  shipping_address?: Record<string, any> | null;
+  shipping_address?: ShippingAddress | null;
   order_items?: OrderItemRow[];
 }
 
@@ -141,7 +153,7 @@ function Orders() {
                 <span
                   className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded mt-1 ${isCod ? "bg-blue-100 text-blue-800" : "bg-emerald-100 text-emerald-800"}`}
                 >
-                  {isCod ? "Cash on Delivery (COD)" : "Razorpay Secured"}
+                  {isCod ? "Cash on Delivery (COD)" : "Online payment"}
                 </span>
               </div>
             </div>
@@ -330,7 +342,7 @@ function Orders() {
                     </span>
                     <Link
                       to="/track"
-                      search={{ order: o.order_number }}
+                      search={{ orderId: o.order_number }}
                       className="inline-block bg-primary text-on-primary px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm"
                     >
                       Track Package ↗
@@ -347,7 +359,7 @@ function Orders() {
                     Payment Tracking
                   </h4>
                   <span className="text-[11px] text-on-surface-variant font-medium">
-                    {isCod ? "Cash on Delivery" : "Razorpay Gateway"}
+                    {isCod ? "Cash on Delivery" : "Online payment gateway"}
                   </span>
                 </div>
                 <div className="bg-white p-4 border border-outline-variant/40 rounded space-y-2">

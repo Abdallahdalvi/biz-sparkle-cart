@@ -3,12 +3,7 @@ import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
 import { CookieBanner } from "@/components/CookieBanner";
-import {
-  getAllProducts,
-  getStorefrontCms,
-  type Product,
-  type StorefrontCms,
-} from "@/lib/products";
+import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,14 +40,15 @@ export const Route = createFileRoute("/")({
               "@id": "https://aghanims.dalvi.cloud/#website",
               url: "https://aghanims.dalvi.cloud/",
               name: "Aghanims Phones and Gadgets",
-              description: "Boutique keypad Androids, transparent audio, and minimalist daily drivers. Shipped across India.",
+              description:
+                "Boutique keypad Androids, transparent audio, and minimalist daily drivers. Shipped across India.",
               potentialAction: [
                 {
                   "@type": "SearchAction",
                   target: "https://aghanims.dalvi.cloud/catalog?q={search_term_string}",
-                  "query-input": "required name=search_term_string"
-                }
-              ]
+                  "query-input": "required name=search_term_string",
+                },
+              ],
             },
             {
               "@type": "Organization",
@@ -66,16 +62,16 @@ export const Route = createFileRoute("/")({
                   telephone: "+91-9876543210",
                   contactType: "customer service",
                   areaServed: "IN",
-                  availableLanguage: ["en", "hi"]
-                }
+                  availableLanguage: ["en", "hi"],
+                },
               ],
               sameAs: [
                 "https://whatsapp.com/channel/0029Vaexample",
                 "https://twitter.com/AghanimsPhones",
-                "https://instagram.com/AghanimsPhones"
-              ]
-            }
-          ]
+                "https://instagram.com/AghanimsPhones",
+              ],
+            },
+          ],
         }),
       },
     ],
@@ -89,6 +85,11 @@ function Index() {
   const [reviewIndex, setReviewIndex] = useState(0);
   const trending = all.slice(0, 3);
   const drivers = all.slice(0, 4);
+  const whatsappChannelUrl = /^https:\/\/(?:www\.)?whatsapp\.com\/channel\//i.test(
+    cms.whatsapp_channel_url,
+  )
+    ? cms.whatsapp_channel_url
+    : "/legal/contact";
 
   return (
     <SiteShell>
@@ -149,8 +150,8 @@ function Index() {
                   </div>
                 </a>
                 <a
-                  href={cms.whatsapp_channel_url || "https://whatsapp.com/channel/0029Vaexample"}
-                  target="_blank"
+                  href={whatsappChannelUrl}
+                  target={whatsappChannelUrl.startsWith("https://") ? "_blank" : undefined}
                   rel="noreferrer"
                   className="relative border-2 border-emerald-500 bg-white hover:bg-emerald-50/50 flex flex-col justify-center items-center text-center p-2 sm:p-4 shadow-sm w-full h-full transition-colors group block"
                 >
@@ -315,7 +316,6 @@ function Index() {
           ))}
         </div>
       </section>
-
 
       {/* 4 to 8 Pointer Section (Trust & Value Props) */}
       {cms.pointers && cms.pointers.length > 0 && (

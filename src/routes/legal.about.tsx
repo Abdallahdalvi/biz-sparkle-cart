@@ -33,7 +33,10 @@ function AboutPage() {
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12 md:py-16">
         <div className="mb-12">
           <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-            <Link to="/" className="hover:text-primary">Home</Link> / About Us
+            <Link to="/" className="hover:text-primary">
+              Home
+            </Link>{" "}
+            / About Us
           </p>
           <h1 className="text-4xl md:text-5xl font-bold text-primary max-w-2xl">
             {cms.about_title || "About Aghanims Phones and Gadgets"}
@@ -88,31 +91,47 @@ function AboutPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-start gap-4 p-4 border border-outline-variant/20 rounded bg-white shadow-2xs">
-              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">manage_search</span>
+              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">
+                manage_search
+              </span>
               <div>
                 <h4 className="font-bold text-sm text-primary mb-1">Hand-picked & Tested</h4>
-                <p className="text-xs text-on-surface-variant leading-relaxed">Hand-picked, in-house tested hardware — no drop-ship junk.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Hand-picked, in-house tested hardware — no drop-ship junk.
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-4 p-4 border border-outline-variant/20 rounded bg-white shadow-2xs">
-              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">local_shipping</span>
+              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">
+                local_shipping
+              </span>
               <div>
                 <h4 className="font-bold text-sm text-primary mb-1">Fast, Free Shipping</h4>
-                <p className="text-xs text-on-surface-variant leading-relaxed">Fast, free shipping across India via Shiprocket couriers.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Fast, free shipping across India via Shiprocket couriers.
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-4 p-4 border border-outline-variant/20 rounded bg-white shadow-2xs">
-              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">shield_lock</span>
+              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">
+                shield_lock
+              </span>
               <div>
                 <h4 className="font-bold text-sm text-primary mb-1">Secured Payments</h4>
-                <p className="text-xs text-on-surface-variant leading-relaxed">Razorpay-secured payments, instant refunds where possible.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Clear order status, tracked shipping, and support throughout fulfilment.
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-4 p-4 border border-outline-variant/20 rounded bg-white shadow-2xs">
-              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">support_agent</span>
+              <span className="material-symbols-outlined text-primary text-2xl mt-0.5">
+                support_agent
+              </span>
               <div>
                 <h4 className="font-bold text-sm text-primary mb-1">Real Human Support</h4>
-                <p className="text-xs text-on-surface-variant leading-relaxed">Real humans on email and phone, 6 days a week.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Real humans on email and phone, 6 days a week.
+                </p>
               </div>
             </div>
           </div>

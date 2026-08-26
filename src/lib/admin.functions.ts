@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 export const createProduct = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         token: z.string(),
@@ -55,7 +55,7 @@ export const createProduct = createServerFn({ method: "POST" })
 
     if (prod && data.metadata?.variants?.length > 0) {
       await supabaseAdmin.from("product_variants").insert(
-        data.metadata.variants.map((v: any) => ({
+        data.metadata.variants.map((v: { label: string }) => ({
           product_id: prod.id,
           label: v.label,
           price_delta_paise: 0,
@@ -68,7 +68,7 @@ export const createProduct = createServerFn({ method: "POST" })
   });
 
 export const updateProduct = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         token: z.string(),
@@ -116,7 +116,7 @@ export const updateProduct = createServerFn({ method: "POST" })
   });
 
 export const updateProductStatus = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         token: z.string(),
@@ -168,7 +168,7 @@ export const updateProductStatus = createServerFn({ method: "POST" })
   });
 
 export const deleteProduct = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         token: z.string(),
@@ -216,7 +216,7 @@ export const deleteProduct = createServerFn({ method: "POST" })
   });
 
 export const updateStoreSettings = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         token: z.string(),
@@ -239,14 +239,8 @@ export const updateStoreSettings = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { token, ...payload } = data;
 
-    try {
-      const { error } = await supabaseAdmin.from("store_settings").upsert(payload);
-      if (error && !error.message.includes("schema cache")) {
-        throw error;
-      }
-    } catch (dbErr: any) {
-      // Silently handle schema cache errors if upsert succeeds in background
-    }
+    const { error } = await supabaseAdmin.from("store_settings").upsert(payload);
+    if (error) throw new Error(`Store settings update failed: ${error.message}`);
 
     return { ok: true };
   });
