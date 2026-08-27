@@ -24,11 +24,17 @@ export function Header() {
   return (
     <nav className="fixed top-0 w-full z-50 bg-white border-b border-outline-variant/30">
       <div className="flex justify-between items-center w-full px-4 md:px-10 max-w-[1280px] mx-auto h-16 box-border">
-        <Link to="/" aria-label="Aghanims Phones and Gadgets Home" className="flex-shrink-0 flex items-center">
-          <img 
-            src="https://aghanims.dalvi.cloud/logo.png" 
-            alt="Aghanims Logo" 
-            className="w-10 h-10 rounded-full object-cover" 
+        <Link
+          to="/"
+          aria-label="Aghanims Phones and Gadgets Home"
+          className="flex-shrink-0 flex items-center"
+        >
+          <img
+            src="/logo.svg"
+            alt="Aghanims Phones and Gadgets"
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-full"
           />
         </Link>
         <div className="hidden md:flex items-center gap-8 font-medium text-sm uppercase tracking-wider">
@@ -50,10 +56,18 @@ export function Header() {
           })}
         </div>
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <Link to="/catalog" aria-label="Search" className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity">
+          <Link
+            to="/catalog"
+            aria-label="Search"
+            className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
+          >
             search
           </Link>
-          <Link to="/cart" aria-label="Cart" className="relative material-symbols-outlined text-primary hover:opacity-70 transition-opacity">
+          <Link
+            to="/cart"
+            aria-label="Cart"
+            className="relative material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
+          >
             shopping_cart
             {count > 0 && (
               <span className="absolute -top-1 -right-2 bg-primary text-on-primary text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
@@ -61,7 +75,11 @@ export function Header() {
               </span>
             )}
           </Link>
-          <Link to="/account" aria-label="Account" className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity">
+          <Link
+            to="/account"
+            aria-label="Account"
+            className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
+          >
             account_circle
           </Link>
           {mounted && isAdmin && (
@@ -93,7 +111,9 @@ export function Header() {
                 to={n.to}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block font-bold text-base uppercase tracking-wider py-1.5 ${
-                  active ? "text-primary border-l-4 border-primary pl-3" : "text-on-surface-variant hover:text-primary pl-3"
+                  active
+                    ? "text-primary border-l-4 border-primary pl-3"
+                    : "text-on-surface-variant hover:text-primary pl-3"
                 }`}
               >
                 {n.label}

@@ -55,7 +55,7 @@ export const Route = createFileRoute("/")({
               "@id": "https://aghanims.dalvi.cloud/#organization",
               name: "Aghanims Phones and Gadgets",
               url: "https://aghanims.dalvi.cloud/",
-              logo: "https://aghanims.dalvi.cloud/logo.png",
+              logo: "https://techshop.dalvi.cloud/logo.svg",
               contactPoint: [
                 {
                   "@type": "ContactPoint",
@@ -353,7 +353,7 @@ function Index() {
               <div className="bg-white p-6 shopify-border shadow-sm flex flex-col justify-between min-w-[280px] max-w-sm w-full lg:w-auto">
                 <div className="flex items-center gap-4">
                   <img
-                    src="https://aghanims.dalvi.cloud/logo.png"
+                    src="/logo.svg"
                     alt="Store review logo"
                     className="w-12 h-12 bg-surface-container-low shopify-border flex-shrink-0 object-cover"
                   />
