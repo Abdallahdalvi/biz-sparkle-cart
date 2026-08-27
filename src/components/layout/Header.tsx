@@ -30,7 +30,7 @@ export function Header() {
           className="flex-shrink-0 flex items-center"
         >
           <img
-            src="/logo.svg"
+            src="/logo.png"
             alt="Aghanims Phones and Gadgets"
             width={40}
             height={40}
