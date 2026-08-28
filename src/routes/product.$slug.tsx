@@ -263,6 +263,19 @@ function ProductPage() {
                   </span>
                 )}
               </div>
+              <div className="mt-3 inline-flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                <span className="material-symbols-outlined text-base">payments</span>
+                {product.codAdvancePaise > 0 ? (
+                  <span>
+                    COD available with <strong>{formatINR(product.codAdvancePaise)}</strong> online
+                    advance;{" "}
+                    <strong>{formatINR(product.pricePaise - product.codAdvancePaise)}</strong> is
+                    collected on delivery.
+                  </span>
+                ) : (
+                  <span>Full Cash on Delivery available with no online advance.</span>
+                )}
+              </div>
             </div>
 
             <p className="text-on-surface-variant leading-relaxed">{product.description}</p>

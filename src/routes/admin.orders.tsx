@@ -50,10 +50,15 @@ interface Order {
   shipping_paise: number;
   tax_paise: number;
   total_paise: number;
+  cod_advance_paise: number;
+  advance_paid_paise: number;
+  cod_collectable_paise: number;
   created_at: string;
   tracking_url: string | null;
   shiprocket_order_id: string | null;
   shiprocket_shipment_id: string | null;
+  shiprocket_courier_id?: number | null;
+  shiprocket_courier_name?: string | null;
   notes?: string | null;
   cashfree_order_id?: string | null;
   cashfree_payment_id?: string | null;
@@ -129,7 +134,7 @@ function AdminOrders() {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "id, order_number, email, phone, shipping_address, status, subtotal_paise, shipping_paise, tax_paise, total_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, notes, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, refund_amount_paise, cancellation_reason, order_items(name, qty, unit_price_paise, variant_label)",
+        "id, order_number, email, phone, shipping_address, status, subtotal_paise, shipping_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, notes, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, refund_amount_paise, cancellation_reason, order_items(name, qty, unit_price_paise, variant_label)",
       )
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -368,7 +373,7 @@ function AdminOrders() {
   async function refundOrder(order: Order) {
     if (
       !window.confirm(
-        `Refund the verified Cashfree payment for ${order.order_number}? This also cancels unshipped fulfilment and cannot be undone.`,
+        `Refund ${formatINR(order.notes === "cod" ? order.advance_paid_paise : order.total_paise)} through Cashfree for ${order.order_number}? This also cancels unshipped fulfilment and cannot be undone.`,
       )
     ) {
       return;
@@ -425,8 +430,7 @@ function AdminOrders() {
     const merchandiseSubtotal =
       Number(o.subtotal_paise) ||
       (o.order_items ?? []).reduce((sum, item) => sum + item.unit_price_paise * item.qty, 0);
-    const chargesBeforeAdjustment =
-      merchandiseSubtotal + Number(o.shipping_paise || 0) + Number(o.tax_paise || 0);
+    const chargesBeforeAdjustment = merchandiseSubtotal + Number(o.tax_paise || 0);
     const pricingAdjustment = Number(o.total_paise) - chargesBeforeAdjustment;
     const itemRows = (o.order_items ?? [])
       .map(
@@ -481,7 +485,9 @@ function AdminOrders() {
               <p><strong>Order Date:</strong> ${new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                <p><strong>Payment Mode:</strong> ${o.notes === "cod" ? "Cash on Delivery" : "Prepaid"}</p>
                <p><strong>Order Status:</strong> ${o.status.toUpperCase()}</p>
-              <p><strong>Final Payable Total:</strong> ${formatINR(o.total_paise)}</p>
+              <p><strong>Product Total:</strong> ${formatINR(o.total_paise)}</p>
+              ${o.notes === "cod" && Number(o.advance_paid_paise) > 0 ? `<p><strong>Advance Paid:</strong> ${formatINR(o.advance_paid_paise)}</p>` : ""}
+              ${o.notes === "cod" ? `<p><strong>COD To Collect:</strong> ${formatINR(o.cod_collectable_paise)}</p>` : ""}
             </div>
           </div>
           <table class="table">
@@ -499,11 +505,10 @@ function AdminOrders() {
           </table>
           <div class="totals">
             <div class="totals-row"><span>Merchandise subtotal</span><strong>${formatINR(merchandiseSubtotal)}</strong></div>
-            ${Number(o.shipping_paise || 0) > 0 ? `<div class="totals-row"><span>Shipping</span><strong>${formatINR(o.shipping_paise)}</strong></div>` : '<div class="totals-row"><span>Shipping</span><strong>FREE</strong></div>'}
             ${Number(o.tax_paise || 0) > 0 ? `<div class="totals-row"><span>Tax</span><strong>${formatINR(o.tax_paise)}</strong></div>` : ""}
             ${pricingAdjustment < 0 ? `<div class="totals-row discount"><span>Prepaid discount</span><strong>-${formatINR(Math.abs(pricingAdjustment))}</strong></div>` : ""}
-            ${pricingAdjustment > 0 ? `<div class="totals-row"><span>COD fee</span><strong>+${formatINR(pricingAdjustment)}</strong></div>` : ""}
-            <div class="totals-row final-total"><span>FINAL PAYABLE TOTAL</span><span>${formatINR(o.total_paise)}</span></div>
+            ${o.notes === "cod" && Number(o.advance_paid_paise) > 0 ? `<div class="totals-row discount"><span>COD advance paid online</span><strong>-${formatINR(o.advance_paid_paise)}</strong></div>` : ""}
+            <div class="totals-row final-total"><span>${o.notes === "cod" ? "REMAINING COD TO COURIER" : "FINAL PAYABLE TOTAL"}</span><span>${formatINR(o.notes === "cod" ? o.cod_collectable_paise : o.total_paise)}</span></div>
           </div>
           <div class="footer">
             <p>Thank you for shopping with Aghanims Phones and Gadgets! If you have any questions about your order, please contact support.</p>
@@ -637,9 +642,7 @@ function AdminOrders() {
                 const isSelected = selectedIds.includes(o.id);
                 const addr = o.shipping_address || {};
                 const subtotal = Number(o.subtotal_paise) || 0;
-                const adjustment =
-                  Number(o.total_paise) -
-                  (subtotal + Number(o.shipping_paise || 0) + Number(o.tax_paise || 0));
+                const adjustment = Number(o.total_paise) - (subtotal + Number(o.tax_paise || 0));
                 const terminal = ["cancelled", "refunded"].includes(o.status);
                 const afterDispatch = ["shipped", "delivered"].includes(o.status);
                 const canCancel = !terminal && !afterDispatch;
@@ -711,6 +714,16 @@ function AdminOrders() {
                           <p className="text-[10px] font-bold text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded inline-block mt-0.5">
                             Awaiting Online Payment
                           </p>
+                        )}
+                        {o.notes === "cod" && Number(o.advance_paid_paise) > 0 && (
+                          <div className="mt-1 space-y-0.5 text-[10px] font-bold">
+                            <p className="text-emerald-700">
+                              Advance paid: {formatINR(o.advance_paid_paise)}
+                            </p>
+                            <p className="text-blue-800">
+                              Shiprocket COD: {formatINR(o.cod_collectable_paise)}
+                            </p>
+                          </div>
                         )}
                         {o.cashfree_refund_status && (
                           <p
@@ -796,7 +809,9 @@ function AdminOrders() {
                               ? "Refund Pending"
                               : orderAction === `${o.id}:refund`
                                 ? "Refunding…"
-                                : "Refund via Cashfree"}
+                                : o.notes === "cod"
+                                  ? "Refund COD Advance"
+                                  : "Refund via Cashfree"}
                           </button>
                         )}
                         {!hasRealAwb(o) &&
@@ -868,17 +883,6 @@ function AdminOrders() {
                                   <span>Merchandise subtotal</span>
                                   <span>{formatINR(subtotal)}</span>
                                 </div>
-                                {Number(o.shipping_paise || 0) > 0 ? (
-                                  <div className="flex justify-between text-on-surface-variant">
-                                    <span>Shipping</span>
-                                    <span>{formatINR(o.shipping_paise)}</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-between text-on-surface-variant">
-                                    <span>Shipping</span>
-                                    <span>FREE</span>
-                                  </div>
-                                )}
                                 {Number(o.tax_paise || 0) > 0 && (
                                   <div className="flex justify-between text-on-surface-variant">
                                     <span>Tax</span>
@@ -891,15 +895,23 @@ function AdminOrders() {
                                     <span>-{formatINR(Math.abs(adjustment))}</span>
                                   </div>
                                 )}
-                                {adjustment > 0 && (
-                                  <div className="flex justify-between font-medium text-purple-800">
-                                    <span>COD fee</span>
-                                    <span>+{formatINR(adjustment)}</span>
+                                {o.notes === "cod" && Number(o.advance_paid_paise) > 0 && (
+                                  <div className="flex justify-between font-medium text-emerald-700">
+                                    <span>COD advance paid online</span>
+                                    <span>-{formatINR(o.advance_paid_paise)}</span>
                                   </div>
                                 )}
                                 <div className="flex justify-between border-t-2 border-primary pt-2 text-sm font-black text-primary">
-                                  <span>FINAL PAYABLE TOTAL</span>
-                                  <span>{formatINR(o.total_paise)}</span>
+                                  <span>
+                                    {o.notes === "cod"
+                                      ? "SHIPROCKET COD TO COLLECT"
+                                      : "FINAL PAYABLE TOTAL"}
+                                  </span>
+                                  <span>
+                                    {formatINR(
+                                      o.notes === "cod" ? o.cod_collectable_paise : o.total_paise,
+                                    )}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -912,6 +924,19 @@ function AdminOrders() {
                                 </span>
                                 Shiprocket Package Prep
                               </h4>
+                              {Number(o.shipping_paise || 0) > 0 && (
+                                <div className="flex items-center justify-between rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs">
+                                  <span className="text-blue-900">
+                                    Actual courier cost
+                                    {o.shiprocket_courier_name
+                                      ? ` · ${o.shiprocket_courier_name}`
+                                      : ""}
+                                  </span>
+                                  <strong className="text-blue-900">
+                                    {formatINR(o.shipping_paise)}
+                                  </strong>
+                                </div>
+                              )}
                               <div className="space-y-3 text-xs">
                                 <div>
                                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">

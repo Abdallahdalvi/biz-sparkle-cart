@@ -167,7 +167,7 @@ async function getOrderWithItems(orderId: string) {
   const { data: order, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, order_number, email, phone, shipping_address, subtotal_paise, total_paise, cashfree_order_id, cashfree_payment_id, razorpay_order_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, tracking_url, status, created_at, notes",
+      "id, order_number, email, phone, shipping_address, subtotal_paise, shipping_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, cashfree_order_id, cashfree_payment_id, razorpay_order_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, tracking_url, status, created_at, notes",
     )
     .eq("id", orderId)
     .single();
@@ -183,32 +183,46 @@ async function getOrderWithItems(orderId: string) {
   return { order, items, supabaseAdmin };
 }
 
-async function getShiprocketOrderValuePaise(order: {
+async function getShiprocketPaymentSummary(order: {
   total_paise: number;
+  cod_collectable_paise: number;
   notes: string | null;
   cashfree_payment_id: string | null;
   cashfree_order_id: string | null;
   razorpay_payment_id: string | null;
   razorpay_order_id: string | null;
 }) {
-  let valuePaise = Number(order.total_paise);
-  if (order.notes === "cod" && order.cashfree_payment_id) {
+  const orderTotalPaise = Number(order.total_paise);
+  if (order.notes !== "cod") {
+    return { valuePaise: orderTotalPaise, paymentMethod: "Prepaid" as const };
+  }
+
+  const storedCollectablePaise = Number(order.cod_collectable_paise) || 0;
+  if (storedCollectablePaise > 0) {
+    return { valuePaise: storedCollectablePaise, paymentMethod: "COD" as const };
+  }
+
+  let paidPaise = 0;
+  if (order.cashfree_payment_id) {
     const { getSuccessfulCashfreePaymentInternal } = await import("@/lib/cashfree.server");
     const payment = await getSuccessfulCashfreePaymentInternal(
       asString(order.cashfree_order_id),
       order.cashfree_payment_id,
     );
-    valuePaise = Math.max(0, valuePaise - payment.amountPaise);
-  } else if (order.notes === "cod" && order.razorpay_payment_id) {
+    paidPaise = payment.amountPaise;
+  } else if (order.razorpay_payment_id) {
     // Backward compatibility for orders paid before the Cashfree migration.
     const { getCapturedRazorpayPaymentInternal } = await import("@/lib/razorpay.server");
     const payment = await getCapturedRazorpayPaymentInternal(
       order.razorpay_payment_id,
       asString(order.razorpay_order_id),
     );
-    valuePaise = Math.max(0, valuePaise - payment.amountPaise);
+    paidPaise = payment.amountPaise;
   }
-  return valuePaise;
+  const remainingPaise = Math.max(0, orderTotalPaise - paidPaise);
+  return remainingPaise > 0
+    ? { valuePaise: remainingPaise, paymentMethod: "COD" as const }
+    : { valuePaise: orderTotalPaise, paymentMethod: "Prepaid" as const };
 }
 
 async function recoverShipmentId(shiprocketOrderId: string): Promise<string> {
@@ -260,9 +274,9 @@ export async function createShiprocketOrderInternal(
   }
 
   const address = asRecord(order.shipping_address);
-  let shiprocketOrderValuePaise: number;
+  let shiprocketPayment: Awaited<ReturnType<typeof getShiprocketPaymentSummary>>;
   try {
-    shiprocketOrderValuePaise = await getShiprocketOrderValuePaise(order);
+    shiprocketPayment = await getShiprocketPaymentSummary(order);
   } catch (error) {
     throw new Error(
       `Could not calculate the remaining COD amount: ${error instanceof Error ? error.message : "Payment verification failed"}`,
@@ -291,8 +305,10 @@ export async function createShiprocketOrderInternal(
       units: item.qty,
       selling_price: (item.unit_price_paise / 100).toFixed(2),
     })),
-    payment_method: order.notes === "cod" ? "COD" : "Prepaid",
-    sub_total: (shiprocketOrderValuePaise / 100).toFixed(2),
+    payment_method: shiprocketPayment.paymentMethod,
+    shipping_charges: 0,
+    total_discount: Math.max(0, Number(order.subtotal_paise) - shiprocketPayment.valuePaise) / 100,
+    sub_total: (shiprocketPayment.valuePaise / 100).toFixed(2),
     length: packageDetails.lengthCm,
     breadth: packageDetails.breadthCm,
     height: packageDetails.heightCm,
@@ -355,6 +371,39 @@ export async function generateShiprocketAwbInternal(
   const { order, supabaseAdmin } = await getOrderWithItems(orderId);
   if (["pending", "cancelled", "refunded"].includes(order.status)) {
     throw new Error(`Order must be paid before shipping (current status: ${order.status})`);
+  }
+  if (
+    order.notes === "cod" &&
+    Number(order.cod_advance_paise) > 0 &&
+    Number(order.advance_paid_paise) < Number(order.cod_advance_paise)
+  ) {
+    throw new Error("The product-level COD advance has not been fully paid and verified");
+  }
+
+  let selectedCourier: ShiprocketCourierOption | null = null;
+  if (!order.shiprocket_shipment_id) {
+    if (!packageDetails.courierId) {
+      throw new Error("Choose a courier before creating the Shiprocket order");
+    }
+    const quotes = await getShiprocketCourierOptionsInternal(orderId, packageDetails);
+    selectedCourier =
+      quotes.options.find((option) => option.id === packageDetails.courierId) ?? null;
+    if (!selectedCourier) {
+      throw new Error("The selected courier is no longer available for this package");
+    }
+    if (quotes.paymentMode === "COD" && !selectedCourier.codAvailable) {
+      throw new Error("The selected courier does not support COD for this delivery PIN code");
+    }
+    const { error: courierError } = await supabaseAdmin
+      .from("orders")
+      .update({
+        shipping_paise: Math.round(selectedCourier.rate * 100),
+        shiprocket_courier_id: selectedCourier.id,
+        shiprocket_courier_name: selectedCourier.name,
+      })
+      .eq("id", order.id);
+    if (courierError)
+      throw new Error(`Could not save the Shiprocket quote: ${courierError.message}`);
   }
 
   const created = await createShiprocketOrderInternal(orderId, packageDetails);
@@ -431,6 +480,7 @@ export async function generateShiprocketAwbInternal(
     pickupScheduled,
     pickupMessage,
     labelUrl,
+    shippingRate: selectedCourier?.rate ?? Number(order.shipping_paise || 0) / 100,
   };
 }
 
@@ -601,17 +651,17 @@ export async function getShiprocketCourierOptionsInternal(
     throw new Error(`Shiprocket pickup location "${requestedPickup}" has no valid PIN code`);
   }
 
-  const shipmentValuePaise = await getShiprocketOrderValuePaise(order);
+  const shiprocketPayment = await getShiprocketPaymentSummary(order);
   const response = asRecord(
     await checkShiprocketServiceabilityInternal({
       pickupPincode: pickup.pincode,
       deliveryPincode,
       weightKg: packageDetails.weightKg,
-      cod: order.notes === "cod",
+      cod: shiprocketPayment.paymentMethod === "COD",
       lengthCm: packageDetails.lengthCm,
       breadthCm: packageDetails.breadthCm,
       heightCm: packageDetails.heightCm,
-      declaredValue: shipmentValuePaise / 100,
+      declaredValue: shiprocketPayment.valuePaise / 100,
     }),
   );
   const data = asRecord(response.data);
@@ -671,10 +721,10 @@ export async function getShiprocketCourierOptionsInternal(
     .sort((a, b) => Number(b.recommended) - Number(a.recommended) || a.rate - b.rate);
 
   return {
-    paymentMode: order.notes === "cod" ? "COD" : "Prepaid",
+    paymentMode: shiprocketPayment.paymentMethod,
     pickupPincode: pickup.pincode,
     deliveryPincode,
-    shipmentValue: shipmentValuePaise / 100,
+    shipmentValue: shiprocketPayment.valuePaise / 100,
     accountCourierCount: network.totalCouriers,
     serviceablePincodeCount: network.serviceablePincodes,
     pickupPincodeCount: network.pickupPincodes,

@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyCashfreePayment } from "@/lib/cashfree.functions";
 import { createSecureOrder, getCheckoutCapabilities } from "@/lib/orders.functions";
-import { getStorefrontCms } from "@/lib/products";
+import { getAllProducts, getStorefrontCms } from "@/lib/products";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -19,8 +19,12 @@ export const Route = createFileRoute("/checkout")({
     store_order_id: z.string().uuid().optional(),
   }),
   loader: async () => {
-    const [cms, capabilities] = await Promise.all([getStorefrontCms(), getCheckoutCapabilities()]);
-    return { cms, capabilities };
+    const [cms, capabilities, products] = await Promise.all([
+      getStorefrontCms(),
+      getCheckoutCapabilities(),
+      getAllProducts(),
+    ]);
+    return { cms, capabilities, products };
   },
   head: () => ({
     meta: [
@@ -32,7 +36,7 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function Checkout() {
-  const { cms, capabilities } = Route.useLoaderData();
+  const { cms, capabilities, products } = Route.useLoaderData();
   const search = Route.useSearch();
   const items = useCart((s) => s.items);
   const total = useCart((s) => s.totalPaise());
@@ -94,22 +98,20 @@ function Checkout() {
     prepaidDiscountPaise = Math.round((total * cms.prepaid_discount_amount) / 100);
   }
 
-  // Calculate COD charge in paise
-  let codChargePaise = 0;
-  if (capabilities.onlinePaymentsConfigured && cms.cod_charge_type !== "none") {
-    codChargePaise = cms.cod_charge_amount * 100;
-  }
+  const productsBySlug = new Map(products.map((product) => [product.slug, product]));
+  const codAdvancePaise = items.reduce(
+    (sum, item) =>
+      sum +
+      Math.min(item.pricePaise, productsBySlug.get(item.slug)?.codAdvancePaise || 0) * item.qty,
+    0,
+  );
 
-  const baseEffective =
-    payMode === "prepaid"
-      ? Math.max(0, total - prepaidDiscountPaise)
-      : cms.cod_charge_type === "additional"
-        ? total + codChargePaise
-        : total;
+  const baseEffective = payMode === "prepaid" ? Math.max(0, total - prepaidDiscountPaise) : total;
 
   const effectiveTotal = baseEffective;
 
-  const paymentAmountPaise = payMode === "cod" ? codChargePaise : effectiveTotal;
+  const paymentAmountPaise = payMode === "cod" ? codAdvancePaise : effectiveTotal;
+  const codAdvanceUnavailable = codAdvancePaise > 0 && !capabilities.onlinePaymentsConfigured;
 
   return (
     <SiteShell>
@@ -122,8 +124,8 @@ function Checkout() {
             <div>
               <p className="font-bold uppercase tracking-wider">Cash on Delivery is active</p>
               <p className="text-blue-900/80 mt-1">
-                Online payments will be enabled after business verification. No online advance or
-                COD fee is charged in the meantime.
+                Models with no advance can be ordered normally. A model that requires an advance
+                cannot be confirmed until online payments are available.
               </p>
             </div>
           </div>
@@ -212,7 +214,7 @@ function Checkout() {
               clear();
               toast.success(
                 payMode === "cod"
-                  ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} received. Order ${verified.orderNumber} confirmed.`
+                  ? `COD advance received. ${formatINR(total - paymentAmountPaise)} remains payable on delivery for order ${verified.orderNumber}.`
                   : `Payment received. Order ${verified.orderNumber} confirmed.`,
               );
               if (!token) {
@@ -313,48 +315,33 @@ function Checkout() {
                 </div>
               </label>
               <label
-                className={`flex items-start gap-3 p-4 border rounded cursor-pointer transition-colors ${payMode === "cod" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
+                className={`flex items-start gap-3 p-4 border rounded transition-colors ${codAdvanceUnavailable ? "cursor-not-allowed opacity-60" : "cursor-pointer"} ${payMode === "cod" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
               >
                 <input
                   type="radio"
                   name="pay"
                   checked={payMode === "cod"}
+                  disabled={codAdvanceUnavailable}
                   onChange={() => setPayMode("cod")}
                   className="mt-1 cursor-pointer"
                 />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-sm text-primary">Cash on Delivery (COD)</p>
-                    {capabilities.onlinePaymentsConfigured &&
-                      cms.cod_charge_type === "advance" &&
-                      cms.cod_charge_amount > 0 && (
-                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                          ₹{cms.cod_charge_amount} Advance
-                        </span>
-                      )}
-                    {capabilities.onlinePaymentsConfigured &&
-                      cms.cod_charge_type === "additional" &&
-                      cms.cod_charge_amount > 0 && (
-                        <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                          +₹{cms.cod_charge_amount} Fee
-                        </span>
-                      )}
-                    {(!capabilities.onlinePaymentsConfigured ||
-                      cms.cod_charge_type === "none" ||
-                      cms.cod_charge_amount === 0) && (
+                    {codAdvancePaise > 0 ? (
+                      <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                        {formatINR(codAdvancePaise)} Advance
+                      </span>
+                    ) : (
                       <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                        FREE COD
+                        No Advance
                       </span>
                     )}
                   </div>
                   <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
-                    {!capabilities.onlinePaymentsConfigured
-                      ? "Pay the order total to the courier when the package arrives"
-                      : cms.cod_charge_type === "advance" && cms.cod_charge_amount > 0
-                        ? `Requires ₹${cms.cod_charge_amount} online advance payment to confirm the order`
-                        : cms.cod_charge_type === "additional" && cms.cod_charge_amount > 0
-                          ? `Includes ₹${cms.cod_charge_amount} additional COD handling fee collected online`
-                          : "Pay via cash or UPI when your package arrives at your doorstep"}
+                    {codAdvancePaise > 0
+                      ? `Pay ${formatINR(codAdvancePaise)} securely now; Shiprocket collects the remaining ${formatINR(total - codAdvancePaise)} on delivery`
+                      : `Shiprocket collects the full ${formatINR(total)} on delivery`}
                   </p>
                 </div>
               </label>
@@ -380,38 +367,36 @@ function Checkout() {
                 <span>-{formatINR(prepaidDiscountPaise)}</span>
               </div>
             )}
-            {payMode === "cod" && cms.cod_charge_type === "additional" && codChargePaise > 0 && (
-              <div className="flex justify-between text-sm text-purple-800 font-medium">
-                <span>COD Additional Fee</span>
-                <span>+{formatINR(codChargePaise)}</span>
-              </div>
-            )}
-            {payMode === "cod" && cms.cod_charge_type === "advance" && codChargePaise > 0 && (
+            {payMode === "cod" && codAdvancePaise > 0 && (
               <div className="flex justify-between text-sm text-amber-800 font-medium">
-                <span>COD Advance Booking Fee</span>
-                <span>+{formatINR(codChargePaise)}</span>
+                <span>Advance payable now</span>
+                <span>{formatINR(codAdvancePaise)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Shipping</span>
-              <span className="font-bold">FREE</span>
-            </div>
+            {payMode === "cod" && (
+              <div className="flex justify-between text-sm font-medium text-blue-800">
+                <span>Remaining COD to courier</span>
+                <span>{formatINR(total - codAdvancePaise)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-base border-t pt-3">
-              <span className="font-bold">Total</span>
+              <span className="font-bold">Product Total</span>
               <span className="font-bold">{formatINR(effectiveTotal)}</span>
             </div>
 
             <button
-              disabled={busy}
+              disabled={busy || codAdvanceUnavailable}
               className="w-full bg-primary text-on-primary py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 disabled:opacity-50 shadow-sm"
             >
-              {busy
-                ? "Processing…"
-                : payMode === "prepaid"
-                  ? `Pay ${formatINR(effectiveTotal)}`
-                  : paymentAmountPaise > 0
-                    ? `Pay COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} ${formatINR(paymentAmountPaise)}`
-                    : `Confirm Order (Pay on Delivery)`}
+              {codAdvanceUnavailable
+                ? "COD Advance Temporarily Unavailable"
+                : busy
+                  ? "Processing…"
+                  : payMode === "prepaid"
+                    ? `Pay ${formatINR(effectiveTotal)}`
+                    : paymentAmountPaise > 0
+                      ? `Pay COD Advance ${formatINR(paymentAmountPaise)}`
+                      : `Confirm Order (Pay on Delivery)`}
             </button>
             <p className="text-[10px] text-on-surface-variant text-center">
               By placing this order you agree to our{" "}

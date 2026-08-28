@@ -9,6 +9,7 @@ export interface Product {
   tagline: string;
   category: Category;
   pricePaise: number;
+  codAdvancePaise: number;
   compareAtPaise?: number | null;
   badge?: string;
   images: string[];
@@ -21,7 +22,6 @@ export interface Product {
   costPricePaise?: number;
   gstRate?: number;
   wholesaleGstRate?: number;
-  shippingCostPaise?: number;
   packagingCostPaise?: number;
   formFactor?: string;
 }
@@ -192,7 +192,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     {
       icon: "local_shipping",
       title: "COD SHIPPING",
-      description: "PAN India COD shipping (no advance payment).",
+      description: "PAN India COD with a model-specific online advance where shown.",
     },
     {
       icon: "currency_exchange",
@@ -269,7 +269,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   legal_privacy_text:
     "We respect your privacy. This Policy explains what we collect, how we use it, and your rights. We share data only with service providers needed to process and deliver your order, and we do not sell your data.",
   legal_shipping_text:
-    "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. Shipping is free on all prepaid orders within India.",
+    "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. No manual shipping fee is added to the customer order; the selected Shiprocket courier rate is recorded internally as the fulfilment cost.",
   legal_returns_text:
     "We accept returns within 7 days of delivery for items that are unused, in original condition, and with all original packaging. Approved refunds credit to the original payment method within 5–7 business days of receipt. For damaged-on-arrival (DOA) products, we offer a free replacement if reported within 48 hours of delivery.",
   legal_cancellation_text:
@@ -302,6 +302,7 @@ export async function getAllProducts(): Promise<Product[]> {
       tagline: row.tagline || "",
       category: (row.categories?.slug || "phones") as Category,
       pricePaise: row.price_paise,
+      codAdvancePaise: Number(row.cod_advance_paise) || 0,
       compareAtPaise: row.compare_at_paise,
       badge: row.metadata?.badge || undefined,
       images: row.metadata?.images?.length
@@ -329,10 +330,6 @@ export async function getAllProducts(): Promise<Product[]> {
         row.metadata?.wholesale_gst_rate !== undefined
           ? Number(row.metadata.wholesale_gst_rate)
           : 18,
-      shippingCostPaise:
-        row.metadata?.shipping_cost_paise !== undefined
-          ? Number(row.metadata.shipping_cost_paise)
-          : 15000,
       packagingCostPaise:
         row.metadata?.packaging_cost_paise !== undefined
           ? Number(row.metadata.packaging_cost_paise)

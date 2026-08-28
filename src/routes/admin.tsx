@@ -50,7 +50,6 @@ interface DashboardProduct {
     cost_price_paise?: number | string;
     gst_rate?: number | string;
     wholesale_gst_rate?: number | string;
-    shipping_cost_paise?: number | string;
     packaging_cost_paise?: number | string;
   } | null;
   categories?: { name?: string | null } | null;
@@ -225,6 +224,7 @@ function AdminOverview() {
               : 1;
           return items.map((item) => {
             const product = item.product_id ? productById.get(item.product_id) : undefined;
+            const itemLineTotal = Number(item.unit_price_paise) * (Number(item.qty) || 1);
             return {
               id: order.order_number,
               item_name: item.name,
@@ -234,7 +234,11 @@ function AdminOverview() {
               gst_rate: Number(product?.metadata?.gst_rate) || 0,
               wholesale_gst_rate: Number(product?.metadata?.wholesale_gst_rate) || 0,
               shipping_paise:
-                (Number(product?.metadata?.shipping_cost_paise) || 0) * (Number(item.qty) || 1),
+                Number(order.subtotal_paise) > 0
+                  ? Math.round(
+                      (Number(order.shipping_paise) * itemLineTotal) / Number(order.subtotal_paise),
+                    )
+                  : 0,
               pkg_paise:
                 (Number(product?.metadata?.packaging_cost_paise) || 0) * (Number(item.qty) || 1),
               date: order.created_at?.slice(0, 10) || "",

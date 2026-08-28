@@ -5,7 +5,25 @@ import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
 import { PRODUCTS } from "@/lib/products";
 import { useServerFn } from "@tanstack/react-start";
-import { createProduct, updateProduct, updateProductStatus, deleteProduct } from "@/lib/admin.functions";
+import {
+  createProduct,
+  updateProduct,
+  updateProductStatus,
+  deleteProduct,
+} from "@/lib/admin.functions";
+
+interface ProductMetadata {
+  badge?: string;
+  cost_price_paise?: number;
+  gst_rate?: number;
+  wholesale_gst_rate?: number;
+  packaging_cost_paise?: number;
+  specs?: Array<{ label: string; value: string }>;
+  variants?: Array<{ id: string; label: string }>;
+  images?: string[];
+  faqs?: Array<{ question: string; answer: string }>;
+  [key: string]: unknown;
+}
 
 interface Row {
   id: string;
@@ -14,16 +32,21 @@ interface Row {
   tagline: string | null;
   description?: string | null;
   price_paise: number;
+  cod_advance_paise: number;
   compare_at_paise: number | null;
   stock: number;
   is_active: boolean;
   category_id: string | null;
-  metadata: any;
+  metadata: ProductMetadata;
 }
 interface Category {
   id: string;
   name: string;
   slug: string;
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 export const Route = createFileRoute("/admin/products")({
@@ -42,7 +65,7 @@ function AdminProducts() {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, slug, name, tagline, description, price_paise, compare_at_paise, stock, is_active, category_id, metadata",
+        "id, slug, name, tagline, description, price_paise, cod_advance_paise, compare_at_paise, stock, is_active, category_id, metadata",
       )
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -55,6 +78,7 @@ function AdminProducts() {
       tagline: p.tagline || null,
       description: p.description || null,
       price_paise: p.pricePaise,
+      cod_advance_paise: p.codAdvancePaise,
       compare_at_paise: p.compareAtPaise || null,
       stock: p.stock,
       is_active: true,
@@ -64,7 +88,6 @@ function AdminProducts() {
         cost_price_paise: Math.round(p.pricePaise * 0.7),
         gst_rate: 18,
         wholesale_gst_rate: 18,
-        shipping_cost_paise: 15000,
         packaging_cost_paise: 5000,
         specs: p.specs,
         variants: p.variants || [],
@@ -118,8 +141,8 @@ function AdminProducts() {
         },
       });
       refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update product status");
+    } catch (error) {
+      toast.error(errorMessage(error, "Failed to update product status"));
     }
   }
 
@@ -159,8 +182,8 @@ function AdminProducts() {
       });
       toast.success("Deleted");
       refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete product");
+    } catch (error) {
+      toast.error(errorMessage(error, "Failed to delete product"));
     }
   }
 
@@ -221,6 +244,7 @@ function AdminProducts() {
                 <th className="p-4">Product Info</th>
                 <th className="p-4">Tag / Badge</th>
                 <th className="p-4">Price & Discount</th>
+                <th className="p-4">COD Advance</th>
                 <th className="p-4">Stock</th>
                 <th className="p-4">Specs & Variants</th>
                 <th className="p-4">Status</th>
@@ -262,6 +286,14 @@ function AdminProducts() {
                       </p>
                     )}
                   </td>
+                  <td className="p-4">
+                    <p className="font-bold text-amber-800">
+                      {r.cod_advance_paise > 0 ? formatINR(r.cod_advance_paise) : "Full COD"}
+                    </p>
+                    <p className="text-[10px] text-on-surface-variant">
+                      {r.cod_advance_paise > 0 ? "Paid online first" : "No advance"}
+                    </p>
+                  </td>
                   <td className="p-4 font-bold">{r.stock}</td>
                   <td className="p-4 text-xs text-on-surface-variant space-y-1">
                     <div>
@@ -269,7 +301,7 @@ function AdminProducts() {
                     </div>
                     <div>
                       <strong>Variants:</strong>{" "}
-                      {r.metadata?.variants?.map((v: any) => v.label).join(", ") || "None"}
+                      {r.metadata?.variants?.map((variant) => variant.label).join(", ") || "None"}
                     </div>
                   </td>
                   <td className="p-4">
@@ -404,11 +436,11 @@ function NewProductForm({
         const fd = new FormData(e.currentTarget);
         setBusy(true);
         const priceRupees = Number(fd.get("price"));
+        const codAdvanceRupees = Number(fd.get("cod_advance") || 0);
         const compareRupees = Number(fd.get("compare_at") || 0);
         const costRupees = Number(fd.get("cost_price") || priceRupees * 0.7);
         const gstRate = Number(fd.get("gst_rate") || 18);
         const wholesaleGstRate = Number(fd.get("wholesale_gst_rate") || 18);
-        const shippingRupees = Number(fd.get("shipping_cost") || 150);
         const packagingRupees = Number(fd.get("packaging_cost") || 50);
 
         const metadata = {
@@ -416,7 +448,6 @@ function NewProductForm({
           cost_price_paise: Math.round(costRupees * 100),
           gst_rate: gstRate,
           wholesale_gst_rate: wholesaleGstRate,
-          shipping_cost_paise: Math.round(shippingRupees * 100),
           packaging_cost_paise: Math.round(packagingRupees * 100),
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
@@ -437,6 +468,7 @@ function NewProductForm({
               tagline: String(fd.get("tagline") ?? ""),
               description: String(fd.get("description") ?? ""),
               price_paise: Math.round(priceRupees * 100),
+              cod_advance_paise: Math.round(codAdvanceRupees * 100),
               compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
               stock: Number(fd.get("stock") ?? 0),
               category_id: (fd.get("category") as string) || null,
@@ -448,9 +480,9 @@ function NewProductForm({
           setBusy(false);
           toast.success("Product successfully created with Specs, Variants, FAQs, and Images!");
           onDone();
-        } catch (error: any) {
+        } catch (error) {
           setBusy(false);
-          toast.error(`Database Error: ${error.message || "Creation failed"}`);
+          toast.error(`Database Error: ${errorMessage(error, "Creation failed")}`);
         }
       }}
       className="bg-surface-container-low shopify-border p-8 space-y-8"
@@ -555,8 +587,8 @@ function NewProductForm({
             2. Pricing, Inventory & Financial Analytics Setup
           </h4>
           <p className="text-[11px] text-on-surface-variant mb-2">
-            Configure buying costs, GST rates, wholesale GST paid, shipping, and packaging for
-            real-time seller profit tracking.
+            Configure buying costs, GST rates, packaging, and the model-specific COD advance. Actual
+            courier cost is captured from Shiprocket when you assign delivery.
           </p>
         </div>
         <div>
@@ -635,15 +667,20 @@ function NewProductForm({
         <div className="grid grid-cols-2 gap-2 md:col-span-3">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-              Shipping (₹)
+              COD Advance Paid Online (₹)
             </label>
             <input
-              name="shipping_cost"
+              name="cod_advance"
               type="number"
-              defaultValue={150}
-              placeholder="150"
+              min="0"
+              step="0.01"
+              defaultValue={0}
+              placeholder="e.g. 299"
               className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
             />
+            <p className="mt-1 text-[10px] text-on-surface-variant">
+              Deducted from the product price; the balance is collected by Shiprocket as COD.
+            </p>
           </div>
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
@@ -968,20 +1005,22 @@ function EditProductForm({
         const fd = new FormData(e.currentTarget);
         setBusy(true);
         const priceRupees = Number(fd.get("price"));
+        const codAdvanceRupees = Number(fd.get("cod_advance") || 0);
         const compareRupees = Number(fd.get("compare_at") || 0);
         const costRupees = Number(fd.get("cost_price") || priceRupees * 0.7);
         const gstRate = Number(fd.get("gst_rate") || 18);
         const wholesaleGstRate = Number(fd.get("wholesale_gst_rate") || 18);
-        const shippingRupees = Number(fd.get("shipping_cost") || 150);
         const packagingRupees = Number(fd.get("packaging_cost") || 50);
+        const { shipping_cost_paise: removedManualShippingCost, ...productMetadata } =
+          prod.metadata || {};
+        void removedManualShippingCost;
 
         const metadata = {
-          ...prod.metadata,
+          ...productMetadata,
           badge: String(fd.get("badge") ?? ""),
           cost_price_paise: Math.round(costRupees * 100),
           gst_rate: gstRate,
           wholesale_gst_rate: wholesaleGstRate,
-          shipping_cost_paise: Math.round(shippingRupees * 100),
           packaging_cost_paise: Math.round(packagingRupees * 100),
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
@@ -1003,6 +1042,7 @@ function EditProductForm({
               tagline: String(fd.get("tagline") ?? ""),
               description: String(fd.get("description") ?? ""),
               price_paise: Math.round(priceRupees * 100),
+              cod_advance_paise: Math.round(codAdvanceRupees * 100),
               compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
               stock: Number(fd.get("stock") ?? 0),
               category_id: (fd.get("category") as string) || null,
@@ -1014,9 +1054,9 @@ function EditProductForm({
           setBusy(false);
           toast.success("Product successfully updated!");
           onDone();
-        } catch (error: any) {
+        } catch (error) {
           setBusy(false);
-          toast.error(`Database Error: ${error.message || "Update failed"}`);
+          toast.error(`Database Error: ${errorMessage(error, "Update failed")}`);
         }
       }}
       className="bg-surface-container-low shopify-border p-8 space-y-8"
@@ -1126,8 +1166,8 @@ function EditProductForm({
             2. Pricing, Inventory & Financial Analytics Setup
           </h4>
           <p className="text-[11px] text-on-surface-variant mb-2">
-            Configure buying costs, GST rates, wholesale GST paid, shipping, and packaging for
-            real-time seller profit tracking.
+            Configure buying costs, GST rates, packaging, and the model-specific COD advance. Actual
+            courier cost is captured from Shiprocket when you assign delivery.
           </p>
         </div>
         <div>
@@ -1217,19 +1257,20 @@ function EditProductForm({
         <div className="grid grid-cols-2 gap-2 md:col-span-3">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-              Shipping (₹)
+              COD Advance Paid Online (₹)
             </label>
             <input
-              name="shipping_cost"
-              defaultValue={
-                prod.metadata?.shipping_cost_paise !== undefined
-                  ? prod.metadata.shipping_cost_paise / 100
-                  : 150
-              }
+              name="cod_advance"
+              defaultValue={prod.cod_advance_paise / 100}
               type="number"
-              placeholder="150"
+              min="0"
+              step="0.01"
+              placeholder="e.g. 299"
               className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
             />
+            <p className="mt-1 text-[10px] text-on-surface-variant">
+              Deducted from the product price; the balance is collected by Shiprocket as COD.
+            </p>
           </div>
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">

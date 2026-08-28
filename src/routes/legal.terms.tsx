@@ -37,9 +37,11 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>4. Payments</h2>
       <p>
-        Cash on Delivery is currently available where supported by the assigned courier. When online
-        payments are enabled, they will be processed by the payment provider identified at checkout.
-        We do not store card or banking credentials.
+        Cash on Delivery is available where supported by the assigned courier. Some models require
+        the advance amount displayed at checkout to be paid online; that advance is deducted from
+        the product total and only the remaining balance is collected on delivery. Online payments
+        are processed by the provider identified at checkout. We do not store card or banking
+        credentials.
       </p>
       <h2>5. Shipping, Returns, Refunds, Cancellation</h2>
       <p>

@@ -88,10 +88,12 @@ export const createSecureOrder = createServerFn({ method: "POST" })
 
     // Securely fetch prices and details for each item
     let subtotalPaise = 0;
+    let codAdvancePaise = 0;
     const orderItemsToInsert: Array<{
       name: string;
       variant_label: string | null;
       unit_price_paise: number;
+      cod_advance_paise: number;
       qty: number;
       image_url: string;
       product_id: string;
@@ -101,7 +103,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     for (const item of normalizedItems.values()) {
       const { data: prod, error: prodErr } = await supabaseAdmin
         .from("products")
-        .select("id, name, price_paise, metadata, stock, is_active")
+        .select("id, name, price_paise, cod_advance_paise, metadata, stock, is_active")
         .eq("slug", item.slug)
         .single();
       if (prodErr || !prod) throw new Error(`Product not found: ${item.slug}`);
@@ -131,6 +133,11 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       }
 
       subtotalPaise += unitPricePaise * item.qty;
+      const unitCodAdvancePaise = Math.min(
+        unitPricePaise,
+        Math.max(0, Number(prod.cod_advance_paise) || 0),
+      );
+      codAdvancePaise += unitCodAdvancePaise * item.qty;
 
       // Determine image url
       let imageUrl = "";
@@ -142,6 +149,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         name: prod.name,
         variant_label: variantLabel,
         unit_price_paise: unitPricePaise,
+        cod_advance_paise: unitCodAdvancePaise,
         qty: item.qty,
         image_url: imageUrl,
         product_id: prod.id,
@@ -149,7 +157,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       });
     }
 
-    // Securely calculate discount / COD charges from store_settings
+    // Securely calculate the prepaid discount. COD advances are configured per product above.
     const { data: settings } = await supabaseAdmin
       .from("store_settings")
       .select("metadata")
@@ -159,8 +167,6 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     const cmsMeta = settings?.metadata || {};
     const prepaidDiscountType = cmsMeta.prepaid_discount_type || "none";
     const prepaidDiscountAmount = cmsMeta.prepaid_discount_amount || 0;
-    const codChargeType = cmsMeta.cod_charge_type || "none";
-    const codChargeAmount = cmsMeta.cod_charge_amount || 0;
 
     let prepaidDiscountPaise = 0;
     if (prepaidDiscountType === "flat") {
@@ -175,22 +181,18 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         "Online payments are temporarily unavailable. Please choose Cash on Delivery.",
       );
     }
-
-    let codChargePaise = 0;
-    if (paymentReady && codChargeType !== "none") {
-      codChargePaise = codChargeAmount * 100;
+    if (data.payMode === "cod" && codAdvancePaise > 0 && !paymentReady) {
+      throw new Error(
+        "The COD advance cannot be collected because online payments are unavailable",
+      );
     }
-
-    const effectiveCodChargeType = paymentReady ? codChargeType : "none";
 
     const effectiveTotal =
       data.payMode === "prepaid"
         ? Math.max(0, subtotalPaise - prepaidDiscountPaise)
-        : effectiveCodChargeType === "additional"
-          ? subtotalPaise + codChargePaise
-          : subtotalPaise;
+        : subtotalPaise;
 
-    const paymentAmountPaise = data.payMode === "cod" ? codChargePaise : effectiveTotal;
+    const paymentAmountPaise = data.payMode === "cod" ? codAdvancePaise : effectiveTotal;
 
     // Insert order securely
     const { data: order, error: orderErr } = await supabaseAdmin
@@ -201,7 +203,12 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         phone: data.phone,
         shipping_address: data.shippingAddress,
         subtotal_paise: subtotalPaise,
+        shipping_paise: 0,
         total_paise: effectiveTotal,
+        cod_advance_paise: data.payMode === "cod" ? codAdvancePaise : 0,
+        advance_paid_paise: 0,
+        cod_collectable_paise:
+          data.payMode === "cod" ? Math.max(0, effectiveTotal - codAdvancePaise) : 0,
         status: paymentAmountPaise === 0 ? "processing" : "pending",
         notes: data.payMode,
       })
@@ -217,6 +224,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       name: i.name,
       variant_label: i.variant_label,
       unit_price_paise: i.unit_price_paise,
+      cod_advance_paise: i.cod_advance_paise,
       qty: i.qty,
       image_url: i.image_url,
     }));
@@ -224,15 +232,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     if (itemsErr) throw new Error(`Order items creation failed: ${itemsErr.message}`);
 
     if (paymentAmountPaise === 0) {
-      // No online amount is due, so fulfil directly on the server.
-      try {
-        const { createShiprocketOrderInternal } = await import("./shiprocket.server");
-        await createShiprocketOrderInternal(order.id);
-      } catch (err) {
-        console.error("[cod→shiprocket]", err);
-      }
-
-      // Decrement stock
+      // No online amount is due. Reserve stock now; Shiprocket creation waits for courier choice.
       for (const item of orderItemsToInsert) {
         const { error: stockError } = await supabaseAdmin.rpc("decrement_stock", {
           p_product_id: item.product_id,
@@ -270,7 +270,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         returnOrigin: data.returnOrigin,
         note:
           data.payMode === "cod"
-            ? `COD ${codChargeType === "advance" ? "advance" : "fee"} for ${order.order_number}`
+            ? `COD advance for ${order.order_number}`
             : `Online payment for ${order.order_number}`,
       });
       const { error: linkError } = await supabaseAdmin

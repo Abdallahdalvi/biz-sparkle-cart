@@ -114,13 +114,6 @@ export async function completeRazorpayPaymentInternal(razorpayOrderId: string, p
     throw new Error(`Stock reservation audit failed: ${reservationError.message}`);
   }
 
-  try {
-    const { createShiprocketOrderInternal } = await import("@/lib/shiprocket.server");
-    await createShiprocketOrderInternal(transitioned.id);
-  } catch (error) {
-    console.error("[razorpay→shiprocket]", error);
-  }
-
   return { ok: true, alreadyProcessed: false, orderId: transitioned.id };
 }
 

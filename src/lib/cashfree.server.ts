@@ -277,11 +277,37 @@ export async function finalizeCashfreeRefundInternal(input: {
 export async function completeCashfreePaymentInternal(cashfreeOrderId: string, paymentId?: string) {
   const payment = await getSuccessfulCashfreePaymentInternal(cashfreeOrderId, paymentId);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: linkedOrder, error: linkedOrderError } = await supabaseAdmin
+    .from("orders")
+    .select("id, notes, total_paise, cod_advance_paise")
+    .eq("cashfree_order_id", cashfreeOrderId)
+    .maybeSingle();
+  if (linkedOrderError) throw new Error(linkedOrderError.message);
+  if (!linkedOrder) throw new Error("No store order matches this Cashfree order");
+  const expectedStorePaymentPaise =
+    linkedOrder.notes === "cod"
+      ? Number(linkedOrder.cod_advance_paise)
+      : Number(linkedOrder.total_paise);
+  if (payment.amountPaise !== expectedStorePaymentPaise) {
+    throw new Error("The verified Cashfree amount does not match the store order payment due");
+  }
+
+  const paymentUpdate: Record<string, unknown> = {
+    status: "paid",
+    cashfree_payment_id: payment.id,
+  };
+  if (linkedOrder.notes === "cod") {
+    paymentUpdate.advance_paid_paise = payment.amountPaise;
+    paymentUpdate.cod_collectable_paise = Math.max(
+      0,
+      Number(linkedOrder.total_paise) - payment.amountPaise,
+    );
+  }
 
   const { data: transitioned, error: transitionError } = await supabaseAdmin
     .from("orders")
-    .update({ status: "paid", cashfree_payment_id: payment.id })
-    .eq("cashfree_order_id", cashfreeOrderId)
+    .update(paymentUpdate)
+    .eq("id", linkedOrder.id)
     .eq("status", "pending")
     .select("id, order_number")
     .maybeSingle();
@@ -326,13 +352,6 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
     .eq("id", transitioned.id);
   if (reservationError) {
     throw new Error(`Stock reservation audit failed: ${reservationError.message}`);
-  }
-
-  try {
-    const { createShiprocketOrderInternal } = await import("@/lib/shiprocket.server");
-    await createShiprocketOrderInternal(transitioned.id);
-  } catch (error) {
-    console.error("[cashfree→shiprocket]", error);
   }
 
   return {

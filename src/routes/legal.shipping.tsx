@@ -7,7 +7,8 @@ export const Route = createFileRoute("/legal/shipping")({
       { title: "Shipping & Delivery — Aghanims Phones and Gadgets" },
       {
         name: "description",
-        content: "Shipping zones, delivery timelines, and tracking for Aghanims Phones and Gadgets orders.",
+        content:
+          "Shipping zones, delivery timelines, and tracking for Aghanims Phones and Gadgets orders.",
       },
     ],
   }),
@@ -39,7 +40,11 @@ export const Route = createFileRoute("/legal/shipping")({
         </li>
       </ul>
       <h2>Shipping charges</h2>
-      <p>Shipping is free on all prepaid orders within India unless stated otherwise.</p>
+      <p>
+        No manual shipping fee is added to the customer&apos;s website order. The actual courier
+        cost is calculated from Shiprocket when we assign the courier and is recorded as an internal
+        fulfilment expense.
+      </p>
       <h2>Tracking</h2>
       <p>
         Once shipped you'll receive an email and SMS with the AWB number and a live tracking link,

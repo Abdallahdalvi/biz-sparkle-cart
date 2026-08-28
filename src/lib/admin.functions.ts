@@ -11,6 +11,7 @@ export const createProduct = createServerFn({ method: "POST" })
         tagline: z.string().default(""),
         description: z.string().default(""),
         price_paise: z.number(),
+        cod_advance_paise: z.number().int().min(0),
         compare_at_paise: z.number().nullable(),
         stock: z.number(),
         category_id: z.string().nullable(),
@@ -22,6 +23,12 @@ export const createProduct = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireSupabaseAuth } = await import("@/lib/auth.server");
     await requireSupabaseAuth(data.token, "admin");
+    if (data.cod_advance_paise > data.price_paise) {
+      throw new Error("COD advance cannot exceed the product selling price");
+    }
+    if (data.cod_advance_paise > 0 && data.cod_advance_paise < 100) {
+      throw new Error("COD advance must be at least ₹1 or exactly ₹0 for full COD");
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prod, error } = await supabaseAdmin
@@ -32,6 +39,7 @@ export const createProduct = createServerFn({ method: "POST" })
         tagline: data.tagline,
         description: data.description,
         price_paise: data.price_paise,
+        cod_advance_paise: data.cod_advance_paise,
         compare_at_paise: data.compare_at_paise,
         stock: data.stock,
         category_id: data.category_id,
@@ -78,6 +86,7 @@ export const updateProduct = createServerFn({ method: "POST" })
         tagline: z.string().default(""),
         description: z.string().default(""),
         price_paise: z.number(),
+        cod_advance_paise: z.number().int().min(0),
         compare_at_paise: z.number().nullable(),
         stock: z.number(),
         category_id: z.string().nullable(),
@@ -89,6 +98,12 @@ export const updateProduct = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireSupabaseAuth } = await import("@/lib/auth.server");
     await requireSupabaseAuth(data.token, "admin");
+    if (data.cod_advance_paise > data.price_paise) {
+      throw new Error("COD advance cannot exceed the product selling price");
+    }
+    if (data.cod_advance_paise > 0 && data.cod_advance_paise < 100) {
+      throw new Error("COD advance must be at least ₹1 or exactly ₹0 for full COD");
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload = {
@@ -97,6 +112,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       tagline: data.tagline,
       description: data.description,
       price_paise: data.price_paise,
+      cod_advance_paise: data.cod_advance_paise,
       compare_at_paise: data.compare_at_paise,
       stock: data.stock,
       category_id: data.category_id,

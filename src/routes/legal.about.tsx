@@ -106,9 +106,9 @@ function AboutPage() {
                 local_shipping
               </span>
               <div>
-                <h4 className="font-bold text-sm text-primary mb-1">Fast, Free Shipping</h4>
+                <h4 className="font-bold text-sm text-primary mb-1">Shiprocket Fulfilment</h4>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  Fast, free shipping across India via Shiprocket couriers.
+                  Courier assignment, tracking, and delivery updates are handled through Shiprocket.
                 </p>
               </div>
             </div>

@@ -50,6 +50,7 @@ create table if not exists electronic_shop.products (
   description  text,
   category_id  uuid references electronic_shop.categories(id) on delete set null,
   price_paise  bigint not null check (price_paise >= 0),
+  cod_advance_paise bigint not null default 0 check (cod_advance_paise >= 0),
   compare_at_paise bigint check (compare_at_paise is null or compare_at_paise >= 0),
   stock        int not null default 0,
   is_active    boolean not null default true,
@@ -57,6 +58,12 @@ create table if not exists electronic_shop.products (
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+alter table electronic_shop.products add column if not exists cod_advance_paise bigint not null default 0;
+do $$ begin
+  alter table electronic_shop.products
+    add constraint products_cod_advance_not_above_price
+    check (cod_advance_paise <= price_paise);
+exception when duplicate_object then null; end $$;
 create index if not exists products_category_idx on electronic_shop.products(category_id);
 create index if not exists products_active_idx on electronic_shop.products(is_active);
 grant select on electronic_shop.products to anon, authenticated;
@@ -166,6 +173,9 @@ create table if not exists electronic_shop.orders (
   shipping_paise     bigint not null default 0,
   tax_paise          bigint not null default 0,
   total_paise        bigint not null,
+  cod_advance_paise  bigint not null default 0,
+  advance_paid_paise bigint not null default 0,
+  cod_collectable_paise bigint not null default 0,
   currency           text not null default 'INR',
   status             electronic_shop.order_status not null default 'pending',
   cashfree_order_id  text,
@@ -181,6 +191,8 @@ create table if not exists electronic_shop.orders (
   razorpay_payment_id text,
   shiprocket_order_id text,
   shiprocket_shipment_id text,
+  shiprocket_courier_id int,
+  shiprocket_courier_name text,
   tracking_url       text,
   notes              text,
   created_at         timestamptz not null default now(),
@@ -194,6 +206,11 @@ alter table electronic_shop.orders add column if not exists refund_amount_paise 
 alter table electronic_shop.orders add column if not exists cancellation_reason text;
 alter table electronic_shop.orders add column if not exists stock_decremented_at timestamptz;
 alter table electronic_shop.orders add column if not exists stock_restored_at timestamptz;
+alter table electronic_shop.orders add column if not exists cod_advance_paise bigint not null default 0;
+alter table electronic_shop.orders add column if not exists advance_paid_paise bigint not null default 0;
+alter table electronic_shop.orders add column if not exists cod_collectable_paise bigint not null default 0;
+alter table electronic_shop.orders add column if not exists shiprocket_courier_id int;
+alter table electronic_shop.orders add column if not exists shiprocket_courier_name text;
 update electronic_shop.orders
 set stock_decremented_at = created_at
 where stock_decremented_at is null
@@ -226,9 +243,11 @@ create table if not exists electronic_shop.order_items (
   name        text not null,
   variant_label text,
   unit_price_paise bigint not null,
+  cod_advance_paise bigint not null default 0,
   qty         int not null check (qty > 0),
   image_url   text
 );
+alter table electronic_shop.order_items add column if not exists cod_advance_paise bigint not null default 0;
 create index if not exists order_items_order_idx on electronic_shop.order_items(order_id);
 grant select on electronic_shop.order_items to authenticated;
 grant all on electronic_shop.order_items to service_role;

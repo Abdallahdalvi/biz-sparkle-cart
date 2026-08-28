@@ -700,96 +700,29 @@ function AdminCmsPage() {
                   Checkout Charges & Discount Configuration
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1">
-                  Configure Cash on Delivery (COD) advance booking fees, additional handling
-                  charges, or flat/percentage prepaid discounts instantly.
+                  COD advances are configured per product model. This page only controls prepaid
+                  discounts.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* COD Settings Card */}
-                <div className="p-6 bg-surface-container-lowest border border-outline-variant/40 space-y-6 rounded">
+                <div className="p-6 bg-amber-50/50 border border-amber-200 space-y-4 rounded">
                   <h4 className="font-bold text-sm text-primary uppercase tracking-wider flex items-center gap-2 border-l-4 border-amber-500 pl-3">
                     <span className="material-symbols-outlined text-amber-600">local_shipping</span>
-                    Cash on Delivery (COD) Rules
+                    Per-Product COD Advances
                   </h4>
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">
-                      COD Charge Type
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(
-                        [
-                          { id: "advance", label: "Advance Fee" },
-                          { id: "additional", label: "Extra Charge" },
-                          { id: "none", label: "Free COD" },
-                        ] as const
-                      ).map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setCms({ ...cms, cod_charge_type: t.id })}
-                          className={`py-2 px-3 text-xs font-bold border rounded transition-all ${cms.cod_charge_type === t.id ? "bg-primary text-on-primary border-primary shadow-sm" : "bg-surface-container-low border-outline-variant/40 text-on-surface-variant hover:bg-surface-container"}`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-on-surface-variant mt-1">
-                      {cms.cod_charge_type === "advance" &&
-                        "Advance booking fee collected through the configured online payment provider and deducted from the amount due on delivery."}
-                      {cms.cod_charge_type === "additional" &&
-                        "Extra handling fee collected through the configured online payment provider."}
-                      {cms.cod_charge_type === "none" &&
-                        "No advance fee. Customer pays full amount at delivery."}
-                    </p>
-                  </div>
-
-                  {cms.cod_charge_type !== "none" && (
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">
-                        Charge Amount (₹ INR)
-                      </label>
-                      <input
-                        type="number"
-                        value={cms.cod_charge_amount}
-                        onChange={(e) =>
-                          setCms({
-                            ...cms,
-                            cod_charge_amount: Math.max(0, parseInt(e.target.value, 10) || 0),
-                          })
-                        }
-                        className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
-                      />
-                    </div>
-                  )}
-
-                  <div className="p-4 bg-amber-50/50 border border-amber-200 rounded space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-primary">Live Checkout Preview:</span>
-                      {cms.cod_charge_type === "advance" && (
-                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                          ₹{cms.cod_charge_amount} Advance
-                        </span>
-                      )}
-                      {cms.cod_charge_type === "additional" && (
-                        <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                          +₹{cms.cod_charge_amount} Fee
-                        </span>
-                      )}
-                      {cms.cod_charge_type === "none" && (
-                        <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                          FREE COD
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-on-surface-variant">
-                      {cms.cod_charge_type === "advance"
-                        ? `Requires ₹${cms.cod_charge_amount} advance payment through the configured online provider`
-                        : cms.cod_charge_type === "additional"
-                          ? `Includes ₹${cms.cod_charge_amount} additional COD handling fee collected online`
-                          : "Pay via cash or UPI when your package arrives at your doorstep"}
-                    </p>
-                  </div>
+                  <p className="text-xs leading-relaxed text-on-surface-variant">
+                    Open a product in <strong>Admin → Products</strong> and set its COD advance.
+                    Cashfree collects that exact amount, and Shiprocket receives only the remaining
+                    product value as COD. Setting ₹0 enables full COD for that model.
+                  </p>
+                  <a
+                    href="/admin/products"
+                    className="inline-flex items-center gap-2 bg-primary text-on-primary px-4 py-2 text-xs font-bold uppercase tracking-widest"
+                  >
+                    Manage Product COD Advances
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </a>
                 </div>
 
                 {/* Prepaid Settings Card */}

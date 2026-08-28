@@ -32,6 +32,9 @@ interface OrderRow {
   shipping_paise: number;
   tax_paise: number;
   total_paise: number;
+  cod_advance_paise: number;
+  advance_paid_paise: number;
+  cod_collectable_paise: number;
   created_at: string;
   tracking_url: string | null;
   notes?: string | null;
@@ -74,7 +77,7 @@ function Orders() {
     supabase
       .from("orders")
       .select(
-        "id, order_number, status, subtotal_paise, shipping_paise, tax_paise, total_paise, created_at, tracking_url, notes, cashfree_payment_id, cashfree_refund_status, refund_amount_paise, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shipping_address, order_items(name, qty, unit_price_paise, variant_label, image_url)",
+        "id, order_number, status, subtotal_paise, shipping_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, notes, cashfree_payment_id, cashfree_refund_status, refund_amount_paise, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shipping_address, order_items(name, qty, unit_price_paise, variant_label, image_url)",
       )
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
@@ -139,8 +142,7 @@ function Orders() {
           Number(o.subtotal_paise) ||
           (o.order_items ?? []).reduce((sum, item) => sum + item.unit_price_paise * item.qty, 0);
         const pricingAdjustment =
-          Number(o.total_paise) -
-          (merchandiseSubtotal + Number(o.shipping_paise || 0) + Number(o.tax_paise || 0));
+          Number(o.total_paise) - (merchandiseSubtotal + Number(o.tax_paise || 0));
         const addr = o.shipping_address || {};
 
         return (
@@ -218,17 +220,6 @@ function Orders() {
                   <span>Merchandise subtotal</span>
                   <span>{formatINR(merchandiseSubtotal)}</span>
                 </div>
-                {Number(o.shipping_paise || 0) > 0 ? (
-                  <div className="flex justify-between text-on-surface-variant">
-                    <span>Shipping</span>
-                    <span>{formatINR(o.shipping_paise)}</span>
-                  </div>
-                ) : (
-                  <div className="flex justify-between text-on-surface-variant">
-                    <span>Shipping</span>
-                    <span>FREE</span>
-                  </div>
-                )}
                 {Number(o.tax_paise || 0) > 0 && (
                   <div className="flex justify-between text-on-surface-variant">
                     <span>Tax</span>
@@ -241,15 +232,15 @@ function Orders() {
                     <span>-{formatINR(Math.abs(pricingAdjustment))}</span>
                   </div>
                 )}
-                {pricingAdjustment > 0 && (
-                  <div className="flex justify-between font-medium text-purple-800">
-                    <span>COD fee</span>
-                    <span>+{formatINR(pricingAdjustment)}</span>
+                {isCod && Number(o.advance_paid_paise) > 0 && (
+                  <div className="flex justify-between font-medium text-emerald-700">
+                    <span>COD advance paid online</span>
+                    <span>-{formatINR(o.advance_paid_paise)}</span>
                   </div>
                 )}
                 <div className="flex justify-between border-t-2 border-primary pt-2 text-sm font-black text-primary">
-                  <span>FINAL PAYABLE TOTAL</span>
-                  <span>{formatINR(o.total_paise)}</span>
+                  <span>{isCod ? "REMAINING COD TO COURIER" : "FINAL PAYABLE TOTAL"}</span>
+                  <span>{formatINR(isCod ? o.cod_collectable_paise : o.total_paise)}</span>
                 </div>
               </div>
             </div>
@@ -428,15 +419,35 @@ function Orders() {
                     <span className="font-mono font-bold text-primary">
                       {o.cashfree_payment_id ||
                         o.razorpay_payment_id ||
-                        (isCod ? "Collected on delivery" : "Pending")}
+                        (isCod ? "No online advance" : "Pending")}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-on-surface-variant">Payment Method:</span>
                     <span className="font-medium text-primary">
-                      {isCod ? "Cash on Delivery (COD)" : "UPI / Card / NetBanking"}
+                      {isCod
+                        ? Number(o.advance_paid_paise) > 0
+                          ? "Partial online advance + COD"
+                          : "Cash on Delivery (COD)"
+                        : "UPI / Card / NetBanking"}
                     </span>
                   </div>
+                  {isCod && (
+                    <>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-on-surface-variant">Advance paid online:</span>
+                        <span className="font-bold text-emerald-700">
+                          {formatINR(o.advance_paid_paise)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-on-surface-variant">Courier will collect:</span>
+                        <span className="font-bold text-blue-800">
+                          {formatINR(o.cod_collectable_paise)}
+                        </span>
+                      </div>
+                    </>
+                  )}
                   {refundStatus && (
                     <div className="flex justify-between text-xs">
                       <span className="text-on-surface-variant">Refund:</span>
@@ -452,7 +463,9 @@ function Orders() {
                     <span className="text-[11px] text-on-surface-variant">
                       Verification:{" "}
                       {isCod
-                        ? "COD confirmed"
+                        ? Number(o.advance_paid_paise) > 0
+                          ? "Advance verified by Cashfree"
+                          : "Full COD confirmed"
                         : onlinePaymentVerified
                           ? "Cashfree API + Webhook"
                           : "Awaiting Cashfree payment"}
