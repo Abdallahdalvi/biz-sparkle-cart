@@ -287,7 +287,7 @@ export async function getAllProducts(): Promise<Product[]> {
   try {
     const { data, error } = await supabase
       .from("products")
-      .select("*, categories(slug)")
+      .select("*, categories(slug), product_variants(id, label, price_delta_paise, stock)")
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
@@ -311,7 +311,12 @@ export async function getAllProducts(): Promise<Product[]> {
           ],
       description: row.description || "",
       specs: row.metadata?.specs || [],
-      variants: row.metadata?.variants?.length ? row.metadata.variants : undefined,
+      variants: row.product_variants?.length
+        ? row.product_variants.map((variant: { id: string; label: string }) => ({
+            id: variant.id,
+            label: variant.label,
+          }))
+        : undefined,
       faqs: row.metadata?.faqs?.length ? row.metadata.faqs : DEFAULT_STOREFRONT_CMS.faqs,
       stock: row.stock,
       heroSlot: row.metadata?.hero_slot ? Number(row.metadata.hero_slot) : undefined,

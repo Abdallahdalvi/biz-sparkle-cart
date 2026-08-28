@@ -167,7 +167,7 @@ async function getOrderWithItems(orderId: string) {
   const { data: order, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, order_number, email, phone, shipping_address, subtotal_paise, total_paise, razorpay_order_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, tracking_url, status, created_at, notes",
+      "id, order_number, email, phone, shipping_address, subtotal_paise, total_paise, cashfree_order_id, cashfree_payment_id, razorpay_order_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, tracking_url, status, created_at, notes",
     )
     .eq("id", orderId)
     .single();
@@ -186,11 +186,21 @@ async function getOrderWithItems(orderId: string) {
 async function getShiprocketOrderValuePaise(order: {
   total_paise: number;
   notes: string | null;
+  cashfree_payment_id: string | null;
+  cashfree_order_id: string | null;
   razorpay_payment_id: string | null;
   razorpay_order_id: string | null;
 }) {
   let valuePaise = Number(order.total_paise);
-  if (order.notes === "cod" && order.razorpay_payment_id) {
+  if (order.notes === "cod" && order.cashfree_payment_id) {
+    const { getSuccessfulCashfreePaymentInternal } = await import("@/lib/cashfree.server");
+    const payment = await getSuccessfulCashfreePaymentInternal(
+      asString(order.cashfree_order_id),
+      order.cashfree_payment_id,
+    );
+    valuePaise = Math.max(0, valuePaise - payment.amountPaise);
+  } else if (order.notes === "cod" && order.razorpay_payment_id) {
+    // Backward compatibility for orders paid before the Cashfree migration.
     const { getCapturedRazorpayPaymentInternal } = await import("@/lib/razorpay.server");
     const payment = await getCapturedRazorpayPaymentInternal(
       order.razorpay_payment_id,
@@ -255,7 +265,7 @@ export async function createShiprocketOrderInternal(
     shiprocketOrderValuePaise = await getShiprocketOrderValuePaise(order);
   } catch (error) {
     throw new Error(
-      `Could not calculate the remaining COD amount: ${error instanceof Error ? error.message : "Razorpay verification failed"}`,
+      `Could not calculate the remaining COD amount: ${error instanceof Error ? error.message : "Payment verification failed"}`,
     );
   }
   const payload = {

@@ -167,6 +167,9 @@ create table if not exists electronic_shop.orders (
   total_paise        bigint not null,
   currency           text not null default 'INR',
   status             electronic_shop.order_status not null default 'pending',
+  cashfree_order_id  text,
+  cashfree_payment_id text,
+  -- Legacy fields retained so orders paid before the Cashfree migration remain readable.
   razorpay_order_id  text,
   razorpay_payment_id text,
   shiprocket_order_id text,
@@ -176,7 +179,13 @@ create table if not exists electronic_shop.orders (
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()
 );
+alter table electronic_shop.orders add column if not exists cashfree_order_id text;
+alter table electronic_shop.orders add column if not exists cashfree_payment_id text;
 create index if not exists orders_user_idx on electronic_shop.orders(user_id);
+create unique index if not exists orders_cashfree_order_idx
+  on electronic_shop.orders(cashfree_order_id) where cashfree_order_id is not null;
+create unique index if not exists orders_cashfree_payment_idx
+  on electronic_shop.orders(cashfree_payment_id) where cashfree_payment_id is not null;
 create index if not exists orders_status_idx on electronic_shop.orders(status);
 grant select, insert, update on electronic_shop.orders to authenticated;
 grant all on electronic_shop.orders to service_role;

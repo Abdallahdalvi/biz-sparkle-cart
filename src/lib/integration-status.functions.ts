@@ -7,9 +7,12 @@ export const getIntegrationStatus = createServerFn({ method: "POST" })
     const { requireSupabaseAuth } = await import("@/lib/auth.server");
     await requireSupabaseAuth(data.token, "admin");
     return {
-      razorpay: {
-        apiKeysConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
-        webhookSecretConfigured: Boolean(process.env.RAZORPAY_WEBHOOK_SECRET),
+      cashfree: {
+        apiKeysConfigured: Boolean(process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY),
+        environment:
+          (process.env.CASHFREE_ENVIRONMENT || "sandbox").toLowerCase() === "production"
+            ? "production"
+            : "sandbox",
       },
       shiprocket: {
         credentialsConfigured: Boolean(

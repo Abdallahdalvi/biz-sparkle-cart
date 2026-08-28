@@ -32,7 +32,7 @@ import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminComplianceRouteImport } from './routes/admin.compliance'
 import { Route as AdminCmsRouteImport } from './routes/admin.cms'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
-import { Route as ApiPublicWebhooksRazorpayRouteImport } from './routes/api/public/webhooks/razorpay'
+import { Route as ApiPublicWebhooksCashfreeRouteImport } from './routes/api/public/webhooks/cashfree'
 
 const TrackRoute = TrackRouteImport.update({
   id: '/track',
@@ -149,10 +149,10 @@ const AccountOrdersRoute = AccountOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AccountRoute,
 } as any)
-const ApiPublicWebhooksRazorpayRoute =
-  ApiPublicWebhooksRazorpayRouteImport.update({
-    id: '/api/public/webhooks/razorpay',
-    path: '/api/public/webhooks/razorpay',
+const ApiPublicWebhooksCashfreeRoute =
+  ApiPublicWebhooksCashfreeRouteImport.update({
+    id: '/api/public/webhooks/cashfree',
+    path: '/api/public/webhooks/cashfree',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -180,7 +180,7 @@ export interface FileRoutesByFullPath {
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
-  '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
+  '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -206,7 +206,7 @@ export interface FileRoutesByTo {
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
-  '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
+  '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -233,7 +233,7 @@ export interface FileRoutesById {
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
-  '/api/public/webhooks/razorpay': typeof ApiPublicWebhooksRazorpayRoute
+  '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -261,7 +261,7 @@ export interface FileRouteTypes {
     | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
-    | '/api/public/webhooks/razorpay'
+    | '/api/public/webhooks/cashfree'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,7 +287,7 @@ export interface FileRouteTypes {
     | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
-    | '/api/public/webhooks/razorpay'
+    | '/api/public/webhooks/cashfree'
   id:
     | '__root__'
     | '/'
@@ -313,7 +313,7 @@ export interface FileRouteTypes {
     | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
-    | '/api/public/webhooks/razorpay'
+    | '/api/public/webhooks/cashfree'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -335,7 +335,7 @@ export interface RootRouteChildren {
   LegalShippingRoute: typeof LegalShippingRoute
   LegalTermsRoute: typeof LegalTermsRoute
   ProductSlugRoute: typeof ProductSlugRoute
-  ApiPublicWebhooksRazorpayRoute: typeof ApiPublicWebhooksRazorpayRoute
+  ApiPublicWebhooksCashfreeRoute: typeof ApiPublicWebhooksCashfreeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -501,11 +501,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountOrdersRouteImport
       parentRoute: typeof AccountRoute
     }
-    '/api/public/webhooks/razorpay': {
-      id: '/api/public/webhooks/razorpay'
-      path: '/api/public/webhooks/razorpay'
-      fullPath: '/api/public/webhooks/razorpay'
-      preLoaderRoute: typeof ApiPublicWebhooksRazorpayRouteImport
+    '/api/public/webhooks/cashfree': {
+      id: '/api/public/webhooks/cashfree'
+      path: '/api/public/webhooks/cashfree'
+      fullPath: '/api/public/webhooks/cashfree'
+      preLoaderRoute: typeof ApiPublicWebhooksCashfreeRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -557,7 +557,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalShippingRoute: LegalShippingRoute,
   LegalTermsRoute: LegalTermsRoute,
   ProductSlugRoute: ProductSlugRoute,
-  ApiPublicWebhooksRazorpayRoute: ApiPublicWebhooksRazorpayRoute,
+  ApiPublicWebhooksCashfreeRoute: ApiPublicWebhooksCashfreeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

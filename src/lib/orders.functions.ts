@@ -2,16 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 function onlinePaymentsConfigured() {
-  return Boolean(
-    process.env.RAZORPAY_KEY_ID &&
-    process.env.RAZORPAY_KEY_SECRET &&
-    process.env.RAZORPAY_WEBHOOK_SECRET,
-  );
+  return Boolean(process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY);
 }
 
 export const getCheckoutCapabilities = createServerFn({ method: "GET" }).handler(async () => ({
   onlinePaymentsConfigured: onlinePaymentsConfigured(),
-  onlinePaymentProvider: onlinePaymentsConfigured() ? "razorpay" : null,
+  onlinePaymentProvider: onlinePaymentsConfigured() ? "cashfree" : null,
+  onlinePaymentEnvironment:
+    (process.env.CASHFREE_ENVIRONMENT || "sandbox").toLowerCase() === "production"
+      ? "production"
+      : "sandbox",
   codAvailable: true,
 }));
 
@@ -54,7 +54,15 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         }),
         payMode: z.enum(["prepaid", "cod"]),
         email: z.string().trim().email().max(254),
-        phone: z.string().regex(/^[0-9+\-\s]{10,18}$/, "Enter a valid phone number"),
+        phone: z
+          .string()
+          .trim()
+          .regex(/^[0-9+\-\s]{10,18}$/, "Enter a valid phone number")
+          .refine((value) => {
+            const digits = value.replace(/\D/g, "");
+            return digits.length === 10 || (digits.length === 12 && digits.startsWith("91"));
+          }, "Enter a valid 10-digit Indian phone number"),
+        returnOrigin: z.string().url().max(200).optional(),
       })
       .parse(input),
   )
@@ -182,7 +190,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
           ? subtotalPaise + codChargePaise
           : subtotalPaise;
 
-    const rzpAmountPaise = data.payMode === "cod" ? codChargePaise : effectiveTotal;
+    const paymentAmountPaise = data.payMode === "cod" ? codChargePaise : effectiveTotal;
 
     // Insert order securely
     const { data: order, error: orderErr } = await supabaseAdmin
@@ -194,7 +202,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         shipping_address: data.shippingAddress,
         subtotal_paise: subtotalPaise,
         total_paise: effectiveTotal,
-        status: rzpAmountPaise === 0 ? "processing" : "pending",
+        status: paymentAmountPaise === 0 ? "processing" : "pending",
         notes: data.payMode,
       })
       .select("id, order_number")
@@ -215,8 +223,8 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     const { error: itemsErr } = await supabaseAdmin.from("order_items").insert(itemsWithOrderId);
     if (itemsErr) throw new Error(`Order items creation failed: ${itemsErr.message}`);
 
-    if (rzpAmountPaise === 0) {
-      // Free COD order -> invoke Shiprocket & decrement stock directly on server
+    if (paymentAmountPaise === 0) {
+      // No online amount is due, so fulfil directly on the server.
       try {
         const { createShiprocketOrderInternal } = await import("./shiprocket.server");
         await createShiprocketOrderInternal(order.id);
@@ -237,49 +245,45 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         ok: true,
         orderId: order.id,
         orderNumber: order.order_number,
-        rzpRequired: false,
+        cashfreeRequired: false,
       };
     }
 
-    // Create Razorpay order
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keyId || !keySecret) {
-      throw new Error(
-        "Razorpay not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env.",
-      );
+    let cashfree;
+    try {
+      const { createCashfreeOrderInternal } = await import("@/lib/cashfree.server");
+      cashfree = await createCashfreeOrderInternal({
+        storeOrderId: order.id,
+        storeOrderNumber: order.order_number,
+        amountPaise: paymentAmountPaise,
+        customerName: `${data.shippingAddress.first_name} ${data.shippingAddress.last_name}`.trim(),
+        customerEmail: data.email,
+        customerPhone: data.phone,
+        returnOrigin: data.returnOrigin,
+        note:
+          data.payMode === "cod"
+            ? `COD ${codChargeType === "advance" ? "advance" : "fee"} for ${order.order_number}`
+            : `Online payment for ${order.order_number}`,
+      });
+      const { error: linkError } = await supabaseAdmin
+        .from("orders")
+        .update({ cashfree_order_id: cashfree.cashfreeOrderId })
+        .eq("id", order.id);
+      if (linkError) throw linkError;
+    } catch (error) {
+      await supabaseAdmin.from("orders").update({ status: "cancelled" }).eq("id", order.id);
+      throw error;
     }
-
-    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
-    const res = await fetch("https://api.razorpay.com/v1/orders", {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        amount: rzpAmountPaise,
-        currency: "INR",
-        receipt: order.order_number,
-        notes: { internal_order_id: order.id },
-      }),
-    });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Razorpay order create failed: ${txt}`);
-    }
-    const rzp = (await res.json()) as { id: string };
-
-    await supabaseAdmin.from("orders").update({ razorpay_order_id: rzp.id }).eq("id", order.id);
 
     return {
       ok: true,
       orderId: order.id,
       orderNumber: order.order_number,
-      rzpRequired: true,
-      rzpOrderId: rzp.id,
-      keyId,
-      amountPaise: rzpAmountPaise,
+      cashfreeRequired: true,
+      cashfreeOrderId: cashfree.cashfreeOrderId,
+      paymentSessionId: cashfree.paymentSessionId,
+      cashfreeMode: cashfree.environment,
+      amountPaise: paymentAmountPaise,
       currency: "INR",
       email: data.email,
     };

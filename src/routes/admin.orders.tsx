@@ -47,6 +47,7 @@ interface Order {
   shiprocket_order_id: string | null;
   shiprocket_shipment_id: string | null;
   notes?: string | null;
+  cashfree_payment_id?: string | null;
   razorpay_payment_id?: string | null;
   order_items?: OrderItem[];
   seller_notes?: string;
@@ -120,7 +121,7 @@ function AdminOrders() {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "id, order_number, email, phone, shipping_address, status, total_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, notes, razorpay_payment_id, order_items(name, qty, unit_price_paise, variant_label)",
+        "id, order_number, email, phone, shipping_address, status, total_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, notes, cashfree_payment_id, razorpay_payment_id, order_items(name, qty, unit_price_paise, variant_label)",
       )
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -593,9 +594,9 @@ function AdminOrders() {
                       </td>
                       <td className="p-4">
                         <p className="font-bold text-primary">{formatINR(o.total_paise)}</p>
-                        {o.razorpay_payment_id ? (
+                        {o.cashfree_payment_id || o.razorpay_payment_id ? (
                           <p className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                            {o.razorpay_payment_id}
+                            {o.cashfree_payment_id || o.razorpay_payment_id}
                           </p>
                         ) : o.notes === "cod" ? (
                           <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-0.5">

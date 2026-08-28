@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { load as loadCashfree } from "@cashfreepayments/cashfree-js";
+import { z } from "zod";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useCart } from "@/lib/cart-store";
 import { formatINR } from "@/lib/format";
@@ -7,29 +9,15 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { verifyRazorpayPayment } from "@/lib/razorpay.functions";
+import { verifyCashfreePayment } from "@/lib/cashfree.functions";
 import { createSecureOrder, getCheckoutCapabilities } from "@/lib/orders.functions";
 import { getStorefrontCms } from "@/lib/products";
 
-declare global {
-  interface Window {
-    Razorpay?: new (opts: Record<string, unknown>) => { open: () => void };
-  }
-}
-
-function loadRazorpayScript(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") return resolve(false);
-    if (window.Razorpay) return resolve(true);
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-}
-
 export const Route = createFileRoute("/checkout")({
+  validateSearch: z.object({
+    cashfree_order_id: z.string().optional(),
+    store_order_id: z.string().uuid().optional(),
+  }),
   loader: async () => {
     const [cms, capabilities] = await Promise.all([getStorefrontCms(), getCheckoutCapabilities()]);
     return { cms, capabilities };
@@ -45,6 +33,7 @@ export const Route = createFileRoute("/checkout")({
 
 function Checkout() {
   const { cms, capabilities } = Route.useLoaderData();
+  const search = Route.useSearch();
   const items = useCart((s) => s.items);
   const total = useCart((s) => s.totalPaise());
   const clear = useCart((s) => s.clear);
@@ -55,11 +44,34 @@ function Checkout() {
   );
   const { user } = useAuth();
   const createOrderFn = useServerFn(createSecureOrder);
-  const verifyRzp = useServerFn(verifyRazorpayPayment);
+  const verifyCashfree = useServerFn(verifyCashfreePayment);
+  const returnVerificationStarted = useRef(false);
 
   useEffect(() => {
-    if (capabilities.onlinePaymentsConfigured) loadRazorpayScript();
-  }, [capabilities.onlinePaymentsConfigured]);
+    if (returnVerificationStarted.current || !search.cashfree_order_id || !search.store_order_id) {
+      return;
+    }
+    returnVerificationStarted.current = true;
+    setBusy(true);
+    verifyCashfree({
+      data: {
+        orderId: search.store_order_id,
+        cashfreeOrderId: search.cashfree_order_id,
+      },
+    })
+      .then((result) => {
+        clear();
+        toast.success(`Payment received. Order ${result.orderNumber} confirmed.`);
+        navigate({
+          to: user ? "/account/orders" : "/track",
+          search: user ? {} : { orderId: result.orderNumber },
+        });
+      })
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : "Cashfree payment is not complete");
+        setBusy(false);
+      });
+  }, [clear, navigate, search.cashfree_order_id, search.store_order_id, user, verifyCashfree]);
 
   if (items.length === 0) {
     return (
@@ -97,7 +109,7 @@ function Checkout() {
 
   const effectiveTotal = baseEffective;
 
-  const rzpAmountPaise = payMode === "cod" ? codChargePaise : effectiveTotal;
+  const paymentAmountPaise = payMode === "cod" ? codChargePaise : effectiveTotal;
 
   return (
     <SiteShell>
@@ -116,6 +128,19 @@ function Checkout() {
             </div>
           </div>
         )}
+
+        {capabilities.onlinePaymentsConfigured &&
+          capabilities.onlinePaymentEnvironment === "sandbox" && (
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded mb-8 flex items-start gap-3 text-xs text-amber-950">
+              <span className="material-symbols-outlined text-amber-700 text-xl">science</span>
+              <div>
+                <p className="font-bold uppercase tracking-wider">Cashfree sandbox is active</p>
+                <p className="text-amber-900/80 mt-1">
+                  Checkout is connected to Cashfree test mode. No real payment will be collected.
+                </p>
+              </div>
+            </div>
+          )}
 
         <form
           onSubmit={async (e) => {
@@ -149,11 +174,12 @@ function Checkout() {
                 payMode: payMode,
                 email: String(fd.get("email") ?? ""),
                 phone: String(fd.get("phone") ?? ""),
+                returnOrigin: window.location.origin,
               };
 
               const res = await createOrderFn({ data: orderPayload });
 
-              if (!res.rzpRequired) {
+              if (!res.cashfreeRequired) {
                 clear();
                 toast.success(`Order ${res.orderNumber} confirmed with Cash on Delivery.`);
                 if (!token) {
@@ -164,57 +190,36 @@ function Checkout() {
                 return;
               }
 
-              const ok = await loadRazorpayScript();
-              if (!ok || !window.Razorpay) throw new Error("Razorpay SDK failed to load");
-
-              const checkout = new window.Razorpay({
-                key: res.keyId,
-                amount: res.amountPaise,
-                currency: res.currency,
-                name: "Aghanims Phones and Gadgets",
-                description:
-                  payMode === "cod"
-                    ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} Order ${res.orderNumber}`
-                    : `Order ${res.orderNumber}`,
-                order_id: res.rzpOrderId,
-                prefill: {
-                  email: res.email,
-                  contact: String(fd.get("phone") ?? ""),
-                  name: `${fd.get("firstName")} ${fd.get("lastName")}`.trim(),
-                },
-                theme: { color: "#000000" },
-                handler: async (resp: {
-                  razorpay_order_id: string;
-                  razorpay_payment_id: string;
-                  razorpay_signature: string;
-                }) => {
-                  try {
-                    await verifyRzp({ data: { orderId: res.orderId, ...resp } });
-                    clear();
-                    toast.success(
-                      payMode === "cod"
-                        ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} received. Order ${res.orderNumber} confirmed.`
-                        : `Payment received. Order ${res.orderNumber} confirmed.`,
-                    );
-                    if (!token) {
-                      navigate({ to: "/track", search: { orderId: res.orderNumber } });
-                    } else {
-                      navigate({ to: "/account/orders" });
-                    }
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Verification failed");
-                  }
-                },
-                modal: {
-                  ondismiss: () => {
-                    toast.message(
-                      `Order ${res.orderNumber} saved as pending — you can complete payment from your account.`,
-                    );
-                    setBusy(false);
-                  },
-                },
+              const cashfree = await loadCashfree({ mode: res.cashfreeMode });
+              if (!cashfree) throw new Error("Cashfree SDK failed to load");
+              const checkoutResult = await cashfree.checkout({
+                paymentSessionId: res.paymentSessionId,
+                redirectTarget: "_modal",
               });
-              checkout.open();
+              if (checkoutResult.redirect) {
+                setBusy(false);
+                return;
+              }
+              if (checkoutResult.error || !checkoutResult.paymentDetails) {
+                toast.message(`Payment was not completed for order ${res.orderNumber}.`);
+                setBusy(false);
+                return;
+              }
+
+              const verified = await verifyCashfree({
+                data: { orderId: res.orderId, cashfreeOrderId: res.cashfreeOrderId },
+              });
+              clear();
+              toast.success(
+                payMode === "cod"
+                  ? `COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} received. Order ${verified.orderNumber} confirmed.`
+                  : `Payment received. Order ${verified.orderNumber} confirmed.`,
+              );
+              if (!token) {
+                navigate({ to: "/track", search: { orderId: verified.orderNumber } });
+              } else {
+                navigate({ to: "/account/orders" });
+              }
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Checkout failed");
               setBusy(false);
@@ -300,6 +305,11 @@ function Checkout() {
                         ? "Secure online payment"
                         : `Instant ${cms.prepaid_discount_type === "flat" ? `₹${cms.prepaid_discount_amount}` : `${cms.prepaid_discount_amount}%`} Discount on Prepaid Orders`}
                   </p>
+                  {capabilities.onlinePaymentsConfigured && (
+                    <p className="text-[10px] text-blue-700 font-bold uppercase tracking-widest mt-1">
+                      Secure checkout powered by Cashfree
+                    </p>
+                  )}
                 </div>
               </label>
               <label
@@ -399,8 +409,8 @@ function Checkout() {
                 ? "Processing…"
                 : payMode === "prepaid"
                   ? `Pay ${formatINR(effectiveTotal)}`
-                  : rzpAmountPaise > 0
-                    ? `Pay COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} ${formatINR(rzpAmountPaise)}`
+                  : paymentAmountPaise > 0
+                    ? `Pay COD ${cms.cod_charge_type === "advance" ? "Advance" : "Fee"} ${formatINR(paymentAmountPaise)}`
                     : `Confirm Order (Pay on Delivery)`}
             </button>
             <p className="text-[10px] text-on-surface-variant text-center">

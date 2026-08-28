@@ -162,7 +162,7 @@ function AdminOverview() {
   const [customEndDate, setCustomEndDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(true);
   const [integrationStatus, setIntegrationStatus] = useState<{
-    razorpay: { apiKeysConfigured: boolean; webhookSecretConfigured: boolean };
+    cashfree: { apiKeysConfigured: boolean; environment: "sandbox" | "production" };
     shiprocket: { credentialsConfigured: boolean; pickupLocation: string };
   } | null>(null);
   const getIntegrationStatusFn = useServerFn(getIntegrationStatus);
@@ -399,10 +399,7 @@ function AdminOverview() {
     document.body.removeChild(link);
   };
 
-  const razorpayReady = Boolean(
-    integrationStatus?.razorpay.apiKeysConfigured &&
-    integrationStatus.razorpay.webhookSecretConfigured,
-  );
+  const cashfreeReady = Boolean(integrationStatus?.cashfree.apiKeysConfigured);
   const shiprocketReady = Boolean(integrationStatus?.shiprocket.credentialsConfigured);
 
   return (
@@ -934,53 +931,55 @@ function AdminOverview() {
             </p>
           </div>
           <span
-            className={`inline-block ${razorpayReady && shiprocketReady ? "bg-emerald-500" : "bg-amber-500"} text-on-primary text-[10px] font-bold uppercase tracking-widest px-3 py-1`}
+            className={`inline-block ${cashfreeReady && shiprocketReady ? "bg-emerald-500" : "bg-amber-500"} text-on-primary text-[10px] font-bold uppercase tracking-widest px-3 py-1`}
           >
-            {razorpayReady && shiprocketReady ? "Integrations Ready" : "Setup Required"}
+            {cashfreeReady && shiprocketReady ? "Integrations Ready" : "Setup Required"}
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Razorpay Gateway */}
+          {/* Cashfree Gateway */}
           <div className="bg-white p-6 shopify-border space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-3 h-3 rounded-full ${razorpayReady ? "bg-emerald-500" : "bg-amber-500"}`}
+                  className={`w-3 h-3 rounded-full ${cashfreeReady ? "bg-emerald-500" : "bg-amber-500"}`}
                 ></div>
                 <h4 className="font-bold text-sm text-primary uppercase tracking-widest">
-                  Razorpay API Gateway
+                  Cashfree Payments Gateway
                 </h4>
               </div>
               <span className="text-[11px] font-mono bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">
-                {razorpayReady ? "Production Ready" : "Credentials Needed"}
+                {cashfreeReady
+                  ? integrationStatus?.cashfree.environment === "production"
+                    ? "Production Ready"
+                    : "Sandbox Ready"
+                  : "Credentials Needed"}
               </span>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed">
-              Checkout uses server-created Razorpay orders and verifies captured payments. Configure
-              the production webhook for <code>payment.captured</code>, <code>payment.failed</code>,{" "}
-              <code>order.paid</code>, and <code>refund.processed</code>.
+              Checkout uses server-created Cashfree orders, hosted checkout, server-side payment
+              status confirmation, and signed webhooks. Enable payment and refund events in the
+              Cashfree dashboard.
             </p>
             <div className="bg-surface-container-lowest p-3 border border-outline-variant/40 text-[11px] space-y-1 rounded">
               <div className="flex justify-between">
                 <span className="text-on-surface-variant">API Keys:</span>
                 <span
-                  className={`font-mono ${integrationStatus?.razorpay.apiKeysConfigured ? "text-emerald-700" : "text-amber-700"}`}
+                  className={`font-mono ${integrationStatus?.cashfree.apiKeysConfigured ? "text-emerald-700" : "text-amber-700"}`}
                 >
-                  {integrationStatus?.razorpay.apiKeysConfigured ? "Configured" : "Missing"}
+                  {integrationStatus?.cashfree.apiKeysConfigured ? "Configured" : "Missing"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-on-surface-variant">Webhook Secret:</span>
-                <span
-                  className={`font-mono ${integrationStatus?.razorpay.webhookSecretConfigured ? "text-emerald-700" : "text-amber-700"}`}
-                >
-                  {integrationStatus?.razorpay.webhookSecretConfigured ? "Configured" : "Missing"}
+                <span className="text-on-surface-variant">Environment:</span>
+                <span className="font-mono text-primary uppercase">
+                  {integrationStatus?.cashfree.environment || "sandbox"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-on-surface-variant">Endpoint:</span>
-                <code>/api/public/webhooks/razorpay</code>
+                <code>/api/public/webhooks/cashfree</code>
               </div>
             </div>
           </div>

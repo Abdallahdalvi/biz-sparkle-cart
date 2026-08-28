@@ -32,6 +32,7 @@ interface OrderRow {
   created_at: string;
   tracking_url: string | null;
   notes?: string | null;
+  cashfree_payment_id?: string | null;
   razorpay_payment_id?: string | null;
   shiprocket_order_id?: string | null;
   shiprocket_shipment_id?: string | null;
@@ -68,7 +69,7 @@ function Orders() {
     supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_paise, created_at, tracking_url, notes, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shipping_address, order_items(name, qty, unit_price_paise, variant_label, image_url)",
+        "id, order_number, status, total_paise, created_at, tracking_url, notes, cashfree_payment_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shipping_address, order_items(name, qty, unit_price_paise, variant_label, image_url)",
       )
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
@@ -127,6 +128,7 @@ function Orders() {
         const estimatedDays =
           o.status === "delivered" ? "Delivered successfully" : "3-5 business days via Shiprocket";
         const isCod = o.notes === "cod";
+        const onlinePaymentVerified = Boolean(o.cashfree_payment_id || o.razorpay_payment_id);
         const addr = o.shipping_address || {};
 
         return (
@@ -355,20 +357,22 @@ function Orders() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-xs uppercase tracking-widest text-primary flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span
+                      className={`w-2 h-2 rounded-full ${isCod || onlinePaymentVerified ? "bg-emerald-500" : "bg-amber-500"}`}
+                    ></span>
                     Payment Tracking
                   </h4>
                   <span className="text-[11px] text-on-surface-variant font-medium">
-                    {isCod ? "Cash on Delivery" : "Online payment gateway"}
+                    {isCod ? "Cash on Delivery" : "Cashfree online payment"}
                   </span>
                 </div>
                 <div className="bg-white p-4 border border-outline-variant/40 rounded space-y-2">
                   <div className="flex justify-between text-xs">
                     <span className="text-on-surface-variant">Transaction ID:</span>
                     <span className="font-mono font-bold text-primary">
-                      {o.razorpay_payment_id
-                        ? o.razorpay_payment_id
-                        : `pay_${o.id.substring(0, 10)}`}
+                      {o.cashfree_payment_id ||
+                        o.razorpay_payment_id ||
+                        (isCod ? "Collected on delivery" : "Pending")}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
@@ -379,10 +383,17 @@ function Orders() {
                   </div>
                   <div className="pt-2 border-t border-outline-variant/40 flex items-center justify-between">
                     <span className="text-[11px] text-on-surface-variant">
-                      Verification: {isCod ? "COD Verified" : "Automatic Webhook"}
+                      Verification:{" "}
+                      {isCod
+                        ? "COD confirmed"
+                        : onlinePaymentVerified
+                          ? "Cashfree API + Webhook"
+                          : "Awaiting Cashfree payment"}
                     </span>
-                    <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">
-                      {isCod ? "Confirmed" : "Paid & Verified"}
+                    <span
+                      className={`text-[11px] font-bold uppercase tracking-widest ${isCod || onlinePaymentVerified ? "text-emerald-600" : "text-amber-700"}`}
+                    >
+                      {isCod ? "Confirmed" : onlinePaymentVerified ? "Paid & Verified" : "Pending"}
                     </span>
                   </div>
                 </div>
