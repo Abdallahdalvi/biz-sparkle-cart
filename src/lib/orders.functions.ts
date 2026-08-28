@@ -234,11 +234,19 @@ export const createSecureOrder = createServerFn({ method: "POST" })
 
       // Decrement stock
       for (const item of orderItemsToInsert) {
-        await supabaseAdmin.rpc("decrement_stock", {
+        const { error: stockError } = await supabaseAdmin.rpc("decrement_stock", {
           p_product_id: item.product_id,
           p_variant_id: item.variant_id,
           p_qty: item.qty,
         });
+        if (stockError) throw new Error(`Stock update failed: ${stockError.message}`);
+      }
+      const { error: reservationError } = await supabaseAdmin
+        .from("orders")
+        .update({ stock_decremented_at: new Date().toISOString() })
+        .eq("id", order.id);
+      if (reservationError) {
+        throw new Error(`Stock reservation audit failed: ${reservationError.message}`);
       }
 
       return {

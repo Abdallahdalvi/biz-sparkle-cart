@@ -19,6 +19,17 @@ type CashfreePayment = {
   payment_status: string;
 };
 
+type CashfreeRefund = {
+  cf_payment_id: string | number;
+  cf_refund_id: string | number;
+  refund_id: string;
+  order_id: string;
+  refund_amount: number;
+  refund_currency: string;
+  refund_status: "SUCCESS" | "PENDING" | "CANCELLED" | "ONHOLD" | "FAILED" | string;
+  status_description?: string;
+};
+
 function getCashfreeCredentials() {
   const appId = process.env.CASHFREE_APP_ID?.trim();
   const secretKey = process.env.CASHFREE_SECRET_KEY?.trim();
@@ -180,6 +191,89 @@ export async function getSuccessfulCashfreePaymentInternal(
   };
 }
 
+export async function createCashfreeRefundInternal(input: {
+  storeOrderId: string;
+  cashfreeOrderId: string;
+  cashfreePaymentId: string;
+  reason: string;
+}) {
+  const payment = await getSuccessfulCashfreePaymentInternal(
+    input.cashfreeOrderId,
+    input.cashfreePaymentId,
+  );
+  const refundId = `refund_${input.storeOrderId.replace(/-/g, "")}`;
+  const refundIdempotencyKey = input.storeOrderId.replace(/^([0-9a-f])/i, (digit) =>
+    digit.toLowerCase() === "f" ? "0" : (Number.parseInt(digit, 16) + 1).toString(16),
+  );
+  const refundNote =
+    getCashfreeEnvironment() === "sandbox"
+      ? "SUCCESS"
+      : input.reason.trim().slice(0, 100) || "Order cancelled by merchant";
+  const rawRefund = await cashfreeRequest<CashfreeRefund | CashfreeRefund[]>(
+    `/orders/${encodeURIComponent(input.cashfreeOrderId)}/refunds`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        refund_amount: Number((payment.amountPaise / 100).toFixed(2)),
+        refund_id: refundId,
+        refund_note: refundNote,
+        refund_speed: "STANDARD",
+      }),
+    },
+    refundIdempotencyKey,
+  );
+  const refund = Array.isArray(rawRefund) ? rawRefund[0] : rawRefund;
+  if (!refund) throw new Error("Cashfree did not return refund details");
+  if (
+    refund.order_id !== input.cashfreeOrderId ||
+    String(refund.cf_payment_id) !== input.cashfreePaymentId ||
+    refund.refund_currency !== "INR" ||
+    Math.round(Number(refund.refund_amount) * 100) !== payment.amountPaise
+  ) {
+    throw new Error("Cashfree refund details do not match this payment");
+  }
+  if (["FAILED", "CANCELLED"].includes(refund.refund_status)) {
+    throw new Error(refund.status_description || `Cashfree refund is ${refund.refund_status}`);
+  }
+  return {
+    id: String(refund.cf_refund_id || refund.refund_id),
+    merchantRefundId: refund.refund_id,
+    status: refund.refund_status,
+    amountPaise: payment.amountPaise,
+    description: refund.status_description || "Refund submitted to Cashfree",
+  };
+}
+
+export async function finalizeCashfreeRefundInternal(input: {
+  cashfreePaymentId: string;
+  cashfreeRefundId?: string;
+  refundStatus: string;
+  refundAmountPaise?: number;
+}) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const status = input.refundStatus.toUpperCase();
+  const update: Record<string, unknown> = { cashfree_refund_status: status };
+  if (input.cashfreeRefundId) update.cashfree_refund_id = input.cashfreeRefundId;
+  if (input.refundAmountPaise !== undefined) update.refund_amount_paise = input.refundAmountPaise;
+  if (status === "SUCCESS") update.status = "refunded";
+
+  const { data: order, error } = await supabaseAdmin
+    .from("orders")
+    .update(update)
+    .eq("cashfree_payment_id", input.cashfreePaymentId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!order) throw new Error("No store order matches this Cashfree refund");
+  if (status === "SUCCESS") {
+    const { error: stockError } = await supabaseAdmin.rpc("restore_order_stock", {
+      p_order_id: order.id,
+    });
+    if (stockError) throw new Error(`Stock restoration failed: ${stockError.message}`);
+  }
+  return { orderId: order.id, status };
+}
+
 export async function completeCashfreePaymentInternal(cashfreeOrderId: string, paymentId?: string) {
   const payment = await getSuccessfulCashfreePaymentInternal(cashfreeOrderId, paymentId);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -225,6 +319,13 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
       p_qty: item.qty,
     });
     if (error) throw new Error(`Stock update failed: ${error.message}`);
+  }
+  const { error: reservationError } = await supabaseAdmin
+    .from("orders")
+    .update({ stock_decremented_at: new Date().toISOString() })
+    .eq("id", transitioned.id);
+  if (reservationError) {
+    throw new Error(`Stock reservation audit failed: ${reservationError.message}`);
   }
 
   try {

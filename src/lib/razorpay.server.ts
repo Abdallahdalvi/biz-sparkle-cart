@@ -106,6 +106,13 @@ export async function completeRazorpayPaymentInternal(razorpayOrderId: string, p
     });
     if (error) throw new Error(`Stock update failed: ${error.message}`);
   }
+  const { error: reservationError } = await supabaseAdmin
+    .from("orders")
+    .update({ stock_decremented_at: new Date().toISOString() })
+    .eq("id", transitioned.id);
+  if (reservationError) {
+    throw new Error(`Stock reservation audit failed: ${reservationError.message}`);
+  }
 
   try {
     const { createShiprocketOrderInternal } = await import("@/lib/shiprocket.server");

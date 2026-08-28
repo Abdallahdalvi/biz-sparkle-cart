@@ -17,8 +17,9 @@ grant usage on schema electronic_shop to anon, authenticated, service_role;
 -- ---------- 2. Enums ----------
 do $$ begin
   create type electronic_shop.order_status as enum
-    ('pending','paid','processing','shipped','delivered','cancelled','refunded');
+    ('pending','paid','processing','packed','shipped','delivered','cancelled','refunded');
 exception when duplicate_object then null; end $$;
+alter type electronic_shop.order_status add value if not exists 'packed' after 'processing';
 
 do $$ begin
   create type electronic_shop.app_role as enum ('admin','staff','customer');
@@ -169,6 +170,12 @@ create table if not exists electronic_shop.orders (
   status             electronic_shop.order_status not null default 'pending',
   cashfree_order_id  text,
   cashfree_payment_id text,
+  cashfree_refund_id text,
+  cashfree_refund_status text,
+  refund_amount_paise bigint,
+  cancellation_reason text,
+  stock_decremented_at timestamptz,
+  stock_restored_at timestamptz,
   -- Legacy fields retained so orders paid before the Cashfree migration remain readable.
   razorpay_order_id  text,
   razorpay_payment_id text,
@@ -181,11 +188,23 @@ create table if not exists electronic_shop.orders (
 );
 alter table electronic_shop.orders add column if not exists cashfree_order_id text;
 alter table electronic_shop.orders add column if not exists cashfree_payment_id text;
+alter table electronic_shop.orders add column if not exists cashfree_refund_id text;
+alter table electronic_shop.orders add column if not exists cashfree_refund_status text;
+alter table electronic_shop.orders add column if not exists refund_amount_paise bigint;
+alter table electronic_shop.orders add column if not exists cancellation_reason text;
+alter table electronic_shop.orders add column if not exists stock_decremented_at timestamptz;
+alter table electronic_shop.orders add column if not exists stock_restored_at timestamptz;
+update electronic_shop.orders
+set stock_decremented_at = created_at
+where stock_decremented_at is null
+  and status::text in ('paid', 'processing', 'packed', 'shipped', 'delivered');
 create index if not exists orders_user_idx on electronic_shop.orders(user_id);
 create unique index if not exists orders_cashfree_order_idx
   on electronic_shop.orders(cashfree_order_id) where cashfree_order_id is not null;
 create unique index if not exists orders_cashfree_payment_idx
   on electronic_shop.orders(cashfree_payment_id) where cashfree_payment_id is not null;
+create unique index if not exists orders_cashfree_refund_idx
+  on electronic_shop.orders(cashfree_refund_id) where cashfree_refund_id is not null;
 create index if not exists orders_status_idx on electronic_shop.orders(status);
 grant select, insert, update on electronic_shop.orders to authenticated;
 grant all on electronic_shop.orders to service_role;
@@ -336,6 +355,54 @@ begin
 end;
 $$;
 grant execute on function electronic_shop.decrement_stock(uuid, uuid, int) to service_role;
+
+-- ---------- 18. Idempotent Stock Restoration RPC ----------
+create or replace function electronic_shop.restore_order_stock(p_order_id uuid)
+returns boolean
+language plpgsql security definer
+set search_path = electronic_shop, public
+as $$
+declare
+  v_restored_at timestamptz;
+  v_item record;
+begin
+  select case when stock_decremented_at is null then now() else stock_restored_at end
+  into v_restored_at
+  from electronic_shop.orders
+  where id = p_order_id
+  for update;
+
+  if not found then
+    raise exception 'Order not found';
+  end if;
+  if v_restored_at is not null then
+    return false;
+  end if;
+
+  for v_item in
+    select product_id, variant_id, qty
+    from electronic_shop.order_items
+    where order_id = p_order_id
+  loop
+    if v_item.variant_id is not null then
+      update electronic_shop.product_variants
+      set stock = stock + v_item.qty
+      where id = v_item.variant_id;
+    end if;
+    if v_item.product_id is not null then
+      update electronic_shop.products
+      set stock = stock + v_item.qty
+      where id = v_item.product_id;
+    end if;
+  end loop;
+
+  update electronic_shop.orders
+  set stock_restored_at = now()
+  where id = p_order_id;
+  return true;
+end;
+$$;
+grant execute on function electronic_shop.restore_order_stock(uuid) to service_role;
 
 -- =====================================================================
 -- AFTER signing up once at /auth, promote yourself to admin:

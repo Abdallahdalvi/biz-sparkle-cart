@@ -14,6 +14,11 @@ import {
 } from "@/lib/shiprocket.functions";
 import type { ShiprocketCourierOption, ShiprocketCourierQuotes } from "@/lib/shiprocket.functions";
 import { getSellerNotes, saveSellerNote as saveSellerNoteServer } from "@/lib/operations.functions";
+import {
+  cancelAdminOrder,
+  refundAdminOrder,
+  updateAdminOrderStatus,
+} from "@/lib/order-admin.functions";
 
 interface ShippingAddress {
   first_name?: string;
@@ -41,13 +46,21 @@ interface Order {
   phone?: string | null;
   shipping_address?: ShippingAddress | null;
   status: string;
+  subtotal_paise: number;
+  shipping_paise: number;
+  tax_paise: number;
   total_paise: number;
   created_at: string;
   tracking_url: string | null;
   shiprocket_order_id: string | null;
   shiprocket_shipment_id: string | null;
   notes?: string | null;
+  cashfree_order_id?: string | null;
   cashfree_payment_id?: string | null;
+  cashfree_refund_id?: string | null;
+  cashfree_refund_status?: string | null;
+  refund_amount_paise?: number | null;
+  cancellation_reason?: string | null;
   razorpay_payment_id?: string | null;
   order_items?: OrderItem[];
   seller_notes?: string;
@@ -71,16 +84,7 @@ function hasRealAwb(order: Order) {
   return Boolean(order.shiprocket_shipment_id && code && !/^SRK-ES-/i.test(code));
 }
 
-const STATUSES = [
-  "pending",
-  "paid",
-  "processing",
-  "packed",
-  "shipped",
-  "delivered",
-  "cancelled",
-  "refunded",
-] as const;
+const STATUSES = ["pending", "paid", "processing", "packed", "shipped", "delivered"] as const;
 
 export const Route = createFileRoute("/admin/orders")({
   component: AdminOrders,
@@ -108,12 +112,16 @@ function AdminOrders() {
   );
   const [courierMode, setCourierMode] = useState<"all" | "Air" | "Surface">("all");
   const [shiprocketAction, setShiprocketAction] = useState<string | null>(null);
+  const [orderAction, setOrderAction] = useState<string | null>(null);
   const generateAwbFn = useServerFn(generateShiprocketAwb);
   const pickupLocationsFn = useServerFn(getShiprocketPickupLocations);
   const courierOptionsFn = useServerFn(getShiprocketCourierOptions);
   const documentFn = useServerFn(generateShiprocketDocument);
   const pickupFn = useServerFn(requestShiprocketPickup);
   const cancelShipmentFn = useServerFn(cancelShiprocketShipment);
+  const cancelOrderFn = useServerFn(cancelAdminOrder);
+  const refundOrderFn = useServerFn(refundAdminOrder);
+  const updateOrderStatusFn = useServerFn(updateAdminOrderStatus);
   const getSellerNotesFn = useServerFn(getSellerNotes);
   const saveSellerNoteFn = useServerFn(saveSellerNoteServer);
 
@@ -121,7 +129,7 @@ function AdminOrders() {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "id, order_number, email, phone, shipping_address, status, total_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, notes, cashfree_payment_id, razorpay_payment_id, order_items(name, qty, unit_price_paise, variant_label)",
+        "id, order_number, email, phone, shipping_address, status, subtotal_paise, shipping_paise, tax_paise, total_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, notes, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, refund_amount_paise, cancellation_reason, order_items(name, qty, unit_price_paise, variant_label)",
       )
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -162,10 +170,16 @@ function AdminOrders() {
   }
 
   async function updateStatus(id: string, status: string) {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success(`Order status updated to ${status}`);
-    load();
+    try {
+      const token = await getAdminToken();
+      await updateOrderStatusFn({
+        data: { token, orderId: id, status: status as (typeof STATUSES)[number] },
+      });
+      toast.success(`Order status updated to ${status}`);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Order status update failed");
+    }
   }
 
   function readPackageDetails() {
@@ -328,14 +342,72 @@ function AdminOrders() {
     }
   }
 
+  async function cancelOrder(order: Order) {
+    const paid = Boolean(order.cashfree_payment_id || order.razorpay_payment_id);
+    const warning = paid
+      ? "Cancel this order and stop fulfilment? This does not return the payment. Use Refund via Cashfree afterward."
+      : "Cancel this order and stop fulfilment? Reserved stock will be restored.";
+    if (!window.confirm(warning)) return;
+    const reason = window.prompt("Cancellation reason", "Cancelled by admin")?.trim();
+    if (!reason) return;
+    setOrderAction(`${order.id}:cancel-order`);
+    try {
+      const token = await getAdminToken();
+      const result = await cancelOrderFn({ data: { token, orderId: order.id, reason } });
+      toast.success(
+        result.stockRestored ? "Order cancelled and reserved stock restored" : "Order cancelled",
+      );
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Order cancellation failed");
+    } finally {
+      setOrderAction(null);
+    }
+  }
+
+  async function refundOrder(order: Order) {
+    if (
+      !window.confirm(
+        `Refund the verified Cashfree payment for ${order.order_number}? This also cancels unshipped fulfilment and cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    const reason = window.prompt("Refund reason", "Order cancelled by admin")?.trim();
+    if (!reason) return;
+    setOrderAction(`${order.id}:refund`);
+    try {
+      const token = await getAdminToken();
+      const result = await refundOrderFn({ data: { token, orderId: order.id, reason } });
+      if (result.alreadyRefunded) toast.message(result.message);
+      else if (result.status === "SUCCESS") {
+        toast.success(`Refunded ${formatINR(result.amountPaise)} through Cashfree`);
+      } else {
+        toast.success(`Cashfree refund submitted: ${result.status}`);
+      }
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Cashfree refund failed");
+    } finally {
+      setOrderAction(null);
+    }
+  }
+
   async function handleBulkStatus(newStatus: string) {
     if (selectedIds.length === 0) return toast.error("Select at least one order");
-    for (const id of selectedIds) {
-      await supabase.from("orders").update({ status: newStatus }).eq("id", id);
+    try {
+      const token = await getAdminToken();
+      for (const id of selectedIds) {
+        await updateOrderStatusFn({
+          data: { token, orderId: id, status: newStatus as (typeof STATUSES)[number] },
+        });
+      }
+      toast.success(`Bulk updated ${selectedIds.length} orders to ${newStatus}`);
+      setSelectedIds([]);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Bulk status update failed");
     }
-    toast.success(`Bulk updated ${selectedIds.length} orders to ${newStatus}`);
-    setSelectedIds([]);
-    load();
   }
 
   async function saveSellerNote(id: string) {
@@ -350,6 +422,12 @@ function AdminOrders() {
 
   function printPackingSlip(o: Order) {
     const addr = o.shipping_address || {};
+    const merchandiseSubtotal =
+      Number(o.subtotal_paise) ||
+      (o.order_items ?? []).reduce((sum, item) => sum + item.unit_price_paise * item.qty, 0);
+    const chargesBeforeAdjustment =
+      merchandiseSubtotal + Number(o.shipping_paise || 0) + Number(o.tax_paise || 0);
+    const pricingAdjustment = Number(o.total_paise) - chargesBeforeAdjustment;
     const itemRows = (o.order_items ?? [])
       .map(
         (item) => `
@@ -364,7 +442,7 @@ function AdminOrders() {
     const content = `
       <html>
         <head>
-          <title>Packing Slip - ${o.order_number}</title>
+          <title>Bill &amp; Packing Slip - ${o.order_number}</title>
           <style>
             body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #111; line-height: 1.6; }
             .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; }
@@ -375,13 +453,17 @@ function AdminOrders() {
             .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             .table th, .table td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 14px; }
             .table th { background-color: #f5f5f5; font-weight: bold; }
+            .totals { width: 360px; margin: 24px 0 0 auto; font-size: 14px; }
+            .totals-row { display: flex; justify-content: space-between; padding: 7px 0; }
+            .discount { color: #08783e; }
+            .final-total { border-top: 2px solid #111; margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 800; }
             .footer { margin-top: 50px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
           </style>
         </head>
         <body>
           <div class="header">
             <div class="store-name">Aghanims Phones and Gadgets</div>
-             <div class="title">PACKING SLIP</div>
+             <div class="title">BILL &amp; PACKING SLIP</div>
           </div>
           <div class="details-grid">
             <div class="box">
@@ -399,7 +481,7 @@ function AdminOrders() {
               <p><strong>Order Date:</strong> ${new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                <p><strong>Payment Mode:</strong> ${o.notes === "cod" ? "Cash on Delivery" : "Prepaid"}</p>
                <p><strong>Order Status:</strong> ${o.status.toUpperCase()}</p>
-              <p><strong>Grand Total:</strong> ${formatINR(o.total_paise)}</p>
+              <p><strong>Final Payable Total:</strong> ${formatINR(o.total_paise)}</p>
             </div>
           </div>
           <table class="table">
@@ -408,13 +490,21 @@ function AdminOrders() {
                 <th>Item Description</th>
                 <th>Quantity</th>
                  <th>Unit Price (INR)</th>
-                 <th>Total Price (INR)</th>
+                 <th>Line Amount (INR)</th>
               </tr>
             </thead>
             <tbody>
                ${itemRows || '<tr><td colspan="4">No line items found for this legacy order.</td></tr>'}
             </tbody>
           </table>
+          <div class="totals">
+            <div class="totals-row"><span>Merchandise subtotal</span><strong>${formatINR(merchandiseSubtotal)}</strong></div>
+            ${Number(o.shipping_paise || 0) > 0 ? `<div class="totals-row"><span>Shipping</span><strong>${formatINR(o.shipping_paise)}</strong></div>` : '<div class="totals-row"><span>Shipping</span><strong>FREE</strong></div>'}
+            ${Number(o.tax_paise || 0) > 0 ? `<div class="totals-row"><span>Tax</span><strong>${formatINR(o.tax_paise)}</strong></div>` : ""}
+            ${pricingAdjustment < 0 ? `<div class="totals-row discount"><span>Prepaid discount</span><strong>-${formatINR(Math.abs(pricingAdjustment))}</strong></div>` : ""}
+            ${pricingAdjustment > 0 ? `<div class="totals-row"><span>COD fee</span><strong>+${formatINR(pricingAdjustment)}</strong></div>` : ""}
+            <div class="totals-row final-total"><span>FINAL PAYABLE TOTAL</span><span>${formatINR(o.total_paise)}</span></div>
+          </div>
           <div class="footer">
             <p>Thank you for shopping with Aghanims Phones and Gadgets! If you have any questions about your order, please contact support.</p>
              <p>Fulfilment managed through the Aghanims order system.</p>
@@ -546,6 +636,21 @@ function AdminOrders() {
                 const isExpanded = expandedId === o.id;
                 const isSelected = selectedIds.includes(o.id);
                 const addr = o.shipping_address || {};
+                const subtotal = Number(o.subtotal_paise) || 0;
+                const adjustment =
+                  Number(o.total_paise) -
+                  (subtotal + Number(o.shipping_paise || 0) + Number(o.tax_paise || 0));
+                const terminal = ["cancelled", "refunded"].includes(o.status);
+                const afterDispatch = ["shipped", "delivered"].includes(o.status);
+                const canCancel = !terminal && !afterDispatch;
+                const refundPending = o.cashfree_refund_status === "PENDING";
+                const canRefund = Boolean(
+                  o.cashfree_order_id &&
+                  o.cashfree_payment_id &&
+                  o.cashfree_refund_status !== "SUCCESS" &&
+                  o.status !== "refunded" &&
+                  !afterDispatch,
+                );
 
                 return (
                   <React.Fragment key={o.id}>
@@ -607,6 +712,13 @@ function AdminOrders() {
                             Awaiting Online Payment
                           </p>
                         )}
+                        {o.cashfree_refund_status && (
+                          <p
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded inline-block mt-1 ml-1 ${o.cashfree_refund_status === "SUCCESS" ? "bg-emerald-100 text-emerald-800" : o.cashfree_refund_status === "PENDING" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}
+                          >
+                            Refund {o.cashfree_refund_status}
+                          </p>
+                        )}
                       </td>
                       <td className="p-4">
                         {hasRealAwb(o) ? (
@@ -634,17 +746,25 @@ function AdminOrders() {
                         )}
                       </td>
                       <td className="p-4">
-                        <select
-                          value={o.status}
-                          onChange={(e) => updateStatus(o.id, e.target.value)}
-                          className="border border-outline-variant/40 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest shadow-sm focus:border-primary"
-                        >
-                          {STATUSES.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
+                        {terminal ? (
+                          <span
+                            className={`inline-block px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest ${o.status === "refunded" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
+                          >
+                            {o.status}
+                          </span>
+                        ) : (
+                          <select
+                            value={o.status}
+                            onChange={(e) => updateStatus(o.id, e.target.value)}
+                            className="border border-outline-variant/40 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest shadow-sm focus:border-primary"
+                          >
+                            {STATUSES.map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </td>
                       <td className="p-4 text-right space-y-1.5">
                         <button
@@ -653,6 +773,32 @@ function AdminOrders() {
                         >
                           {isExpanded ? "Close Panel" : "Expand OMS ⚙️"}
                         </button>
+                        {canCancel && (
+                          <button
+                            type="button"
+                            disabled={Boolean(orderAction)}
+                            onClick={() => cancelOrder(o)}
+                            className="border border-rose-300 bg-rose-50 text-rose-800 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-rose-100 disabled:opacity-50"
+                          >
+                            {orderAction === `${o.id}:cancel-order`
+                              ? "Cancelling…"
+                              : "Cancel Order"}
+                          </button>
+                        )}
+                        {canRefund && (
+                          <button
+                            type="button"
+                            disabled={Boolean(orderAction) || refundPending}
+                            onClick={() => refundOrder(o)}
+                            className="bg-emerald-700 text-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-emerald-800 disabled:opacity-50"
+                          >
+                            {refundPending
+                              ? "Refund Pending"
+                              : orderAction === `${o.id}:refund`
+                                ? "Refunding…"
+                                : "Refund via Cashfree"}
+                          </button>
+                        )}
                         {!hasRealAwb(o) &&
                           !["pending", "cancelled", "refunded"].includes(o.status) && (
                             <button
@@ -690,7 +836,7 @@ function AdminOrders() {
                                   className="bg-primary text-on-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded shadow-sm hover:opacity-90 flex items-center gap-1"
                                 >
                                   <span className="material-symbols-outlined text-xs">print</span>
-                                  Print Slip
+                                  Print Bill
                                 </button>
                               </div>
                               <div className="text-xs text-on-surface-variant space-y-1.5 leading-relaxed font-medium">
@@ -716,6 +862,45 @@ function AdminOrders() {
                                     <strong>Business GSTIN:</strong> {addr.gstin}
                                   </p>
                                 )}
+                              </div>
+                              <div className="border-t border-outline-variant/30 pt-4 space-y-2 text-xs">
+                                <div className="flex justify-between text-on-surface-variant">
+                                  <span>Merchandise subtotal</span>
+                                  <span>{formatINR(subtotal)}</span>
+                                </div>
+                                {Number(o.shipping_paise || 0) > 0 ? (
+                                  <div className="flex justify-between text-on-surface-variant">
+                                    <span>Shipping</span>
+                                    <span>{formatINR(o.shipping_paise)}</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-between text-on-surface-variant">
+                                    <span>Shipping</span>
+                                    <span>FREE</span>
+                                  </div>
+                                )}
+                                {Number(o.tax_paise || 0) > 0 && (
+                                  <div className="flex justify-between text-on-surface-variant">
+                                    <span>Tax</span>
+                                    <span>{formatINR(o.tax_paise)}</span>
+                                  </div>
+                                )}
+                                {adjustment < 0 && (
+                                  <div className="flex justify-between font-medium text-emerald-700">
+                                    <span>Prepaid discount</span>
+                                    <span>-{formatINR(Math.abs(adjustment))}</span>
+                                  </div>
+                                )}
+                                {adjustment > 0 && (
+                                  <div className="flex justify-between font-medium text-purple-800">
+                                    <span>COD fee</span>
+                                    <span>+{formatINR(adjustment)}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between border-t-2 border-primary pt-2 text-sm font-black text-primary">
+                                  <span>FINAL PAYABLE TOTAL</span>
+                                  <span>{formatINR(o.total_paise)}</span>
+                                </div>
                               </div>
                             </div>
 

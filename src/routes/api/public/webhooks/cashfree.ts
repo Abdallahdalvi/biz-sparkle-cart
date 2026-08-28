@@ -9,7 +9,8 @@ type CashfreeWebhook = {
     refund?: {
       cf_payment_id?: string | number;
       refund_status?: string;
-      cf_refund_id?: string;
+      cf_refund_id?: string | number;
+      refund_amount?: number;
     };
   };
 };
@@ -80,16 +81,20 @@ export const Route = createFileRoute("/api/public/webhooks/cashfree")({
               cashfreeOrderId,
               paymentId === undefined ? undefined : String(paymentId),
             );
-          } else if (
-            event.type.includes("REFUND") &&
-            event.data?.refund?.refund_status === "SUCCESS" &&
-            refundPaymentId !== undefined
-          ) {
-            const { error } = await supabaseAdmin
-              .from("orders")
-              .update({ status: "refunded" })
-              .eq("cashfree_payment_id", String(refundPaymentId));
-            if (error) throw error;
+          } else if (event.type.includes("REFUND") && refundPaymentId !== undefined) {
+            const refund = event.data?.refund;
+            if (!refund?.refund_status) throw new Error("Cashfree refund status is missing");
+            const { finalizeCashfreeRefundInternal } = await import("@/lib/cashfree.server");
+            await finalizeCashfreeRefundInternal({
+              cashfreePaymentId: String(refundPaymentId),
+              cashfreeRefundId:
+                refund.cf_refund_id === undefined ? undefined : String(refund.cf_refund_id),
+              refundStatus: refund.refund_status,
+              refundAmountPaise:
+                refund.refund_amount === undefined
+                  ? undefined
+                  : Math.round(Number(refund.refund_amount) * 100),
+            });
           }
 
           const { error: idempotencyError } = await supabaseAdmin

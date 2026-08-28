@@ -28,11 +28,16 @@ interface OrderRow {
   id: string;
   order_number: string;
   status: string;
+  subtotal_paise: number;
+  shipping_paise: number;
+  tax_paise: number;
   total_paise: number;
   created_at: string;
   tracking_url: string | null;
   notes?: string | null;
   cashfree_payment_id?: string | null;
+  cashfree_refund_status?: string | null;
+  refund_amount_paise?: number | null;
   razorpay_payment_id?: string | null;
   shiprocket_order_id?: string | null;
   shiprocket_shipment_id?: string | null;
@@ -69,7 +74,7 @@ function Orders() {
     supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_paise, created_at, tracking_url, notes, cashfree_payment_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shipping_address, order_items(name, qty, unit_price_paise, variant_label, image_url)",
+        "id, order_number, status, subtotal_paise, shipping_paise, tax_paise, total_paise, created_at, tracking_url, notes, cashfree_payment_id, cashfree_refund_status, refund_amount_paise, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shipping_address, order_items(name, qty, unit_price_paise, variant_label, image_url)",
       )
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
@@ -129,6 +134,13 @@ function Orders() {
           o.status === "delivered" ? "Delivered successfully" : "3-5 business days via Shiprocket";
         const isCod = o.notes === "cod";
         const onlinePaymentVerified = Boolean(o.cashfree_payment_id || o.razorpay_payment_id);
+        const refundStatus = o.cashfree_refund_status?.toUpperCase();
+        const merchandiseSubtotal =
+          Number(o.subtotal_paise) ||
+          (o.order_items ?? []).reduce((sum, item) => sum + item.unit_price_paise * item.qty, 0);
+        const pricingAdjustment =
+          Number(o.total_paise) -
+          (merchandiseSubtotal + Number(o.shipping_paise || 0) + Number(o.tax_paise || 0));
         const addr = o.shipping_address || {};
 
         return (
@@ -149,7 +161,7 @@ function Orders() {
               </div>
               <div className="text-left md:text-right">
                 <p className="text-[11px] uppercase tracking-widest text-on-surface-variant mb-1">
-                  Total Amount
+                  Final Order Total
                 </p>
                 <p className="font-bold text-xl text-primary">{formatINR(o.total_paise)}</p>
                 <span
@@ -190,11 +202,55 @@ function Orders() {
                         <p className="text-xs text-on-surface-variant">Qty: {item.qty}</p>
                       </div>
                     </div>
-                    <div className="text-right font-bold text-sm text-primary">
-                      {formatINR(item.unit_price_paise * item.qty)}
+                    <div className="text-right">
+                      <p className="font-bold text-sm text-primary">
+                        {formatINR(item.unit_price_paise * item.qty)}
+                      </p>
+                      <p className="text-[9px] uppercase tracking-wider text-on-surface-variant">
+                        Line amount
+                      </p>
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="max-w-sm ml-auto border-t border-outline-variant/40 pt-4 space-y-2 text-xs">
+                <div className="flex justify-between text-on-surface-variant">
+                  <span>Merchandise subtotal</span>
+                  <span>{formatINR(merchandiseSubtotal)}</span>
+                </div>
+                {Number(o.shipping_paise || 0) > 0 ? (
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>Shipping</span>
+                    <span>{formatINR(o.shipping_paise)}</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>Shipping</span>
+                    <span>FREE</span>
+                  </div>
+                )}
+                {Number(o.tax_paise || 0) > 0 && (
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>Tax</span>
+                    <span>{formatINR(o.tax_paise)}</span>
+                  </div>
+                )}
+                {pricingAdjustment < 0 && (
+                  <div className="flex justify-between font-medium text-emerald-700">
+                    <span>Prepaid discount</span>
+                    <span>-{formatINR(Math.abs(pricingAdjustment))}</span>
+                  </div>
+                )}
+                {pricingAdjustment > 0 && (
+                  <div className="flex justify-between font-medium text-purple-800">
+                    <span>COD fee</span>
+                    <span>+{formatINR(pricingAdjustment)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t-2 border-primary pt-2 text-sm font-black text-primary">
+                  <span>FINAL PAYABLE TOTAL</span>
+                  <span>{formatINR(o.total_paise)}</span>
+                </div>
               </div>
             </div>
 
@@ -358,7 +414,7 @@ function Orders() {
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-xs uppercase tracking-widest text-primary flex items-center gap-2">
                     <span
-                      className={`w-2 h-2 rounded-full ${isCod || onlinePaymentVerified ? "bg-emerald-500" : "bg-amber-500"}`}
+                      className={`w-2 h-2 rounded-full ${refundStatus === "SUCCESS" ? "bg-rose-500" : isCod || onlinePaymentVerified ? "bg-emerald-500" : "bg-amber-500"}`}
                     ></span>
                     Payment Tracking
                   </h4>
@@ -381,6 +437,17 @@ function Orders() {
                       {isCod ? "Cash on Delivery (COD)" : "UPI / Card / NetBanking"}
                     </span>
                   </div>
+                  {refundStatus && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-on-surface-variant">Refund:</span>
+                      <span
+                        className={`font-bold ${refundStatus === "SUCCESS" ? "text-emerald-700" : "text-amber-700"}`}
+                      >
+                        {refundStatus}
+                        {o.refund_amount_paise ? ` · ${formatINR(o.refund_amount_paise)}` : ""}
+                      </span>
+                    </div>
+                  )}
                   <div className="pt-2 border-t border-outline-variant/40 flex items-center justify-between">
                     <span className="text-[11px] text-on-surface-variant">
                       Verification:{" "}
@@ -393,7 +460,15 @@ function Orders() {
                     <span
                       className={`text-[11px] font-bold uppercase tracking-widest ${isCod || onlinePaymentVerified ? "text-emerald-600" : "text-amber-700"}`}
                     >
-                      {isCod ? "Confirmed" : onlinePaymentVerified ? "Paid & Verified" : "Pending"}
+                      {refundStatus === "SUCCESS"
+                        ? "Refunded"
+                        : refundStatus === "PENDING"
+                          ? "Refund Pending"
+                          : isCod
+                            ? "Confirmed"
+                            : onlinePaymentVerified
+                              ? "Paid & Verified"
+                              : "Pending"}
                     </span>
                   </div>
                 </div>
