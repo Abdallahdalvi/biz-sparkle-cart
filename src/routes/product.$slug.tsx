@@ -83,9 +83,6 @@ function ProductPage() {
   // New trust & conversion states
   const [pincode, setPincode] = useState("");
   const [pinStatus, setPinStatus] = useState<string | null>(null);
-  const [bundleCharger, setBundleCharger] = useState(false);
-  const [bundleGlass, setBundleGlass] = useState(false);
-  const [warranty, setWarranty] = useState("1yr");
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
@@ -154,19 +151,6 @@ function ProductPage() {
       "Successfully added to priority waitlist! You will be alerted first upon restock.",
     );
   }
-
-  // Calculate total price including bundle and warranty add-ons
-  let baseAddonsPaise = 0;
-  if (bundleCharger) baseAddonsPaise += 79900; // ₹799 20W Fast Charger
-  if (bundleGlass) baseAddonsPaise += 39900; // ₹399 Tempered Glass
-
-  // Apply 15% bundle discount if both add-ons are selected
-  const hasBundleDiscount = bundleCharger && bundleGlass;
-  if (hasBundleDiscount) {
-    baseAddonsPaise = Math.round(baseAddonsPaise * 0.85);
-  }
-
-  const finalPricePaise = product.pricePaise + baseAddonsPaise;
 
   return (
     <SiteShell>
@@ -266,7 +250,7 @@ function ProductPage() {
                   </span>
                 )}
                 <span className="text-3xl font-bold text-primary">
-                  {formatINR(finalPricePaise)}
+                  {formatINR(product.pricePaise)}
                 </span>
                 {product.compareAtPaise && product.compareAtPaise > product.pricePaise && (
                   <span className="text-xs font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded">
@@ -316,68 +300,6 @@ function ProductPage() {
                 </p>
               )}
             </div>
-
-            {/* Frequently Bought Together (Bundle & Cross-Sell) */}
-            <div className="bg-white border border-outline-variant/40 p-6 rounded shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-base text-amber-600">
-                    auto_awesome
-                  </span>
-                  Frequently Bought Together
-                </h3>
-                {hasBundleDiscount && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300">
-                    15% BUNDLE SAVINGS APPLIED
-                  </span>
-                )}
-              </div>
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between p-2 hover:bg-surface-container-lowest rounded transition-colors">
-                  <label className="flex items-center gap-3 cursor-pointer font-medium text-primary">
-                    <input type="checkbox" checked disabled className="cursor-not-allowed" />
-                    <span>{product.name} (This item)</span>
-                  </label>
-                  <span className="font-bold">{formatINR(product.pricePaise)}</span>
-                </div>
-                <div className="flex items-center justify-between p-2 hover:bg-surface-container-lowest rounded transition-colors">
-                  <label className="flex items-center gap-3 cursor-pointer font-medium text-primary">
-                    <input
-                      type="checkbox"
-                      checked={bundleCharger}
-                      onChange={(e) => setBundleCharger(e.target.checked)}
-                      className="cursor-pointer"
-                    />
-                    <span>20W Fast Charger Adapter (PD Compatible)</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-on-surface-variant line-through text-[10px]">₹1,299</span>
-                    <span className="font-bold text-emerald-700">
-                      {hasBundleDiscount ? formatINR(Math.round(79900 * 0.85)) : "₹799"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-2 hover:bg-surface-container-lowest rounded transition-colors">
-                  <label className="flex items-center gap-3 cursor-pointer font-medium text-primary">
-                    <input
-                      type="checkbox"
-                      checked={bundleGlass}
-                      onChange={(e) => setBundleGlass(e.target.checked)}
-                      className="cursor-pointer"
-                    />
-                    <span>Premium 9H Tempered Glass Screen Protector</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-on-surface-variant line-through text-[10px]">₹699</span>
-                    <span className="font-bold text-emerald-700">
-                      {hasBundleDiscount ? formatINR(Math.round(39900 * 0.85)) : "₹399"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Extended Warranty Selector Removed */}
 
             {product.variants && product.variants.length > 0 && (
               <div>
@@ -490,7 +412,7 @@ function ProductPage() {
                     <span className="text-center font-bold text-sm">
                       {currentQty}{" "}
                       <span className="text-[10px] opacity-80 font-normal uppercase tracking-widest block sm:inline">
-                        ({formatINR(finalPricePaise * currentQty)})
+                        ({formatINR(product.pricePaise * currentQty)})
                       </span>
                     </span>
                     <button
@@ -522,33 +444,13 @@ function ProductPage() {
                         },
                         1,
                       );
-                      if (bundleCharger)
-                        add(
-                          {
-                            slug: "bundle-charger",
-                            name: "20W Fast Charger Adapter",
-                            pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900,
-                            image: product.images[0],
-                          },
-                          1,
-                        );
-                      if (bundleGlass)
-                        add(
-                          {
-                            slug: "bundle-glass",
-                            name: "Premium 9H Tempered Glass",
-                            pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900,
-                            image: product.images[0],
-                          },
-                          1,
-                        );
-                      toast.success(`Added ${product.name} (and selected add-ons) to cart`);
+                      toast.success(`Added ${product.name} to cart`);
                     }}
                     className="w-full bg-primary text-on-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2"
                   >
                     <span>Add to Cart</span>
                     <span className="text-[11px] sm:text-sm font-bold opacity-90">
-                      ({formatINR(finalPricePaise)})
+                      ({formatINR(product.pricePaise)})
                     </span>
                   </button>
                 )}
@@ -585,7 +487,7 @@ function ProductPage() {
 
         {/* FAQs */}
         {product.faqs && product.faqs.length > 0 && (
-          <div className="mt-20 bg-white shopify-border p-8 md:p-12 shadow-sm max-w-4xl mx-auto">
+          <div className="mt-20 bg-white shopify-border p-8 md:p-12 shadow-sm w-full">
             <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-8 text-center tracking-tight">
               Frequently Asked Questions About {product.name}
             </h2>
@@ -711,26 +613,6 @@ function ProductPage() {
                   },
                   1,
                 );
-                if (bundleCharger)
-                  add(
-                    {
-                      slug: "bundle-charger",
-                      name: "20W Fast Charger Adapter",
-                      pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900,
-                      image: product.images[0],
-                    },
-                    1,
-                  );
-                if (bundleGlass)
-                  add(
-                    {
-                      slug: "bundle-glass",
-                      name: "Premium 9H Tempered Glass",
-                      pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900,
-                      image: product.images[0],
-                    },
-                    1,
-                  );
                 toast.success(`Added ${product.name} to cart`);
               }}
               className="flex-1 bg-white border border-primary text-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-surface-container transition-all text-center disabled:opacity-40 shadow-sm"
@@ -754,26 +636,6 @@ function ProductPage() {
                   },
                   1,
                 );
-                if (bundleCharger)
-                  add(
-                    {
-                      slug: "bundle-charger",
-                      name: "20W Fast Charger Adapter",
-                      pricePaise: hasBundleDiscount ? Math.round(79900 * 0.85) : 79900,
-                      image: product.images[0],
-                    },
-                    1,
-                  );
-                if (bundleGlass)
-                  add(
-                    {
-                      slug: "bundle-glass",
-                      name: "Premium 9H Tempered Glass",
-                      pricePaise: hasBundleDiscount ? Math.round(39900 * 0.85) : 39900,
-                      image: product.images[0],
-                    },
-                    1,
-                  );
               }
             }}
             className="flex-1 bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all text-center block shadow-sm"

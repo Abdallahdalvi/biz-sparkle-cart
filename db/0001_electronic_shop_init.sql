@@ -1,5 +1,5 @@
 -- =====================================================================
--- electronic_shop schema — TechLab e-commerce
+-- electronic_shop schema — Aghanims Phones and Gadgets e-commerce
 -- Run this entire file in your self-hosted Supabase SQL editor
 -- (https://supabase.dalvi.cloud → SQL Editor → New query → paste → Run).
 -- Safe to re-run: every statement is idempotent.

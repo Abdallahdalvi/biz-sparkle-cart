@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  techlab-storefront:
+  aghanims-storefront:
     image: ghcr.io/abdallahdalvi/biz-sparkle-cart:latest
-    container_name: techlab-storefront
+    container_name: aghanims-storefront
     restart: unless-stopped
     ports:
       - "9999:9999"
@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 300 techlab-storefront
+    command: --interval 300 aghanims-storefront
     environment:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_LABEL_ENABLE=false

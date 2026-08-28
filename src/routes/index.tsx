@@ -7,6 +7,8 @@ import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } fr
 import { formatINR } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
+const GOOGLE_REVIEWS_URL = "https://share.google/QsovQvaK3NBblvoUu";
+
 export const Route = createFileRoute("/")({
   loader: async () => {
     const all = await getAllProducts();
@@ -85,6 +87,10 @@ function Index() {
   const [reviewIndex, setReviewIndex] = useState(0);
   const trending = all.slice(0, 3);
   const drivers = all.slice(0, 4);
+  const visibleReviews = Array.from(
+    { length: Math.min(3, cms.reviews.length) },
+    (_, offset) => cms.reviews[(reviewIndex + offset) % cms.reviews.length],
+  );
   const whatsappChannelUrl = /^https:\/\/(?:www\.)?whatsapp\.com\/channel\//i.test(
     cms.whatsapp_channel_url,
   )
@@ -359,7 +365,7 @@ function Index() {
                   />
                   <div>
                     <h4 className="font-bold text-sm text-primary">
-                      {cms.reviews_heading?.store_name || "Dumbphones India"}
+                      {cms.reviews_heading?.store_name || "Aghanims Phones and Gadgets"}
                     </h4>
                     <div className="flex items-center gap-1 my-1 text-amber-400 text-xs">
                       <span>★</span>
@@ -369,12 +375,12 @@ function Index() {
                       <span>★</span>
                     </div>
                     <p className="text-[11px] text-on-surface-variant font-medium">
-                      {cms.reviews_heading?.total_reviews || 84} Google reviews
+                      {cms.reviews_heading?.total_reviews || 4} Google reviews
                     </p>
                   </div>
                 </div>
                 <a
-                  href="https://search.google.com"
+                  href={GOOGLE_REVIEWS_URL}
                   target="_blank"
                   rel="noreferrer"
                   className="border border-outline-variant/80 px-4 py-2.5 text-xs font-bold text-primary hover:bg-surface-container-low w-full text-center block mt-6 shadow-sm transition-colors"
@@ -396,10 +402,10 @@ function Index() {
                 </button>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 w-full">
-                  {cms.reviews.map((rev, i) => (
+                  {visibleReviews.map((rev, i) => (
                     <div
-                      key={i}
-                      className={`bg-white p-6 shopify-border shadow-sm space-y-4 flex flex-col justify-between max-w-sm mx-auto w-full ${i >= 3 ? "hidden md:flex" : ""}`}
+                      key={`${rev.author}-${reviewIndex}-${i}`}
+                      className="bg-white p-6 shopify-border shadow-sm space-y-4 flex flex-col justify-between max-w-sm mx-auto w-full"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -429,9 +435,14 @@ function Index() {
                           {rev.snippet}
                         </p>
                       </div>
-                      <span className="text-[10px] text-on-surface-variant hover:underline cursor-pointer pt-2 border-t border-outline-variant/20 inline-block">
+                      <a
+                        href={GOOGLE_REVIEWS_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-on-surface-variant hover:underline cursor-pointer pt-2 border-t border-outline-variant/20 inline-block"
+                      >
                         Read more
-                      </span>
+                      </a>
                     </div>
                   ))}
                 </div>

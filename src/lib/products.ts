@@ -211,34 +211,40 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     },
   ],
   reviews_heading: {
-    store_name: "Dumbphones India",
+    store_name: "Aghanims Phones and Gadgets",
     rating: 5.0,
-    total_reviews: 84,
+    total_reviews: 4,
   },
   reviews: [
     {
-      author: "Dheeraj",
-      time: "2 months ago",
+      author: "MITESH RATHOD",
+      time: "August 2026",
       stars: 5,
       snippet:
-        "I recently purchased the Duoqin F22 Pro from Dumbphones, and I must say, I'm really impressed with the build and support.",
-      avatar: "D",
+        "Bought a phone for his mother and praised the product, service, and the team's genuine support.",
+      avatar: "M",
     },
     {
-      author: "SND Gaming",
-      time: "2 months ago",
+      author: "Sumit Jadhav",
+      time: "August 2026",
       stars: 5,
       snippet:
-        "I Personally Visited The Office And I Truly Like Their Models So I Decided To Purchase Jelly Star And They Give The best service.",
+        "Purchased a Nokia phone and described Aghanims Phones and Gadgets as an authentic seller.",
       avatar: "S",
     },
     {
-      author: "Khadar Basha",
-      time: "2 months ago",
+      author: "Karan Mundarkar",
+      time: "August 2026",
       stars: 5,
-      snippet:
-        "Recently I bought a mobile from here. Very trusted website and people. They personally interact with you to guide on setup.",
+      snippet: "Found the product nice and trustworthy.",
       avatar: "K",
+    },
+    {
+      author: "Sahdevsinh Jadav",
+      time: "August 2026",
+      stars: 5,
+      snippet: "Called the business authentic and trustworthy.",
+      avatar: "S",
     },
   ],
   cod_charge_amount: 99,
@@ -271,7 +277,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   footer_tagline: "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.",
   footer_copyright: "© 2026 Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.",
   reviews_api_key: "",
-  reviews_place_id: "ChIJwe754bS55zsRwb3Q4U1xd7g",
+  reviews_place_id: "",
 };
 
 // No dummy/seed products — all products are managed via Supabase admin panel.
@@ -474,9 +480,8 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     business_profile_verified: dbCms.business_profile_verified === true,
     whatsapp_channel_url: dbCms.whatsapp_channel_url || DEFAULT_STOREFRONT_CMS.whatsapp_channel_url,
     whatsapp_chat_phone: dbCms.whatsapp_chat_phone || DEFAULT_STOREFRONT_CMS.whatsapp_chat_phone,
-    whatsapp_chat_message: (
-      dbCms.whatsapp_chat_message || DEFAULT_STOREFRONT_CMS.whatsapp_chat_message
-    ).replace(/TECHLAB/gi, "Aghanims"),
+    whatsapp_chat_message:
+      dbCms.whatsapp_chat_message || DEFAULT_STOREFRONT_CMS.whatsapp_chat_message,
     legal_terms_text: dbCms.legal_terms_text || DEFAULT_STOREFRONT_CMS.legal_terms_text,
     legal_privacy_text: dbCms.legal_privacy_text || DEFAULT_STOREFRONT_CMS.legal_privacy_text,
     legal_shipping_text: dbCms.legal_shipping_text || DEFAULT_STOREFRONT_CMS.legal_shipping_text,
