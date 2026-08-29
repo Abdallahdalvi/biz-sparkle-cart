@@ -132,12 +132,14 @@ function ProductPage() {
       day: "numeric",
       month: "short",
     });
-    const carrier = isMetro ? "Bluedart Air Express" : "Delhivery Surface Priority";
+    const routeSpeed = isMetro ? "metro priority route" : "standard priority route";
 
     setPinStatus(
-      `⚡ FREE Express Delivery to ${cleanPin} by ${dateStr} via ${carrier} | COD Available`,
+      `Delivery to ${cleanPin} is serviceable by ${dateStr} on a ${routeSpeed}. Final courier is selected in Shiprocket after order placement. COD available.`,
     );
-    toast.success(`Pincode verified! Assigned carrier: ${carrier}`);
+    toast.success(
+      "Pincode verified. Courier will be selected in Shiprocket after order placement.",
+    );
   }
 
   function handleWaitlist(e: React.FormEvent) {

@@ -249,6 +249,10 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         throw new Error(`Stock reservation audit failed: ${reservationError.message}`);
       }
 
+      void import("@/lib/order-notifications.server").then(({ notifyAdminAboutActionableOrder }) =>
+        notifyAdminAboutActionableOrder(order.id),
+      );
+
       return {
         ok: true,
         orderId: order.id,

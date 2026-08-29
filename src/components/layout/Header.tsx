@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useCart } from "@/lib/cart-store";
+import { useCart, useCartOwnerSync } from "@/lib/cart-store";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 
@@ -18,8 +18,9 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => setMounted(true), []);
-  const count = mounted ? items.reduce((a, i) => a + i.qty, 0) : 0;
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
+  useCartOwnerSync(user?.id, loading);
+  const count = mounted && !loading ? items.reduce((a, i) => a + i.qty, 0) : 0;
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-white border-b border-outline-variant/30">

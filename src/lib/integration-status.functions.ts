@@ -20,5 +20,11 @@ export const getIntegrationStatus = createServerFn({ method: "POST" })
         ),
         pickupLocation: process.env.SHIPROCKET_PICKUP_LOCATION || "Primary",
       },
+      orderNotifications: {
+        emailConfigured: Boolean(
+          process.env.RESEND_API_KEY && process.env.ADMIN_ORDER_NOTIFICATION_EMAIL,
+        ),
+        webhookConfigured: Boolean(process.env.ADMIN_ORDER_NOTIFICATION_WEBHOOK_URL),
+      },
     };
   });

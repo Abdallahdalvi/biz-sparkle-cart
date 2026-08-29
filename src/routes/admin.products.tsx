@@ -188,9 +188,9 @@ function AdminProducts() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-2xl font-bold">Products Catalog</h2>
           <p className="text-xs text-on-surface-variant mt-1">
             Manage specifications, variants, flagship tags, discounted pricing, and image galleries.
@@ -201,7 +201,7 @@ function AdminProducts() {
             setShowNew(true);
             setEditingProduct(null);
           }}
-          className="bg-primary text-on-primary px-4 py-2 text-[11px] font-bold uppercase tracking-widest hover:opacity-90 shadow-sm"
+          className="w-full bg-primary text-on-primary px-4 py-2 text-[11px] font-bold uppercase tracking-widest hover:opacity-90 shadow-sm sm:w-auto"
         >
           + New Product
         </button>
@@ -237,108 +237,200 @@ function AdminProducts() {
           No products in database yet. Click <strong>+ New Product</strong> above to add one.
         </p>
       ) : (
-        <div className="bg-white shopify-border overflow-x-auto shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-container-low border-b border-outline-variant/40">
-              <tr className="text-left text-[10px] uppercase tracking-widest text-on-surface-variant">
-                <th className="p-4">Product Info</th>
-                <th className="p-4">Tag / Badge</th>
-                <th className="p-4">Price & Discount</th>
-                <th className="p-4">COD Advance</th>
-                <th className="p-4">Stock</th>
-                <th className="p-4">Specs & Variants</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/40">
-              {rows.map((r) => (
-                <tr key={r.id} className="hover:bg-surface-container-lowest transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      {r.metadata?.images?.[0] && (
-                        <img
-                          src={r.metadata.images[0]}
-                          alt=""
-                          className="w-10 h-10 object-cover shopify-border flex-shrink-0"
-                        />
-                      )}
-                      <div>
-                        <p className="font-bold text-primary">{r.name}</p>
-                        <p className="text-[11px] text-on-surface-variant">{r.slug}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    {r.metadata?.badge ? (
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2 py-0.5 rounded inline-block bg-primary/5">
+        <>
+          <div className="space-y-3 md:hidden">
+            {rows.map((r) => (
+              <div key={r.id} className="bg-white shopify-border p-4 shadow-sm space-y-4">
+                <div className="flex gap-3">
+                  {r.metadata?.images?.[0] && (
+                    <img
+                      src={r.metadata.images[0]}
+                      alt=""
+                      className="h-16 w-16 flex-shrink-0 object-cover shopify-border"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-primary leading-snug break-words">{r.name}</p>
+                    <p className="text-[11px] text-on-surface-variant break-all">{r.slug}</p>
+                    {r.metadata?.badge && (
+                      <span className="mt-2 inline-block rounded border border-primary bg-primary/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
                         {r.metadata.badge}
                       </span>
-                    ) : (
-                      <span className="text-xs text-on-surface-variant">—</span>
                     )}
-                  </td>
-                  <td className="p-4">
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="rounded bg-surface-container-low p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      Price
+                    </p>
                     <p className="font-bold text-primary">{formatINR(r.price_paise)}</p>
                     {r.compare_at_paise && r.compare_at_paise > r.price_paise && (
-                      <p className="text-xs text-on-surface-variant line-through">
+                      <p className="text-[11px] text-on-surface-variant line-through">
                         {formatINR(r.compare_at_paise)}
                       </p>
                     )}
-                  </td>
-                  <td className="p-4">
+                  </div>
+                  <div className="rounded bg-amber-50 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900">
+                      COD Advance
+                    </p>
                     <p className="font-bold text-amber-800">
                       {r.cod_advance_paise > 0 ? formatINR(r.cod_advance_paise) : "Full COD"}
                     </p>
-                    <p className="text-[10px] text-on-surface-variant">
-                      {r.cod_advance_paise > 0 ? "Paid online first" : "No advance"}
+                  </div>
+                  <div className="rounded bg-surface-container-low p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      Stock
                     </p>
-                  </td>
-                  <td className="p-4 font-bold">{r.stock}</td>
-                  <td className="p-4 text-xs text-on-surface-variant space-y-1">
-                    <div>
-                      <strong>Specs:</strong> {r.metadata?.specs?.length || 0} configured
-                    </div>
-                    <div>
-                      <strong>Variants:</strong>{" "}
+                    <p className="font-bold text-primary">{r.stock}</p>
+                  </div>
+                  <div className="rounded bg-surface-container-low p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      Variants
+                    </p>
+                    <p className="truncate font-medium">
                       {r.metadata?.variants?.map((variant) => variant.label).join(", ") || "None"}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <button
-                      onClick={() => toggle(r)}
-                      className={
-                        "text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded " +
-                        (r.is_active
-                          ? "bg-primary text-on-primary"
-                          : "border border-outline text-on-surface-variant")
-                      }
-                    >
-                      {r.is_active ? "Active" : "Hidden"}
-                    </button>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button
-                      onClick={() => {
-                        setEditingProduct(r);
-                        setShowNew(false);
-                      }}
-                      className="text-primary text-[11px] uppercase tracking-widest font-bold hover:underline mr-4"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => remove(r)}
-                      className="text-destructive text-[11px] uppercase tracking-widest font-bold hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button
+                    onClick={() => toggle(r)}
+                    className={
+                      "w-full rounded px-3 py-2 text-[10px] font-bold uppercase tracking-widest " +
+                      (r.is_active
+                        ? "bg-primary text-on-primary"
+                        : "border border-outline text-on-surface-variant")
+                    }
+                  >
+                    {r.is_active ? "Active" : "Hidden"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingProduct(r);
+                      setShowNew(false);
+                    }}
+                    className="w-full rounded border border-outline-variant/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => remove(r)}
+                    className="w-full rounded border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-destructive"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden bg-white shopify-border overflow-x-auto shadow-sm md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-surface-container-low border-b border-outline-variant/40">
+                <tr className="text-left text-[10px] uppercase tracking-widest text-on-surface-variant">
+                  <th className="p-4">Product Info</th>
+                  <th className="p-4">Tag / Badge</th>
+                  <th className="p-4">Price & Discount</th>
+                  <th className="p-4">COD Advance</th>
+                  <th className="p-4">Stock</th>
+                  <th className="p-4">Specs & Variants</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/40">
+                {rows.map((r) => (
+                  <tr key={r.id} className="hover:bg-surface-container-lowest transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        {r.metadata?.images?.[0] && (
+                          <img
+                            src={r.metadata.images[0]}
+                            alt=""
+                            className="w-10 h-10 object-cover shopify-border flex-shrink-0"
+                          />
+                        )}
+                        <div>
+                          <p className="font-bold text-primary">{r.name}</p>
+                          <p className="text-[11px] text-on-surface-variant">{r.slug}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      {r.metadata?.badge ? (
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2 py-0.5 rounded inline-block bg-primary/5">
+                          {r.metadata.badge}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-on-surface-variant">—</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <p className="font-bold text-primary">{formatINR(r.price_paise)}</p>
+                      {r.compare_at_paise && r.compare_at_paise > r.price_paise && (
+                        <p className="text-xs text-on-surface-variant line-through">
+                          {formatINR(r.compare_at_paise)}
+                        </p>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <p className="font-bold text-amber-800">
+                        {r.cod_advance_paise > 0 ? formatINR(r.cod_advance_paise) : "Full COD"}
+                      </p>
+                      <p className="text-[10px] text-on-surface-variant">
+                        {r.cod_advance_paise > 0 ? "Paid online first" : "No advance"}
+                      </p>
+                    </td>
+                    <td className="p-4 font-bold">{r.stock}</td>
+                    <td className="p-4 text-xs text-on-surface-variant space-y-1">
+                      <div>
+                        <strong>Specs:</strong> {r.metadata?.specs?.length || 0} configured
+                      </div>
+                      <div>
+                        <strong>Variants:</strong>{" "}
+                        {r.metadata?.variants?.map((variant) => variant.label).join(", ") || "None"}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <button
+                        onClick={() => toggle(r)}
+                        className={
+                          "text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded " +
+                          (r.is_active
+                            ? "bg-primary text-on-primary"
+                            : "border border-outline text-on-surface-variant")
+                        }
+                      >
+                        {r.is_active ? "Active" : "Hidden"}
+                      </button>
+                    </td>
+                    <td className="p-4 text-right">
+                      <button
+                        onClick={() => {
+                          setEditingProduct(r);
+                          setShowNew(false);
+                        }}
+                        className="text-primary text-[11px] uppercase tracking-widest font-bold hover:underline mr-4"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => remove(r)}
+                        className="text-destructive text-[11px] uppercase tracking-widest font-bold hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
@@ -485,7 +577,7 @@ function NewProductForm({
           toast.error(`Database Error: ${errorMessage(error, "Creation failed")}`);
         }
       }}
-      className="bg-surface-container-low shopify-border p-8 space-y-8"
+      className="bg-surface-container-low shopify-border p-4 md:p-8 space-y-6 md:space-y-8"
     >
       <div>
         <h3 className="text-lg font-bold text-primary">Add New Premium Product</h3>
@@ -496,7 +588,7 @@ function NewProductForm({
       </div>
 
       {/* Basic Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-6 shopify-border">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-2">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-2">
             1. Basic Information
@@ -581,7 +673,7 @@ function NewProductForm({
       </div>
 
       {/* Pricing & Stock & Advanced Financials */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-6 shopify-border">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-3">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-1">
             2. Pricing, Inventory & Financial Analytics Setup
@@ -664,7 +756,7 @@ function NewProductForm({
             className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2 md:col-span-3">
+        <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-2">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
               COD Advance Paid Online (₹)
@@ -698,8 +790,8 @@ function NewProductForm({
       </div>
 
       {/* Images Gallery */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             3. Product Image Gallery URLs & Device Storage Upload
           </h4>
@@ -759,8 +851,8 @@ function NewProductForm({
       </div>
 
       {/* Precision Specifications Builder */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             4. Precision Specifications
           </h4>
@@ -811,8 +903,8 @@ function NewProductForm({
       </div>
 
       {/* Product Variants Builder */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             5. Product Variants
           </h4>
@@ -853,8 +945,8 @@ function NewProductForm({
       </div>
 
       {/* Product FAQs Builder */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             6. Product Specific FAQs
           </h4>
@@ -911,7 +1003,7 @@ function NewProductForm({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 pt-4">
+      <div className="flex flex-col gap-3 pt-4 sm:flex-row">
         <button
           disabled={busy}
           className="bg-primary text-on-primary px-8 py-3 text-xs font-bold uppercase tracking-widest disabled:opacity-50 shadow-sm hover:opacity-90 transition-opacity"
@@ -1059,7 +1151,7 @@ function EditProductForm({
           toast.error(`Database Error: ${errorMessage(error, "Update failed")}`);
         }
       }}
-      className="bg-surface-container-low shopify-border p-8 space-y-8"
+      className="bg-surface-container-low shopify-border p-4 md:p-8 space-y-6 md:space-y-8"
     >
       <div>
         <h3 className="text-lg font-bold text-primary">Edit Product: {prod.name}</h3>
@@ -1069,7 +1161,7 @@ function EditProductForm({
       </div>
 
       {/* Basic Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-6 shopify-border">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-2">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-2">
             1. Basic Information
@@ -1160,7 +1252,7 @@ function EditProductForm({
       </div>
 
       {/* Pricing & Stock & Advanced Financials */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-6 shopify-border">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-3">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-1">
             2. Pricing, Inventory & Financial Analytics Setup
@@ -1254,7 +1346,7 @@ function EditProductForm({
             className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2 md:col-span-3">
+        <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-2">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
               COD Advance Paid Online (₹)
@@ -1292,8 +1384,8 @@ function EditProductForm({
       </div>
 
       {/* Images Gallery */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             3. Product Image Gallery URLs & Device Storage Upload
           </h4>
@@ -1353,8 +1445,8 @@ function EditProductForm({
       </div>
 
       {/* Precision Specifications Builder */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             4. Precision Specifications
           </h4>
@@ -1405,8 +1497,8 @@ function EditProductForm({
       </div>
 
       {/* Product Variants Builder */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             5. Product Variants
           </h4>
@@ -1447,8 +1539,8 @@ function EditProductForm({
       </div>
 
       {/* Product FAQs Builder */}
-      <div className="bg-white p-6 shopify-border space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
             6. Product Specific FAQs
           </h4>
@@ -1505,7 +1597,7 @@ function EditProductForm({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 pt-4">
+      <div className="flex flex-col gap-3 pt-4 sm:flex-row">
         <button
           disabled={busy}
           className="bg-primary text-on-primary px-8 py-3 text-xs font-bold uppercase tracking-widest disabled:opacity-50 shadow-sm hover:opacity-90 transition-opacity"

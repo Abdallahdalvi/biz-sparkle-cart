@@ -354,6 +354,10 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
     throw new Error(`Stock reservation audit failed: ${reservationError.message}`);
   }
 
+  void import("@/lib/order-notifications.server").then(({ notifyAdminAboutActionableOrder }) =>
+    notifyAdminAboutActionableOrder(transitioned.id),
+  );
+
   return {
     ok: true,
     alreadyProcessed: false,

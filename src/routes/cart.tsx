@@ -18,10 +18,10 @@ function CartPage() {
 
   return (
     <SiteShell>
-      <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12">
-        <h1 className="text-4xl font-bold text-primary mb-8">Your Cart</h1>
+      <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-8 md:py-12">
+        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-8">Your Cart</h1>
         {items.length === 0 ? (
-          <div className="bg-white shopify-border p-16 text-center">
+          <div className="bg-white shopify-border p-8 md:p-16 text-center">
             <p className="text-on-surface-variant mb-6">Your cart is empty.</p>
             <Link
               to="/catalog"
@@ -36,18 +36,18 @@ function CartPage() {
               {items.map((i) => (
                 <div
                   key={i.slug + (i.variantId ?? "")}
-                  className="bg-white shopify-border p-4 flex gap-4 items-center"
+                  className="bg-white shopify-border p-4 flex flex-col gap-4 sm:flex-row sm:items-center"
                 >
                   <img
                     src={i.image}
                     alt={i.name}
-                    className="w-24 h-24 object-cover shopify-border"
+                    className="w-full aspect-square object-cover shopify-border sm:h-24 sm:w-24"
                   />
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <Link
                       to="/product/$slug"
                       params={{ slug: i.slug }}
-                      className="font-bold uppercase tracking-tight hover:underline"
+                      className="break-words font-bold uppercase tracking-tight hover:underline"
                     >
                       {i.name}
                     </Link>
@@ -58,28 +58,30 @@ function CartPage() {
                     )}
                     <p className="text-sm font-bold mt-1">{formatINR(i.pricePaise)}</p>
                   </div>
-                  <div className="flex items-center border border-outline">
+                  <div className="flex items-center justify-between gap-3 sm:justify-start">
+                    <div className="flex items-center border border-outline">
+                      <button
+                        onClick={() => setQty(i.slug, i.qty - 1, i.variantId)}
+                        className="px-3 py-2 font-bold"
+                      >
+                        −
+                      </button>
+                      <span className="w-10 text-center text-sm font-bold">{i.qty}</span>
+                      <button
+                        onClick={() => setQty(i.slug, i.qty + 1, i.variantId)}
+                        className="px-3 py-2 font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
                     <button
-                      onClick={() => setQty(i.slug, i.qty - 1, i.variantId)}
-                      className="px-3 py-2 font-bold"
+                      onClick={() => remove(i.slug, i.variantId)}
+                      aria-label="Remove"
+                      className="material-symbols-outlined text-on-surface-variant hover:text-destructive"
                     >
-                      −
-                    </button>
-                    <span className="w-10 text-center text-sm font-bold">{i.qty}</span>
-                    <button
-                      onClick={() => setQty(i.slug, i.qty + 1, i.variantId)}
-                      className="px-3 py-2 font-bold"
-                    >
-                      +
+                      close
                     </button>
                   </div>
-                  <button
-                    onClick={() => remove(i.slug, i.variantId)}
-                    aria-label="Remove"
-                    className="material-symbols-outlined text-on-surface-variant hover:text-destructive"
-                  >
-                    close
-                  </button>
                 </div>
               ))}
             </div>
@@ -88,10 +90,6 @@ function CartPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-on-surface-variant">Subtotal</span>
                 <span className="font-bold">{formatINR(total)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">Shipping</span>
-                <span className="text-[11px] uppercase font-bold">Calculated at checkout</span>
               </div>
               <div className="flex justify-between text-base border-t pt-3">
                 <span className="font-bold">Total</span>

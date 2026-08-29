@@ -125,9 +125,11 @@ values ('${user.id}', 'admin');`}
   const isIndex = pathname === "/admin";
   return (
     <SiteShell>
-      <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12">
-        <h1 className="text-4xl font-bold text-primary mb-8">Admin Dashboard</h1>
-        <div className="flex gap-6 border-b border-outline-variant/40 mb-8 overflow-x-auto whitespace-nowrap">
+      <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-8 md:py-12">
+        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-6 md:mb-8">
+          Admin Dashboard
+        </h1>
+        <div className="-mx-margin-mobile mb-8 flex gap-4 overflow-x-auto border-b border-outline-variant/40 px-margin-mobile pb-px whitespace-nowrap md:mx-0 md:gap-6 md:px-0">
           {TABS.map((t) => {
             const active = t.exact ? pathname === t.to : pathname.startsWith(t.to);
             return (
@@ -163,6 +165,7 @@ function AdminOverview() {
   const [integrationStatus, setIntegrationStatus] = useState<{
     cashfree: { apiKeysConfigured: boolean; environment: "sandbox" | "production" };
     shiprocket: { credentialsConfigured: boolean; pickupLocation: string };
+    orderNotifications: { emailConfigured: boolean; webhookConfigured: boolean };
   } | null>(null);
   const getIntegrationStatusFn = useServerFn(getIntegrationStatus);
 
@@ -405,13 +408,17 @@ function AdminOverview() {
 
   const cashfreeReady = Boolean(integrationStatus?.cashfree.apiKeysConfigured);
   const shiprocketReady = Boolean(integrationStatus?.shiprocket.credentialsConfigured);
+  const notificationsReady = Boolean(
+    integrationStatus?.orderNotifications.emailConfigured ||
+    integrationStatus?.orderNotifications.webhookConfigured,
+  );
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 md:space-y-12">
       {/* Timeframe selector & Report Download */}
       <div className="bg-white shopify-border p-6 md:p-8 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-l-4 border-l-primary">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
+          <h2 className="text-xl md:text-2xl font-bold text-primary flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">analytics</span>
             Advanced Financial & Inventory Analytics
           </h2>
@@ -421,12 +428,12 @@ function AdminOverview() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
-          <div className="flex bg-surface-container-low p-1 border border-outline-variant/40 rounded">
+          <div className="flex w-full overflow-x-auto bg-surface-container-low p-1 border border-outline-variant/40 rounded sm:w-auto">
             {(["weekly", "monthly", "yearly", "custom"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTimeRange(t)}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors ${timeRange === t ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-primary"}`}
+                className={`shrink-0 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded transition-colors ${timeRange === t ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-primary"}`}
               >
                 {t}
               </button>
@@ -434,7 +441,7 @@ function AdminOverview() {
           </div>
           <button
             onClick={downloadAnalyticsReport}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 font-bold text-xs uppercase tracking-widest shadow-sm flex items-center gap-2 transition-all flex-shrink-0"
+            className="w-full justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 font-bold text-xs uppercase tracking-widest shadow-sm flex items-center gap-2 transition-all sm:w-auto sm:flex-shrink-0"
           >
             <span className="material-symbols-outlined text-base">download</span>
             Download CSV Report
@@ -598,7 +605,7 @@ function AdminOverview() {
       </div>
 
       {/* Per-Order / Per-Product Profitability Breakdown Table */}
-      <div className="bg-white shopify-border shadow-sm overflow-hidden space-y-4 p-6 md:p-8">
+      <div className="bg-white shopify-border shadow-sm overflow-hidden space-y-4 p-4 md:p-8">
         <div>
           <h3 className="text-xl font-bold text-primary">
             Per-Order Profitability Audit (Real-time Seller Analysis)
@@ -609,8 +616,8 @@ function AdminOverview() {
             packaging.
           </p>
         </div>
-        <div className="overflow-x-auto border border-outline-variant/40">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="-mx-4 overflow-x-auto border border-outline-variant/40 md:mx-0">
+          <table className="min-w-[980px] w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-surface-container-low border-b border-outline-variant/40 text-[11px] uppercase tracking-wider text-primary font-bold">
                 <th className="p-4">Order ID</th>
@@ -856,7 +863,7 @@ function AdminOverview() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           to="/admin/products"
-          className="bg-white shopify-border p-8 hover:shopify-shadow transition-all group relative overflow-hidden flex flex-col justify-between"
+          className="bg-white shopify-border p-5 md:p-8 hover:shopify-shadow transition-all group relative overflow-hidden flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -865,13 +872,13 @@ function AdminOverview() {
               </span>
               <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
             </div>
-            <h2 className="text-3xl font-bold text-primary">Products & Inventory</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-primary">Products & Inventory</h2>
             <p className="text-sm text-on-surface-variant mt-3 leading-relaxed">
               Manage your store catalog, add new electronic products, update pricing, set stock
               quantities, and instantly toggle product visibility across the storefront.
             </p>
           </div>
-          <div className="mt-8 pt-4 border-t border-outline-variant/40 flex items-center justify-between text-xs text-on-surface-variant">
+          <div className="mt-8 pt-4 border-t border-outline-variant/40 flex flex-col gap-2 text-xs text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
             <span>Active database table: electronic_shop.products</span>
             <span className="font-bold text-primary">Manage Catalog</span>
           </div>
@@ -879,7 +886,7 @@ function AdminOverview() {
 
         <Link
           to="/admin/orders"
-          className="bg-white shopify-border p-8 hover:shopify-shadow transition-all group relative overflow-hidden flex flex-col justify-between"
+          className="bg-white shopify-border p-5 md:p-8 hover:shopify-shadow transition-all group relative overflow-hidden flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -888,13 +895,15 @@ function AdminOverview() {
               </span>
               <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
             </div>
-            <h2 className="text-3xl font-bold text-primary">Orders & Shipment Tracking</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-primary">
+              Orders & Shipment Tracking
+            </h2>
             <p className="text-sm text-on-surface-variant mt-3 leading-relaxed">
               View incoming orders, verify payment status, compare live courier services, generate
               Shiprocket AWBs, and manage delivery operations.
             </p>
           </div>
-          <div className="mt-8 pt-4 border-t border-outline-variant/40 flex items-center justify-between text-xs text-on-surface-variant">
+          <div className="mt-8 pt-4 border-t border-outline-variant/40 flex flex-col gap-2 text-xs text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
             <span>Active database table: electronic_shop.orders</span>
             <span className="font-bold text-primary">Manage Orders</span>
           </div>
@@ -902,7 +911,7 @@ function AdminOverview() {
 
         <Link
           to="/admin/cms"
-          className="bg-white shopify-border p-8 hover:shopify-shadow transition-all group relative overflow-hidden flex flex-col justify-between md:col-span-2"
+          className="bg-white shopify-border p-5 md:p-8 hover:shopify-shadow transition-all group relative overflow-hidden flex flex-col justify-between md:col-span-2"
         >
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -911,14 +920,16 @@ function AdminOverview() {
               </span>
               <span className="text-primary group-hover:translate-x-1 transition-transform">→</span>
             </div>
-            <h2 className="text-3xl font-bold text-primary">Storefront CMS & Live Banners</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-primary">
+              Storefront CMS & Live Banners
+            </h2>
             <p className="text-sm text-on-surface-variant mt-3 leading-relaxed">
               Fully customize your storefront layout, hero titles, custom promotional image banners,
               Keypad collection highlights, and Homepage FAQ sections. Upload images directly from
               your device storage or provide direct URLs.
             </p>
           </div>
-          <div className="mt-8 pt-4 border-t border-outline-variant/40 flex items-center justify-between text-xs text-on-surface-variant">
+          <div className="mt-8 pt-4 border-t border-outline-variant/40 flex flex-col gap-2 text-xs text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
             <span>Active database table: electronic_shop.store_settings</span>
             <span className="font-bold text-primary">Open Storefront CMS</span>
           </div>
@@ -926,8 +937,8 @@ function AdminOverview() {
       </div>
 
       {/* API integration status */}
-      <div className="bg-surface-container-low shopify-border p-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-outline-variant/40 pb-4">
+      <div className="bg-surface-container-low shopify-border p-4 md:p-8 space-y-6">
+        <div className="flex flex-col gap-3 border-b border-outline-variant/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-xl font-bold text-primary">Live API Integrations Health</h3>
             <p className="text-xs text-on-surface-variant mt-1">
@@ -935,13 +946,15 @@ function AdminOverview() {
             </p>
           </div>
           <span
-            className={`inline-block ${cashfreeReady && shiprocketReady ? "bg-emerald-500" : "bg-amber-500"} text-on-primary text-[10px] font-bold uppercase tracking-widest px-3 py-1`}
+            className={`inline-block ${cashfreeReady && shiprocketReady && notificationsReady ? "bg-emerald-500" : "bg-amber-500"} text-on-primary text-[10px] font-bold uppercase tracking-widest px-3 py-1`}
           >
-            {cashfreeReady && shiprocketReady ? "Integrations Ready" : "Setup Required"}
+            {cashfreeReady && shiprocketReady && notificationsReady
+              ? "Integrations Ready"
+              : "Setup Required"}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Cashfree Gateway */}
           <div className="bg-white p-6 shopify-border space-y-4">
             <div className="flex items-center justify-between">
@@ -1017,6 +1030,45 @@ function AdminOverview() {
               <div className="flex justify-between">
                 <span className="text-on-surface-variant">Courier Selection:</span>
                 <span>{shiprocketReady ? "Live per order" : "Unavailable"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 shopify-border space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:flex-col lg:items-start xl:flex-row xl:items-center">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-3 h-3 rounded-full ${notificationsReady ? "bg-emerald-500" : "bg-amber-500"}`}
+                ></div>
+                <h4 className="font-bold text-sm text-primary uppercase tracking-widest">
+                  New Order Alerts
+                </h4>
+              </div>
+              <span className="text-[11px] font-mono bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">
+                {notificationsReady ? "Enabled" : "Env Needed"}
+              </span>
+            </div>
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Sends an admin alert after a full-COD order is reserved or after Cashfree verifies a
+              prepaid payment/COD advance. Notification failures are logged without blocking
+              checkout.
+            </p>
+            <div className="bg-surface-container-lowest p-3 border border-outline-variant/40 text-[11px] space-y-1 rounded">
+              <div className="flex justify-between gap-3">
+                <span className="text-on-surface-variant">Email:</span>
+                <span
+                  className={`font-mono ${integrationStatus?.orderNotifications.emailConfigured ? "text-emerald-700" : "text-amber-700"}`}
+                >
+                  {integrationStatus?.orderNotifications.emailConfigured ? "Configured" : "Missing"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-on-surface-variant">Webhook:</span>
+                <span
+                  className={`font-mono ${integrationStatus?.orderNotifications.webhookConfigured ? "text-emerald-700" : "text-on-surface-variant"}`}
+                >
+                  {integrationStatus?.orderNotifications.webhookConfigured ? "Configured" : "Off"}
+                </span>
               </div>
             </div>
           </div>

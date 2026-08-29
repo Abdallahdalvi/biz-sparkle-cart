@@ -612,696 +612,1019 @@ function AdminOrders() {
           No orders yet.
         </div>
       ) : (
-        <div className="bg-white shopify-border overflow-x-auto shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-container-low border-b border-outline-variant/40">
-              <tr className="text-left text-[10px] uppercase tracking-widest text-on-surface-variant">
-                <th className="p-4 w-12 text-center">
-                  <input
-                    type="checkbox"
-                    checked={
-                      filteredOrders.length > 0 && selectedIds.length === filteredOrders.length
-                    }
-                    onChange={(e) =>
-                      setSelectedIds(e.target.checked ? filteredOrders.map((o) => o.id) : [])
-                    }
-                    className="cursor-pointer"
-                  />
-                </th>
-                <th className="p-4">Order Info</th>
-                <th className="p-4">Customer & Phone</th>
-                <th className="p-4">Payment Tracking</th>
-                <th className="p-4">Shipment Tracking</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/40">
-              {filteredOrders.map((o) => {
-                const isExpanded = expandedId === o.id;
-                const isSelected = selectedIds.includes(o.id);
-                const addr = o.shipping_address || {};
-                const subtotal = Number(o.subtotal_paise) || 0;
-                const adjustment = Number(o.total_paise) - (subtotal + Number(o.tax_paise || 0));
-                const terminal = ["cancelled", "refunded"].includes(o.status);
-                const afterDispatch = ["shipped", "delivered"].includes(o.status);
-                const canCancel = !terminal && !afterDispatch;
-                const refundPending = o.cashfree_refund_status === "PENDING";
-                const canRefund = Boolean(
-                  o.cashfree_order_id &&
-                  o.cashfree_payment_id &&
-                  o.cashfree_refund_status !== "SUCCESS" &&
-                  o.status !== "refunded" &&
-                  !afterDispatch,
-                );
+        <>
+          <div className="space-y-4 md:hidden">
+            {filteredOrders.map((o) => {
+              const isExpanded = expandedId === o.id;
+              const isSelected = selectedIds.includes(o.id);
+              const addr = o.shipping_address || {};
+              const subtotal = Number(o.subtotal_paise) || 0;
+              const adjustment = Number(o.total_paise) - (subtotal + Number(o.tax_paise || 0));
+              const terminal = ["cancelled", "refunded"].includes(o.status);
+              const afterDispatch = ["shipped", "delivered"].includes(o.status);
+              const canCancel = !terminal && !afterDispatch;
+              const refundPending = o.cashfree_refund_status === "PENDING";
+              const canRefund = Boolean(
+                o.cashfree_order_id &&
+                o.cashfree_payment_id &&
+                o.cashfree_refund_status !== "SUCCESS" &&
+                o.status !== "refunded" &&
+                !afterDispatch,
+              );
 
-                return (
-                  <React.Fragment key={o.id}>
-                    <tr
-                      className={`hover:bg-surface-container-lowest transition-colors ${isSelected ? "bg-primary/5" : ""}`}
+              return (
+                <div
+                  key={o.id}
+                  className={`bg-white shopify-border p-4 shadow-sm space-y-4 ${isSelected ? "ring-1 ring-primary" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <label className="flex items-start gap-3 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) =>
+                          setSelectedIds(
+                            e.target.checked
+                              ? [...selectedIds, o.id]
+                              : selectedIds.filter((id) => id !== o.id),
+                          )
+                        }
+                        className="mt-1"
+                      />
+                      <span className="min-w-0">
+                        <span className="block break-words font-bold text-primary">
+                          {o.order_number}
+                        </span>
+                        <span className="block text-[11px] text-on-surface-variant">
+                          {new Date(o.created_at).toLocaleString()}
+                        </span>
+                      </span>
+                    </label>
+                    <span
+                      className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${terminal ? "bg-rose-50 text-rose-800" : "bg-primary/10 text-primary"}`}
                     >
-                      <td className="p-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) =>
-                            setSelectedIds(
-                              e.target.checked
-                                ? [...selectedIds, o.id]
-                                : selectedIds.filter((id) => id !== o.id),
-                            )
-                          }
-                          className="cursor-pointer"
-                        />
-                      </td>
-                      <td className="p-4 cursor-pointer" onClick={() => toggleOrderPanel(o)}>
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-base text-on-surface-variant">
-                            {isExpanded ? "expand_less" : "expand_more"}
-                          </span>
-                          <div>
-                            <p className="font-bold text-primary hover:underline">
-                              {o.order_number}
+                      {o.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="rounded bg-surface-container-low p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                        Customer
+                      </p>
+                      <p className="break-all font-bold text-primary">{o.email}</p>
+                      <p className="text-on-surface-variant">{o.phone || "No phone"}</p>
+                    </div>
+                    <div className="rounded bg-surface-container-low p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                        Total
+                      </p>
+                      <p className="font-bold text-primary">{formatINR(o.total_paise)}</p>
+                      <p className="text-on-surface-variant">
+                        {o.notes === "cod" ? "COD order" : "Prepaid order"}
+                      </p>
+                    </div>
+                    <div className="rounded bg-blue-50 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-900">
+                        Shipment
+                      </p>
+                      <p className="font-bold text-blue-800">
+                        {hasRealAwb(o)
+                          ? trackingCode(o)
+                          : o.tracking_url
+                            ? "Test AWB"
+                            : "Pending AWB"}
+                      </p>
+                    </div>
+                    <div className="rounded bg-amber-50 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900">
+                        COD Collect
+                      </p>
+                      <p className="font-bold text-amber-800">
+                        {o.notes === "cod" ? formatINR(o.cod_collectable_paise) : "None"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!terminal && (
+                    <select
+                      value={o.status}
+                      onChange={(e) => updateStatus(o.id, e.target.value)}
+                      className="w-full border border-outline-variant/40 bg-white px-3 py-2 text-[11px] font-bold uppercase tracking-widest shadow-sm focus:border-primary"
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      onClick={() => toggleOrderPanel(o)}
+                      className="w-full border border-outline-variant/40 bg-white px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary shadow-sm"
+                    >
+                      {isExpanded ? "Close Order Panel" : "Open Order Panel"}
+                    </button>
+                    {canCancel && (
+                      <button
+                        type="button"
+                        disabled={Boolean(orderAction)}
+                        onClick={() => cancelOrder(o)}
+                        className="w-full border border-rose-300 bg-rose-50 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-rose-800 disabled:opacity-50"
+                      >
+                        {orderAction === `${o.id}:cancel-order` ? "Cancelling..." : "Cancel Order"}
+                      </button>
+                    )}
+                    {canRefund && (
+                      <button
+                        type="button"
+                        disabled={Boolean(orderAction) || refundPending}
+                        onClick={() => refundOrder(o)}
+                        className="w-full bg-emerald-700 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-white disabled:opacity-50"
+                      >
+                        {refundPending
+                          ? "Refund Pending"
+                          : orderAction === `${o.id}:refund`
+                            ? "Refunding..."
+                            : o.notes === "cod"
+                              ? "Refund COD Advance"
+                              : "Refund via Cashfree"}
+                      </button>
+                    )}
+                  </div>
+
+                  {isExpanded && (
+                    <div className="space-y-4 border-t border-outline-variant/30 pt-4">
+                      <div className="rounded border border-outline-variant/40 bg-surface-container-lowest p-4 text-xs space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-bold text-primary">
+                              {addr.first_name || "Customer"} {addr.last_name || ""}
                             </p>
-                            <p className="text-[11px] text-on-surface-variant">
-                              {new Date(o.created_at).toLocaleString()}
+                            <p className="text-on-surface-variant">{addr.line1}</p>
+                            {addr.line2 && <p className="text-on-surface-variant">{addr.line2}</p>}
+                            <p className="text-on-surface-variant">
+                              {addr.city}, {addr.state} - {addr.pincode}
                             </p>
                           </div>
+                          <button
+                            onClick={() => printPackingSlip(o)}
+                            className="shrink-0 bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-on-primary"
+                          >
+                            Print
+                          </button>
                         </div>
-                      </td>
-                      <td className="p-4 cursor-pointer" onClick={() => toggleOrderPanel(o)}>
-                        <p className="font-medium text-primary">{o.email}</p>
-                        <p className="text-xs text-on-surface-variant">
-                          {o.phone || "No phone provided"}
-                        </p>
                         {addr.gstin && (
-                          <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                            GSTIN: {addr.gstin}
-                          </span>
+                          <p className="font-bold text-purple-700">GSTIN: {addr.gstin}</p>
                         )}
-                      </td>
-                      <td className="p-4">
-                        <p className="font-bold text-primary">{formatINR(o.total_paise)}</p>
-                        {o.cashfree_payment_id || o.razorpay_payment_id ? (
-                          <p className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                            {o.cashfree_payment_id || o.razorpay_payment_id}
-                          </p>
-                        ) : o.notes === "cod" ? (
-                          <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                            Cash on Delivery
-                          </p>
-                        ) : (
-                          <p className="text-[10px] font-bold text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded inline-block mt-0.5">
-                            Awaiting Online Payment
-                          </p>
+                      </div>
+
+                      <div className="rounded border border-outline-variant/40 bg-white p-4 text-xs space-y-2">
+                        <div className="flex justify-between text-on-surface-variant">
+                          <span>Merchandise subtotal</span>
+                          <span>{formatINR(subtotal)}</span>
+                        </div>
+                        {Number(o.tax_paise || 0) > 0 && (
+                          <div className="flex justify-between text-on-surface-variant">
+                            <span>Tax</span>
+                            <span>{formatINR(o.tax_paise)}</span>
+                          </div>
+                        )}
+                        {adjustment < 0 && (
+                          <div className="flex justify-between font-medium text-emerald-700">
+                            <span>Prepaid discount</span>
+                            <span>-{formatINR(Math.abs(adjustment))}</span>
+                          </div>
                         )}
                         {o.notes === "cod" && Number(o.advance_paid_paise) > 0 && (
-                          <div className="mt-1 space-y-0.5 text-[10px] font-bold">
-                            <p className="text-emerald-700">
-                              Advance paid: {formatINR(o.advance_paid_paise)}
-                            </p>
-                            <p className="text-blue-800">
-                              Shiprocket COD: {formatINR(o.cod_collectable_paise)}
-                            </p>
+                          <div className="flex justify-between font-medium text-emerald-700">
+                            <span>COD advance paid</span>
+                            <span>-{formatINR(o.advance_paid_paise)}</span>
                           </div>
                         )}
-                        {o.cashfree_refund_status && (
-                          <p
-                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded inline-block mt-1 ml-1 ${o.cashfree_refund_status === "SUCCESS" ? "bg-emerald-100 text-emerald-800" : o.cashfree_refund_status === "PENDING" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}
-                          >
-                            Refund {o.cashfree_refund_status}
-                          </p>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        {hasRealAwb(o) ? (
-                          <div className="space-y-1">
-                            <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded block w-max">
-                              {trackingCode(o)}
-                            </span>
-                            <a
-                              href={o.tracking_url ?? undefined}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[11px] text-primary underline hover:text-primary/80 block"
+                        <div className="flex justify-between border-t-2 border-primary pt-2 text-sm font-black text-primary">
+                          <span>{o.notes === "cod" ? "COD TO COLLECT" : "FINAL TOTAL"}</span>
+                          <span>
+                            {formatINR(o.notes === "cod" ? o.cod_collectable_paise : o.total_paise)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {!hasRealAwb(o) &&
+                        !["pending", "cancelled", "refunded"].includes(o.status) && (
+                          <div className="rounded border border-outline-variant/40 bg-white p-4 text-xs space-y-3">
+                            <p className="font-bold uppercase tracking-widest text-primary">
+                              Shiprocket Package Prep
+                            </p>
+                            <input
+                              value={pkgWeight}
+                              onChange={(event) => setPkgWeight(event.target.value)}
+                              className="w-full border border-outline-variant/40 bg-surface-container-low p-2 font-medium"
+                              placeholder="Weight kg"
+                            />
+                            <input
+                              value={pkgDims}
+                              onChange={(event) => setPkgDims(event.target.value)}
+                              className="w-full border border-outline-variant/40 bg-surface-container-low p-2 font-medium"
+                              placeholder="20x15x10"
+                            />
+                            <select
+                              value={pickupLocation}
+                              onChange={(event) => setPickupLocation(event.target.value)}
+                              className="w-full border border-outline-variant/40 bg-surface-container-low p-2 font-medium"
                             >
-                              Open Live Tracking ↗
-                            </a>
-                          </div>
-                        ) : o.tracking_url ? (
-                          <span className="text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded inline-block font-medium">
-                            Legacy test AWB — replace it
-                          </span>
-                        ) : (
-                          <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded inline-block font-medium">
-                            Pending AWB Assignment
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        {terminal ? (
-                          <span
-                            className={`inline-block px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest ${o.status === "refunded" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
-                          >
-                            {o.status}
-                          </span>
-                        ) : (
-                          <select
-                            value={o.status}
-                            onChange={(e) => updateStatus(o.id, e.target.value)}
-                            className="border border-outline-variant/40 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest shadow-sm focus:border-primary"
-                          >
-                            {STATUSES.map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </td>
-                      <td className="p-4 text-right space-y-1.5">
-                        <button
-                          onClick={() => toggleOrderPanel(o)}
-                          className="border border-outline-variant/40 bg-white text-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-surface-container-lowest transition-colors shadow-sm"
-                        >
-                          {isExpanded ? "Close Panel" : "Expand OMS ⚙️"}
-                        </button>
-                        {canCancel && (
-                          <button
-                            type="button"
-                            disabled={Boolean(orderAction)}
-                            onClick={() => cancelOrder(o)}
-                            className="border border-rose-300 bg-rose-50 text-rose-800 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-rose-100 disabled:opacity-50"
-                          >
-                            {orderAction === `${o.id}:cancel-order`
-                              ? "Cancelling…"
-                              : "Cancel Order"}
-                          </button>
-                        )}
-                        {canRefund && (
-                          <button
-                            type="button"
-                            disabled={Boolean(orderAction) || refundPending}
-                            onClick={() => refundOrder(o)}
-                            className="bg-emerald-700 text-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-emerald-800 disabled:opacity-50"
-                          >
-                            {refundPending
-                              ? "Refund Pending"
-                              : orderAction === `${o.id}:refund`
-                                ? "Refunding…"
-                                : o.notes === "cod"
-                                  ? "Refund COD Advance"
-                                  : "Refund via Cashfree"}
-                          </button>
-                        )}
-                        {!hasRealAwb(o) &&
-                          !["pending", "cancelled", "refunded"].includes(o.status) && (
+                              {pickupLocations.map((location) => (
+                                <option key={location.name} value={location.name}>
+                                  {location.name} - {location.city} {location.pincode}
+                                </option>
+                              ))}
+                              {!pickupLocations.length && (
+                                <option value={pickupLocation}>{pickupLocation}</option>
+                              )}
+                            </select>
                             <button
                               disabled={loadingCouriers}
-                              onClick={() => {
-                                setExpandedId(o.id);
-                                void loadCourierOptions(o.id);
-                              }}
-                              className="bg-blue-600 text-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+                              onClick={() => loadCourierOptions(o.id)}
+                              className="w-full border border-blue-200 bg-blue-50 py-2 text-[10px] font-bold uppercase tracking-widest text-blue-800 disabled:opacity-50"
                             >
-                              {loadingCouriers && expandedId === o.id
-                                ? "Loading couriers…"
-                                : "+ Choose Courier & AWB"}
+                              {loadingCouriers ? "Loading Couriers..." : "Refresh Courier Rates"}
                             </button>
-                          )}
-                      </td>
-                    </tr>
 
-                    {/* Expanded OMS Details Panel */}
-                    {isExpanded && (
-                      <tr className="bg-surface-container-lowest border-b border-outline-variant/40">
-                        <td colSpan={7} className="p-6 md:p-8">
-                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Shipping Address & Details */}
-                            <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
-                              <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
-                                <h4 className="font-bold text-sm text-primary uppercase tracking-tight flex items-center gap-2">
-                                  <span className="material-symbols-outlined text-base text-primary">
-                                    local_shipping
-                                  </span>
-                                  Customer Shipping Address
-                                </h4>
-                                <button
-                                  onClick={() => printPackingSlip(o)}
-                                  className="bg-primary text-on-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded shadow-sm hover:opacity-90 flex items-center gap-1"
-                                >
-                                  <span className="material-symbols-outlined text-xs">print</span>
-                                  Print Bill
-                                </button>
+                            {courierQuote && (
+                              <div className="grid grid-cols-2 gap-2 rounded bg-surface-container-low p-2 text-[10px]">
+                                <span>
+                                  <strong>Payment:</strong> {courierQuote.paymentMode}
+                                </span>
+                                <span>
+                                  <strong>Value:</strong> ₹{courierQuote.shipmentValue.toFixed(2)}
+                                </span>
+                                <span className="col-span-2">
+                                  <strong>Route:</strong> {courierQuote.pickupPincode} to{" "}
+                                  {courierQuote.deliveryPincode}
+                                </span>
                               </div>
-                              <div className="text-xs text-on-surface-variant space-y-1.5 leading-relaxed font-medium">
-                                <p className="font-bold text-primary text-sm">
-                                  {addr.first_name || "Customer"} {addr.last_name || ""}
-                                </p>
-                                <p>{addr.line1 || "No address line 1 provided"}</p>
-                                {addr.line2 && <p>{addr.line2}</p>}
-                                <p>
-                                  {addr.city || "City"}, {addr.state || "State"} -{" "}
-                                  <span className="font-bold text-primary">
-                                    {addr.pincode || "PIN"}
-                                  </span>
-                                </p>
-                                <p className="pt-2 border-t border-outline-variant/20">
-                                  <strong>Phone:</strong> {o.phone || "N/A"}
-                                </p>
-                                <p>
-                                  <strong>Email:</strong> {o.email}
-                                </p>
-                                {addr.gstin && (
-                                  <p className="text-purple-700 font-bold">
-                                    <strong>Business GSTIN:</strong> {addr.gstin}
+                            )}
+
+                            <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                              {visibleCourierOptions.map((courier) => (
+                                <button
+                                  type="button"
+                                  key={courier.id}
+                                  onClick={() => setSelectedCourierId(courier.id)}
+                                  className={`w-full rounded border p-3 text-left ${selectedCourierId === courier.id ? "border-blue-600 bg-blue-50" : "border-outline-variant/40 bg-white"}`}
+                                >
+                                  <div className="flex justify-between gap-3">
+                                    <span className="font-bold text-primary">{courier.name}</span>
+                                    <span className="font-bold text-blue-700">
+                                      ₹{courier.rate.toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <p className="mt-1 text-[10px] text-on-surface-variant">
+                                    {courier.mode} ·{" "}
+                                    {courier.codAvailable ? "COD available" : "Prepaid only"} · ETA{" "}
+                                    {courier.etd || `${courier.estimatedDays || "?"} days`}
                                   </p>
-                                )}
-                              </div>
-                              <div className="border-t border-outline-variant/30 pt-4 space-y-2 text-xs">
-                                <div className="flex justify-between text-on-surface-variant">
-                                  <span>Merchandise subtotal</span>
-                                  <span>{formatINR(subtotal)}</span>
-                                </div>
-                                {Number(o.tax_paise || 0) > 0 && (
-                                  <div className="flex justify-between text-on-surface-variant">
-                                    <span>Tax</span>
-                                    <span>{formatINR(o.tax_paise)}</span>
-                                  </div>
-                                )}
-                                {adjustment < 0 && (
-                                  <div className="flex justify-between font-medium text-emerald-700">
-                                    <span>Prepaid discount</span>
-                                    <span>-{formatINR(Math.abs(adjustment))}</span>
-                                  </div>
-                                )}
-                                {o.notes === "cod" && Number(o.advance_paid_paise) > 0 && (
-                                  <div className="flex justify-between font-medium text-emerald-700">
-                                    <span>COD advance paid online</span>
-                                    <span>-{formatINR(o.advance_paid_paise)}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between border-t-2 border-primary pt-2 text-sm font-black text-primary">
-                                  <span>
-                                    {o.notes === "cod"
-                                      ? "SHIPROCKET COD TO COLLECT"
-                                      : "FINAL PAYABLE TOTAL"}
-                                  </span>
-                                  <span>
-                                    {formatINR(
-                                      o.notes === "cod" ? o.cod_collectable_paise : o.total_paise,
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Shiprocket AWB Preparation */}
-                            <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
-                              <h4 className="font-bold text-sm text-primary uppercase tracking-tight border-b border-outline-variant/30 pb-2 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-base text-blue-600">
-                                  inventory_2
-                                </span>
-                                Shiprocket Package Prep
-                              </h4>
-                              {Number(o.shipping_paise || 0) > 0 && (
-                                <div className="flex items-center justify-between rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs">
-                                  <span className="text-blue-900">
-                                    Actual courier cost
-                                    {o.shiprocket_courier_name
-                                      ? ` · ${o.shiprocket_courier_name}`
-                                      : ""}
-                                  </span>
-                                  <strong className="text-blue-900">
-                                    {formatINR(o.shipping_paise)}
-                                  </strong>
-                                </div>
-                              )}
-                              <div className="space-y-3 text-xs">
-                                <div>
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                                    Package Weight (KG)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={pkgWeight}
-                                    onChange={(e) => {
-                                      setPkgWeight(e.target.value);
-                                      setCourierOptions([]);
-                                      setCourierQuote(null);
-                                      setSelectedCourierId(null);
-                                    }}
-                                    className="w-full bg-surface-container-low border border-outline-variant/40 p-2 font-medium focus:outline-none focus:border-primary"
-                                    placeholder="e.g. 0.5"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                                    Dimensions L×W×H (CM)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={pkgDims}
-                                    onChange={(e) => {
-                                      setPkgDims(e.target.value);
-                                      setCourierOptions([]);
-                                      setCourierQuote(null);
-                                      setSelectedCourierId(null);
-                                    }}
-                                    className="w-full bg-surface-container-low border border-outline-variant/40 p-2 font-medium focus:outline-none focus:border-primary"
-                                    placeholder="e.g. 20x15x10"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                                    Pickup Location
-                                  </label>
-                                  <select
-                                    value={pickupLocation}
-                                    onChange={(event) => {
-                                      setPickupLocation(event.target.value);
-                                      setCourierOptions([]);
-                                      setCourierQuote(null);
-                                      setSelectedCourierId(null);
-                                    }}
-                                    className="w-full bg-surface-container-low border border-outline-variant/40 p-2 font-medium focus:outline-none focus:border-primary"
-                                  >
-                                    {pickupLocations.length ? (
-                                      pickupLocations.map((location) => (
-                                        <option key={location.name} value={location.name}>
-                                          {location.name} — {location.city}, {location.state}{" "}
-                                          {location.pincode}
-                                        </option>
-                                      ))
-                                    ) : (
-                                      <option value="Primary">Primary</option>
-                                    )}
-                                  </select>
-                                </div>
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between gap-3">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                                      Live Shiprocket Courier Quotes
-                                    </label>
-                                    <button
-                                      type="button"
-                                      disabled={loadingCouriers}
-                                      onClick={() => loadCourierOptions(o.id)}
-                                      className="text-[10px] font-bold text-blue-700 hover:underline disabled:opacity-50"
-                                    >
-                                      {loadingCouriers ? "Checking…" : "Refresh rates"}
-                                    </button>
-                                  </div>
-
-                                  {courierQuote && (
-                                    <div className="rounded border border-outline-variant/40 bg-surface-container-lowest p-2 text-[10px] grid grid-cols-2 gap-2">
-                                      <span>
-                                        <strong>Payment:</strong>{" "}
-                                        <b
-                                          className={
-                                            courierQuote.paymentMode === "COD"
-                                              ? "text-amber-700"
-                                              : "text-emerald-700"
-                                          }
-                                        >
-                                          {courierQuote.paymentMode}
-                                        </b>
-                                      </span>
-                                      <span>
-                                        <strong>
-                                          {courierQuote.paymentMode === "COD"
-                                            ? "COD collection"
-                                            : "Shipment value"}
-                                          :
-                                        </strong>{" "}
-                                        ₹{courierQuote.shipmentValue.toFixed(2)}
-                                      </span>
-                                      <span>
-                                        <strong>Route:</strong> {courierQuote.pickupPincode} →{" "}
-                                        {courierQuote.deliveryPincode}
-                                      </span>
-                                      <span>
-                                        <strong>Available:</strong> {courierOptions.length} courier
-                                        {courierOptions.length === 1 ? "" : "s"}
-                                      </span>
-                                      <span className="col-span-2 text-on-surface-variant">
-                                        Shiprocket account network:{" "}
-                                        {courierQuote.accountCourierCount} couriers ·{" "}
-                                        {courierQuote.serviceablePincodeCount.toLocaleString(
-                                          "en-IN",
-                                        )}{" "}
-                                        delivery PIN codes. Only couriers eligible for this exact
-                                        route, payment mode, weight and dimensions can be selected.
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <select
-                                      value={courierSort}
-                                      onChange={(event) =>
-                                        setCourierSort(event.target.value as typeof courierSort)
-                                      }
-                                      className="bg-surface-container-low border border-outline-variant/40 p-2 font-medium"
-                                    >
-                                      <option value="recommended">Recommended first</option>
-                                      <option value="cheapest">Cheapest first</option>
-                                      <option value="fastest">Fastest first</option>
-                                      <option value="rating">Highest rating</option>
-                                    </select>
-                                    <select
-                                      value={courierMode}
-                                      onChange={(event) =>
-                                        setCourierMode(event.target.value as typeof courierMode)
-                                      }
-                                      className="bg-surface-container-low border border-outline-variant/40 p-2 font-medium"
-                                    >
-                                      <option value="all">Air + Surface</option>
-                                      <option value="Air">Air only</option>
-                                      <option value="Surface">Surface only</option>
-                                    </select>
-                                  </div>
-
-                                  <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
-                                    {loadingCouriers ? (
-                                      <div className="p-4 text-center bg-blue-50 text-blue-800">
-                                        Checking live rates, COD and pickup availability…
-                                      </div>
-                                    ) : visibleCourierOptions.length ? (
-                                      visibleCourierOptions.map((courier) => (
-                                        <button
-                                          type="button"
-                                          key={courier.id}
-                                          onClick={() => setSelectedCourierId(courier.id)}
-                                          className={`w-full text-left rounded border p-3 transition-colors ${selectedCourierId === courier.id ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-outline-variant/40 bg-white hover:border-blue-300"}`}
-                                        >
-                                          <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                              <div className="font-bold text-primary flex flex-wrap items-center gap-1">
-                                                <span
-                                                  className={`inline-block w-3 h-3 rounded-full border ${selectedCourierId === courier.id ? "bg-blue-600 border-blue-600" : "border-outline"}`}
-                                                ></span>
-                                                {courier.name}
-                                                {courier.recommended && (
-                                                  <span className="bg-violet-100 text-violet-800 px-1.5 py-0.5 rounded text-[9px]">
-                                                    Recommended
-                                                  </span>
-                                                )}
-                                              </div>
-                                              <div className="mt-1 flex flex-wrap gap-1 text-[9px]">
-                                                <span className="bg-surface-container px-1.5 py-0.5 rounded">
-                                                  {courier.mode}
-                                                </span>
-                                                <span
-                                                  className={
-                                                    courier.codAvailable
-                                                      ? "bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded"
-                                                      : "bg-surface-container px-1.5 py-0.5 rounded"
-                                                  }
-                                                >
-                                                  {courier.codAvailable
-                                                    ? "COD available"
-                                                    : "Prepaid only"}
-                                                </span>
-                                                {courier.realtimeTracking && (
-                                                  <span className="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded">
-                                                    {courier.realtimeTracking} tracking
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
-                                            <div className="text-right shrink-0">
-                                              <div className="text-base font-bold text-blue-700">
-                                                ₹{courier.rate.toFixed(2)}
-                                              </div>
-                                              <div className="text-[9px] text-on-surface-variant">
-                                                total shipping
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div className="mt-3 grid grid-cols-4 gap-2 border-t border-outline-variant/30 pt-2 text-[9px]">
-                                            <span>
-                                              <strong>Freight</strong>
-                                              <br />₹{courier.freightCharge.toFixed(2)}
-                                            </span>
-                                            <span>
-                                              <strong>COD fee</strong>
-                                              <br />₹{courier.codCharge.toFixed(2)}
-                                            </span>
-                                            <span>
-                                              <strong>RTO</strong>
-                                              <br />₹{courier.rtoCharge.toFixed(2)}
-                                            </span>
-                                            <span>
-                                              <strong>Weight</strong>
-                                              <br />
-                                              {courier.chargeWeightKg} kg
-                                            </span>
-                                            <span>
-                                              <strong>ETA</strong>
-                                              <br />
-                                              {courier.etd ||
-                                                `${courier.estimatedDays || "?"} days`}
-                                            </span>
-                                            <span>
-                                              <strong>Rating</strong>
-                                              <br />
-                                              {courier.rating?.toFixed(1) ?? "N/A"}
-                                            </span>
-                                            <span>
-                                              <strong>POD</strong>
-                                              <br />
-                                              {courier.podAvailable || "N/A"}
-                                            </span>
-                                            <span>
-                                              <strong>Pickup</strong>
-                                              <br />
-                                              {courier.pickupAvailableToday
-                                                ? "Today"
-                                                : courier.nextPickupDate || "Next slot"}
-                                            </span>
-                                          </div>
-                                          <div className="mt-2 text-[9px] text-on-surface-variant">
-                                            Delivery{" "}
-                                            {courier.deliveryPerformance?.toFixed(1) ?? "N/A"}/5 ·
-                                            Tracking{" "}
-                                            {courier.trackingPerformance?.toFixed(1) ?? "N/A"}/5 ·
-                                            Pickup {courier.pickupPerformance?.toFixed(1) ?? "N/A"}
-                                            /5
-                                            {courier.callBeforeDelivery
-                                              ? ` · Call before delivery: ${courier.callBeforeDelivery}`
-                                              : ""}
-                                          </div>
-                                        </button>
-                                      ))
-                                    ) : (
-                                      <div className="p-3 text-center bg-amber-50 text-amber-800">
-                                        {courierOptions.length
-                                          ? `No ${courierMode} couriers in this live quote. Change the filter.`
-                                          : "No courier quote loaded. Refresh rates after checking package details."}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                {hasRealAwb(o) ? (
-                                  <div className="space-y-2 border-t border-outline-variant/30 pt-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">
-                                      Live AWB Operations
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      {(
-                                        ["label", "invoice", "manifest", "label-invoice"] as const
-                                      ).map((type) => (
-                                        <button
-                                          type="button"
-                                          key={type}
-                                          disabled={Boolean(shiprocketAction)}
-                                          onClick={() => openShiprocketDocument(o.id, type)}
-                                          className="border border-outline-variant/40 bg-white hover:bg-blue-50 py-2 text-[9px] font-bold uppercase tracking-wider disabled:opacity-50"
-                                        >
-                                          {shiprocketAction === `${o.id}:${type}`
-                                            ? "Generating…"
-                                            : type.replace("-", " + ")}
-                                        </button>
-                                      ))}
-                                      <button
-                                        type="button"
-                                        disabled={Boolean(shiprocketAction)}
-                                        onClick={() => retryPickup(o.id)}
-                                        className="border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 py-2 text-[9px] font-bold uppercase tracking-wider disabled:opacity-50"
-                                      >
-                                        {shiprocketAction === `${o.id}:pickup`
-                                          ? "Requesting…"
-                                          : "Schedule / Retry Pickup"}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        disabled={Boolean(shiprocketAction)}
-                                        onClick={() => cancelShipment(o.id)}
-                                        className="border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 py-2 text-[9px] font-bold uppercase tracking-wider disabled:opacity-50"
-                                      >
-                                        {shiprocketAction === `${o.id}:cancel`
-                                          ? "Cancelling…"
-                                          : "Cancel Before Pickup"}
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <button
-                                    disabled={simulatingId === o.id || !selectedCourierId}
-                                    onClick={() => generateAWB(o.id)}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 font-bold text-[11px] uppercase tracking-widest rounded shadow-sm disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
-                                  >
-                                    <span className="material-symbols-outlined text-sm">send</span>
-                                    {o.tracking_url
-                                      ? "Replace Test AWB with Selected Courier"
-                                      : "Generate AWB with Selected Courier"}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Internal Seller Notes */}
-                            <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
-                              <h4 className="font-bold text-sm text-primary uppercase tracking-tight border-b border-outline-variant/30 pb-2 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-base text-amber-600">
-                                  note_alt
-                                </span>
-                                Seller Operational Notes
-                              </h4>
-                              <div className="space-y-3 text-xs">
-                                <p className="text-[11px] text-on-surface-variant">
-                                  Add internal reminders about customer requests, packaging
-                                  preferences, or verification calls.
-                                </p>
-                                <textarea
-                                  value={sellerNotes[o.id] || ""}
-                                  onChange={(e) =>
-                                    setSellerNotes({ ...sellerNotes, [o.id]: e.target.value })
-                                  }
-                                  rows={4}
-                                  className="w-full bg-surface-container-low border border-outline-variant/40 p-3 font-medium focus:outline-none focus:border-primary resize-none"
-                                  placeholder="e.g. Customer called to confirm express delivery before Friday..."
-                                />
-                                <button
-                                  onClick={() => saveSellerNote(o.id)}
-                                  className="w-full bg-surface-container-high hover:bg-primary hover:text-on-primary text-primary border border-outline-variant/40 py-2.5 font-bold text-[11px] uppercase tracking-widest rounded shadow-sm transition-all flex items-center justify-center gap-1.5"
-                                >
-                                  <span className="material-symbols-outlined text-sm">save</span>
-                                  Save Internal Notes
                                 </button>
-                              </div>
+                              ))}
+                            </div>
+
+                            <button
+                              disabled={simulatingId === o.id || !selectedCourierId}
+                              onClick={() => generateAWB(o.id)}
+                              className="w-full bg-blue-600 py-2.5 text-[11px] font-bold uppercase tracking-widest text-white disabled:opacity-50"
+                            >
+                              {o.tracking_url
+                                ? "Replace Test AWB With Selected Courier"
+                                : "Generate AWB With Selected Courier"}
+                            </button>
+                          </div>
+                        )}
+
+                      <div className="rounded border border-outline-variant/40 bg-white p-4 text-xs space-y-3">
+                        <p className="font-bold uppercase tracking-widest text-primary">
+                          Seller Operational Notes
+                        </p>
+                        <textarea
+                          value={sellerNotes[o.id] || ""}
+                          onChange={(e) =>
+                            setSellerNotes({ ...sellerNotes, [o.id]: e.target.value })
+                          }
+                          rows={4}
+                          className="w-full resize-none border border-outline-variant/40 bg-surface-container-low p-3 font-medium"
+                          placeholder="Internal notes for this order..."
+                        />
+                        <button
+                          onClick={() => saveSellerNote(o.id)}
+                          className="w-full bg-surface-container-high py-2.5 text-[11px] font-bold uppercase tracking-widest text-primary"
+                        >
+                          Save Internal Notes
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden bg-white shopify-border overflow-x-auto shadow-sm md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-surface-container-low border-b border-outline-variant/40">
+                <tr className="text-left text-[10px] uppercase tracking-widest text-on-surface-variant">
+                  <th className="p-4 w-12 text-center">
+                    <input
+                      type="checkbox"
+                      checked={
+                        filteredOrders.length > 0 && selectedIds.length === filteredOrders.length
+                      }
+                      onChange={(e) =>
+                        setSelectedIds(e.target.checked ? filteredOrders.map((o) => o.id) : [])
+                      }
+                      className="cursor-pointer"
+                    />
+                  </th>
+                  <th className="p-4">Order Info</th>
+                  <th className="p-4">Customer & Phone</th>
+                  <th className="p-4">Payment Tracking</th>
+                  <th className="p-4">Shipment Tracking</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/40">
+                {filteredOrders.map((o) => {
+                  const isExpanded = expandedId === o.id;
+                  const isSelected = selectedIds.includes(o.id);
+                  const addr = o.shipping_address || {};
+                  const subtotal = Number(o.subtotal_paise) || 0;
+                  const adjustment = Number(o.total_paise) - (subtotal + Number(o.tax_paise || 0));
+                  const terminal = ["cancelled", "refunded"].includes(o.status);
+                  const afterDispatch = ["shipped", "delivered"].includes(o.status);
+                  const canCancel = !terminal && !afterDispatch;
+                  const refundPending = o.cashfree_refund_status === "PENDING";
+                  const canRefund = Boolean(
+                    o.cashfree_order_id &&
+                    o.cashfree_payment_id &&
+                    o.cashfree_refund_status !== "SUCCESS" &&
+                    o.status !== "refunded" &&
+                    !afterDispatch,
+                  );
+
+                  return (
+                    <React.Fragment key={o.id}>
+                      <tr
+                        className={`hover:bg-surface-container-lowest transition-colors ${isSelected ? "bg-primary/5" : ""}`}
+                      >
+                        <td className="p-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) =>
+                              setSelectedIds(
+                                e.target.checked
+                                  ? [...selectedIds, o.id]
+                                  : selectedIds.filter((id) => id !== o.id),
+                              )
+                            }
+                            className="cursor-pointer"
+                          />
+                        </td>
+                        <td className="p-4 cursor-pointer" onClick={() => toggleOrderPanel(o)}>
+                          <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-base text-on-surface-variant">
+                              {isExpanded ? "expand_less" : "expand_more"}
+                            </span>
+                            <div>
+                              <p className="font-bold text-primary hover:underline">
+                                {o.order_number}
+                              </p>
+                              <p className="text-[11px] text-on-surface-variant">
+                                {new Date(o.created_at).toLocaleString()}
+                              </p>
                             </div>
                           </div>
                         </td>
+                        <td className="p-4 cursor-pointer" onClick={() => toggleOrderPanel(o)}>
+                          <p className="font-medium text-primary">{o.email}</p>
+                          <p className="text-xs text-on-surface-variant">
+                            {o.phone || "No phone provided"}
+                          </p>
+                          {addr.gstin && (
+                            <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              GSTIN: {addr.gstin}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <p className="font-bold text-primary">{formatINR(o.total_paise)}</p>
+                          {o.cashfree_payment_id || o.razorpay_payment_id ? (
+                            <p className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                              {o.cashfree_payment_id || o.razorpay_payment_id}
+                            </p>
+                          ) : o.notes === "cod" ? (
+                            <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                              Cash on Delivery
+                            </p>
+                          ) : (
+                            <p className="text-[10px] font-bold text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded inline-block mt-0.5">
+                              Awaiting Online Payment
+                            </p>
+                          )}
+                          {o.notes === "cod" && Number(o.advance_paid_paise) > 0 && (
+                            <div className="mt-1 space-y-0.5 text-[10px] font-bold">
+                              <p className="text-emerald-700">
+                                Advance paid: {formatINR(o.advance_paid_paise)}
+                              </p>
+                              <p className="text-blue-800">
+                                Shiprocket COD: {formatINR(o.cod_collectable_paise)}
+                              </p>
+                            </div>
+                          )}
+                          {o.cashfree_refund_status && (
+                            <p
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded inline-block mt-1 ml-1 ${o.cashfree_refund_status === "SUCCESS" ? "bg-emerald-100 text-emerald-800" : o.cashfree_refund_status === "PENDING" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}
+                            >
+                              Refund {o.cashfree_refund_status}
+                            </p>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {hasRealAwb(o) ? (
+                            <div className="space-y-1">
+                              <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded block w-max">
+                                {trackingCode(o)}
+                              </span>
+                              <a
+                                href={o.tracking_url ?? undefined}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] text-primary underline hover:text-primary/80 block"
+                              >
+                                Open Live Tracking ↗
+                              </a>
+                            </div>
+                          ) : o.tracking_url ? (
+                            <span className="text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded inline-block font-medium">
+                              Legacy test AWB — replace it
+                            </span>
+                          ) : (
+                            <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded inline-block font-medium">
+                              Pending AWB Assignment
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {terminal ? (
+                            <span
+                              className={`inline-block px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest ${o.status === "refunded" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
+                            >
+                              {o.status}
+                            </span>
+                          ) : (
+                            <select
+                              value={o.status}
+                              onChange={(e) => updateStatus(o.id, e.target.value)}
+                              className="border border-outline-variant/40 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest shadow-sm focus:border-primary"
+                            >
+                              {STATUSES.map((s) => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
+                        <td className="p-4 text-right space-y-1.5">
+                          <button
+                            onClick={() => toggleOrderPanel(o)}
+                            className="border border-outline-variant/40 bg-white text-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-surface-container-lowest transition-colors shadow-sm"
+                          >
+                            {isExpanded ? "Close Panel" : "Expand OMS ⚙️"}
+                          </button>
+                          {canCancel && (
+                            <button
+                              type="button"
+                              disabled={Boolean(orderAction)}
+                              onClick={() => cancelOrder(o)}
+                              className="border border-rose-300 bg-rose-50 text-rose-800 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-rose-100 disabled:opacity-50"
+                            >
+                              {orderAction === `${o.id}:cancel-order`
+                                ? "Cancelling…"
+                                : "Cancel Order"}
+                            </button>
+                          )}
+                          {canRefund && (
+                            <button
+                              type="button"
+                              disabled={Boolean(orderAction) || refundPending}
+                              onClick={() => refundOrder(o)}
+                              className="bg-emerald-700 text-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-emerald-800 disabled:opacity-50"
+                            >
+                              {refundPending
+                                ? "Refund Pending"
+                                : orderAction === `${o.id}:refund`
+                                  ? "Refunding…"
+                                  : o.notes === "cod"
+                                    ? "Refund COD Advance"
+                                    : "Refund via Cashfree"}
+                            </button>
+                          )}
+                          {!hasRealAwb(o) &&
+                            !["pending", "cancelled", "refunded"].includes(o.status) && (
+                              <button
+                                disabled={loadingCouriers}
+                                onClick={() => {
+                                  setExpandedId(o.id);
+                                  void loadCourierOptions(o.id);
+                                }}
+                                className="bg-blue-600 text-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+                              >
+                                {loadingCouriers && expandedId === o.id
+                                  ? "Loading couriers…"
+                                  : "+ Choose Courier & AWB"}
+                              </button>
+                            )}
+                        </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+
+                      {/* Expanded OMS Details Panel */}
+                      {isExpanded && (
+                        <tr className="bg-surface-container-lowest border-b border-outline-variant/40">
+                          <td colSpan={7} className="p-6 md:p-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                              {/* Shipping Address & Details */}
+                              <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
+                                <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">
+                                  <h4 className="font-bold text-sm text-primary uppercase tracking-tight flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-base text-primary">
+                                      local_shipping
+                                    </span>
+                                    Customer Shipping Address
+                                  </h4>
+                                  <button
+                                    onClick={() => printPackingSlip(o)}
+                                    className="bg-primary text-on-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded shadow-sm hover:opacity-90 flex items-center gap-1"
+                                  >
+                                    <span className="material-symbols-outlined text-xs">print</span>
+                                    Print Bill
+                                  </button>
+                                </div>
+                                <div className="text-xs text-on-surface-variant space-y-1.5 leading-relaxed font-medium">
+                                  <p className="font-bold text-primary text-sm">
+                                    {addr.first_name || "Customer"} {addr.last_name || ""}
+                                  </p>
+                                  <p>{addr.line1 || "No address line 1 provided"}</p>
+                                  {addr.line2 && <p>{addr.line2}</p>}
+                                  <p>
+                                    {addr.city || "City"}, {addr.state || "State"} -{" "}
+                                    <span className="font-bold text-primary">
+                                      {addr.pincode || "PIN"}
+                                    </span>
+                                  </p>
+                                  <p className="pt-2 border-t border-outline-variant/20">
+                                    <strong>Phone:</strong> {o.phone || "N/A"}
+                                  </p>
+                                  <p>
+                                    <strong>Email:</strong> {o.email}
+                                  </p>
+                                  {addr.gstin && (
+                                    <p className="text-purple-700 font-bold">
+                                      <strong>Business GSTIN:</strong> {addr.gstin}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="border-t border-outline-variant/30 pt-4 space-y-2 text-xs">
+                                  <div className="flex justify-between text-on-surface-variant">
+                                    <span>Merchandise subtotal</span>
+                                    <span>{formatINR(subtotal)}</span>
+                                  </div>
+                                  {Number(o.tax_paise || 0) > 0 && (
+                                    <div className="flex justify-between text-on-surface-variant">
+                                      <span>Tax</span>
+                                      <span>{formatINR(o.tax_paise)}</span>
+                                    </div>
+                                  )}
+                                  {adjustment < 0 && (
+                                    <div className="flex justify-between font-medium text-emerald-700">
+                                      <span>Prepaid discount</span>
+                                      <span>-{formatINR(Math.abs(adjustment))}</span>
+                                    </div>
+                                  )}
+                                  {o.notes === "cod" && Number(o.advance_paid_paise) > 0 && (
+                                    <div className="flex justify-between font-medium text-emerald-700">
+                                      <span>COD advance paid online</span>
+                                      <span>-{formatINR(o.advance_paid_paise)}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex justify-between border-t-2 border-primary pt-2 text-sm font-black text-primary">
+                                    <span>
+                                      {o.notes === "cod"
+                                        ? "SHIPROCKET COD TO COLLECT"
+                                        : "FINAL PAYABLE TOTAL"}
+                                    </span>
+                                    <span>
+                                      {formatINR(
+                                        o.notes === "cod" ? o.cod_collectable_paise : o.total_paise,
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Shiprocket AWB Preparation */}
+                              <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
+                                <h4 className="font-bold text-sm text-primary uppercase tracking-tight border-b border-outline-variant/30 pb-2 flex items-center gap-2">
+                                  <span className="material-symbols-outlined text-base text-blue-600">
+                                    inventory_2
+                                  </span>
+                                  Shiprocket Package Prep
+                                </h4>
+                                {Number(o.shipping_paise || 0) > 0 && (
+                                  <div className="flex items-center justify-between rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs">
+                                    <span className="text-blue-900">
+                                      Actual courier cost
+                                      {o.shiprocket_courier_name
+                                        ? ` · ${o.shiprocket_courier_name}`
+                                        : ""}
+                                    </span>
+                                    <strong className="text-blue-900">
+                                      {formatINR(o.shipping_paise)}
+                                    </strong>
+                                  </div>
+                                )}
+                                <div className="space-y-3 text-xs">
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
+                                      Package Weight (KG)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={pkgWeight}
+                                      onChange={(e) => {
+                                        setPkgWeight(e.target.value);
+                                        setCourierOptions([]);
+                                        setCourierQuote(null);
+                                        setSelectedCourierId(null);
+                                      }}
+                                      className="w-full bg-surface-container-low border border-outline-variant/40 p-2 font-medium focus:outline-none focus:border-primary"
+                                      placeholder="e.g. 0.5"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
+                                      Dimensions L×W×H (CM)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={pkgDims}
+                                      onChange={(e) => {
+                                        setPkgDims(e.target.value);
+                                        setCourierOptions([]);
+                                        setCourierQuote(null);
+                                        setSelectedCourierId(null);
+                                      }}
+                                      className="w-full bg-surface-container-low border border-outline-variant/40 p-2 font-medium focus:outline-none focus:border-primary"
+                                      placeholder="e.g. 20x15x10"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
+                                      Pickup Location
+                                    </label>
+                                    <select
+                                      value={pickupLocation}
+                                      onChange={(event) => {
+                                        setPickupLocation(event.target.value);
+                                        setCourierOptions([]);
+                                        setCourierQuote(null);
+                                        setSelectedCourierId(null);
+                                      }}
+                                      className="w-full bg-surface-container-low border border-outline-variant/40 p-2 font-medium focus:outline-none focus:border-primary"
+                                    >
+                                      {pickupLocations.length ? (
+                                        pickupLocations.map((location) => (
+                                          <option key={location.name} value={location.name}>
+                                            {location.name} — {location.city}, {location.state}{" "}
+                                            {location.pincode}
+                                          </option>
+                                        ))
+                                      ) : (
+                                        <option value="Primary">Primary</option>
+                                      )}
+                                    </select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between gap-3">
+                                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                                        Live Shiprocket Courier Quotes
+                                      </label>
+                                      <button
+                                        type="button"
+                                        disabled={loadingCouriers}
+                                        onClick={() => loadCourierOptions(o.id)}
+                                        className="text-[10px] font-bold text-blue-700 hover:underline disabled:opacity-50"
+                                      >
+                                        {loadingCouriers ? "Checking…" : "Refresh rates"}
+                                      </button>
+                                    </div>
+
+                                    {courierQuote && (
+                                      <div className="rounded border border-outline-variant/40 bg-surface-container-lowest p-2 text-[10px] grid grid-cols-2 gap-2">
+                                        <span>
+                                          <strong>Payment:</strong>{" "}
+                                          <b
+                                            className={
+                                              courierQuote.paymentMode === "COD"
+                                                ? "text-amber-700"
+                                                : "text-emerald-700"
+                                            }
+                                          >
+                                            {courierQuote.paymentMode}
+                                          </b>
+                                        </span>
+                                        <span>
+                                          <strong>
+                                            {courierQuote.paymentMode === "COD"
+                                              ? "COD collection"
+                                              : "Shipment value"}
+                                            :
+                                          </strong>{" "}
+                                          ₹{courierQuote.shipmentValue.toFixed(2)}
+                                        </span>
+                                        <span>
+                                          <strong>Route:</strong> {courierQuote.pickupPincode} →{" "}
+                                          {courierQuote.deliveryPincode}
+                                        </span>
+                                        <span>
+                                          <strong>Available:</strong> {courierOptions.length}{" "}
+                                          courier
+                                          {courierOptions.length === 1 ? "" : "s"}
+                                        </span>
+                                        <span className="col-span-2 text-on-surface-variant">
+                                          Shiprocket account network:{" "}
+                                          {courierQuote.accountCourierCount} couriers ·{" "}
+                                          {courierQuote.serviceablePincodeCount.toLocaleString(
+                                            "en-IN",
+                                          )}{" "}
+                                          delivery PIN codes. Only couriers eligible for this exact
+                                          route, payment mode, weight and dimensions can be
+                                          selected.
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <select
+                                        value={courierSort}
+                                        onChange={(event) =>
+                                          setCourierSort(event.target.value as typeof courierSort)
+                                        }
+                                        className="bg-surface-container-low border border-outline-variant/40 p-2 font-medium"
+                                      >
+                                        <option value="recommended">Recommended first</option>
+                                        <option value="cheapest">Cheapest first</option>
+                                        <option value="fastest">Fastest first</option>
+                                        <option value="rating">Highest rating</option>
+                                      </select>
+                                      <select
+                                        value={courierMode}
+                                        onChange={(event) =>
+                                          setCourierMode(event.target.value as typeof courierMode)
+                                        }
+                                        className="bg-surface-container-low border border-outline-variant/40 p-2 font-medium"
+                                      >
+                                        <option value="all">Air + Surface</option>
+                                        <option value="Air">Air only</option>
+                                        <option value="Surface">Surface only</option>
+                                      </select>
+                                    </div>
+
+                                    <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+                                      {loadingCouriers ? (
+                                        <div className="p-4 text-center bg-blue-50 text-blue-800">
+                                          Checking live rates, COD and pickup availability…
+                                        </div>
+                                      ) : visibleCourierOptions.length ? (
+                                        visibleCourierOptions.map((courier) => (
+                                          <button
+                                            type="button"
+                                            key={courier.id}
+                                            onClick={() => setSelectedCourierId(courier.id)}
+                                            className={`w-full text-left rounded border p-3 transition-colors ${selectedCourierId === courier.id ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600" : "border-outline-variant/40 bg-white hover:border-blue-300"}`}
+                                          >
+                                            <div className="flex items-start justify-between gap-3">
+                                              <div>
+                                                <div className="font-bold text-primary flex flex-wrap items-center gap-1">
+                                                  <span
+                                                    className={`inline-block w-3 h-3 rounded-full border ${selectedCourierId === courier.id ? "bg-blue-600 border-blue-600" : "border-outline"}`}
+                                                  ></span>
+                                                  {courier.name}
+                                                  {courier.recommended && (
+                                                    <span className="bg-violet-100 text-violet-800 px-1.5 py-0.5 rounded text-[9px]">
+                                                      Recommended
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <div className="mt-1 flex flex-wrap gap-1 text-[9px]">
+                                                  <span className="bg-surface-container px-1.5 py-0.5 rounded">
+                                                    {courier.mode}
+                                                  </span>
+                                                  <span
+                                                    className={
+                                                      courier.codAvailable
+                                                        ? "bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded"
+                                                        : "bg-surface-container px-1.5 py-0.5 rounded"
+                                                    }
+                                                  >
+                                                    {courier.codAvailable
+                                                      ? "COD available"
+                                                      : "Prepaid only"}
+                                                  </span>
+                                                  {courier.realtimeTracking && (
+                                                    <span className="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded">
+                                                      {courier.realtimeTracking} tracking
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <div className="text-right shrink-0">
+                                                <div className="text-base font-bold text-blue-700">
+                                                  ₹{courier.rate.toFixed(2)}
+                                                </div>
+                                                <div className="text-[9px] text-on-surface-variant">
+                                                  total shipping
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <div className="mt-3 grid grid-cols-4 gap-2 border-t border-outline-variant/30 pt-2 text-[9px]">
+                                              <span>
+                                                <strong>Freight</strong>
+                                                <br />₹{courier.freightCharge.toFixed(2)}
+                                              </span>
+                                              <span>
+                                                <strong>COD fee</strong>
+                                                <br />₹{courier.codCharge.toFixed(2)}
+                                              </span>
+                                              <span>
+                                                <strong>RTO</strong>
+                                                <br />₹{courier.rtoCharge.toFixed(2)}
+                                              </span>
+                                              <span>
+                                                <strong>Weight</strong>
+                                                <br />
+                                                {courier.chargeWeightKg} kg
+                                              </span>
+                                              <span>
+                                                <strong>ETA</strong>
+                                                <br />
+                                                {courier.etd ||
+                                                  `${courier.estimatedDays || "?"} days`}
+                                              </span>
+                                              <span>
+                                                <strong>Rating</strong>
+                                                <br />
+                                                {courier.rating?.toFixed(1) ?? "N/A"}
+                                              </span>
+                                              <span>
+                                                <strong>POD</strong>
+                                                <br />
+                                                {courier.podAvailable || "N/A"}
+                                              </span>
+                                              <span>
+                                                <strong>Pickup</strong>
+                                                <br />
+                                                {courier.pickupAvailableToday
+                                                  ? "Today"
+                                                  : courier.nextPickupDate || "Next slot"}
+                                              </span>
+                                            </div>
+                                            <div className="mt-2 text-[9px] text-on-surface-variant">
+                                              Delivery{" "}
+                                              {courier.deliveryPerformance?.toFixed(1) ?? "N/A"}/5 ·
+                                              Tracking{" "}
+                                              {courier.trackingPerformance?.toFixed(1) ?? "N/A"}/5 ·
+                                              Pickup{" "}
+                                              {courier.pickupPerformance?.toFixed(1) ?? "N/A"}
+                                              /5
+                                              {courier.callBeforeDelivery
+                                                ? ` · Call before delivery: ${courier.callBeforeDelivery}`
+                                                : ""}
+                                            </div>
+                                          </button>
+                                        ))
+                                      ) : (
+                                        <div className="p-3 text-center bg-amber-50 text-amber-800">
+                                          {courierOptions.length
+                                            ? `No ${courierMode} couriers in this live quote. Change the filter.`
+                                            : "No courier quote loaded. Refresh rates after checking package details."}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {hasRealAwb(o) ? (
+                                    <div className="space-y-2 border-t border-outline-variant/30 pt-3">
+                                      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">
+                                        Live AWB Operations
+                                      </p>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        {(
+                                          ["label", "invoice", "manifest", "label-invoice"] as const
+                                        ).map((type) => (
+                                          <button
+                                            type="button"
+                                            key={type}
+                                            disabled={Boolean(shiprocketAction)}
+                                            onClick={() => openShiprocketDocument(o.id, type)}
+                                            className="border border-outline-variant/40 bg-white hover:bg-blue-50 py-2 text-[9px] font-bold uppercase tracking-wider disabled:opacity-50"
+                                          >
+                                            {shiprocketAction === `${o.id}:${type}`
+                                              ? "Generating…"
+                                              : type.replace("-", " + ")}
+                                          </button>
+                                        ))}
+                                        <button
+                                          type="button"
+                                          disabled={Boolean(shiprocketAction)}
+                                          onClick={() => retryPickup(o.id)}
+                                          className="border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 py-2 text-[9px] font-bold uppercase tracking-wider disabled:opacity-50"
+                                        >
+                                          {shiprocketAction === `${o.id}:pickup`
+                                            ? "Requesting…"
+                                            : "Schedule / Retry Pickup"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={Boolean(shiprocketAction)}
+                                          onClick={() => cancelShipment(o.id)}
+                                          className="border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 py-2 text-[9px] font-bold uppercase tracking-wider disabled:opacity-50"
+                                        >
+                                          {shiprocketAction === `${o.id}:cancel`
+                                            ? "Cancelling…"
+                                            : "Cancel Before Pickup"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      disabled={simulatingId === o.id || !selectedCourierId}
+                                      onClick={() => generateAWB(o.id)}
+                                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 font-bold text-[11px] uppercase tracking-widest rounded shadow-sm disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+                                    >
+                                      <span className="material-symbols-outlined text-sm">
+                                        send
+                                      </span>
+                                      {o.tracking_url
+                                        ? "Replace Test AWB with Selected Courier"
+                                        : "Generate AWB with Selected Courier"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Internal Seller Notes */}
+                              <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
+                                <h4 className="font-bold text-sm text-primary uppercase tracking-tight border-b border-outline-variant/30 pb-2 flex items-center gap-2">
+                                  <span className="material-symbols-outlined text-base text-amber-600">
+                                    note_alt
+                                  </span>
+                                  Seller Operational Notes
+                                </h4>
+                                <div className="space-y-3 text-xs">
+                                  <p className="text-[11px] text-on-surface-variant">
+                                    Add internal reminders about customer requests, packaging
+                                    preferences, or verification calls.
+                                  </p>
+                                  <textarea
+                                    value={sellerNotes[o.id] || ""}
+                                    onChange={(e) =>
+                                      setSellerNotes({ ...sellerNotes, [o.id]: e.target.value })
+                                    }
+                                    rows={4}
+                                    className="w-full bg-surface-container-low border border-outline-variant/40 p-3 font-medium focus:outline-none focus:border-primary resize-none"
+                                    placeholder="e.g. Customer called to confirm express delivery before Friday..."
+                                  />
+                                  <button
+                                    onClick={() => saveSellerNote(o.id)}
+                                    className="w-full bg-surface-container-high hover:bg-primary hover:text-on-primary text-primary border border-outline-variant/40 py-2.5 font-bold text-[11px] uppercase tracking-widest rounded shadow-sm transition-all flex items-center justify-center gap-1.5"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">save</span>
+                                    Save Internal Notes
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

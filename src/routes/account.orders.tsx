@@ -73,12 +73,16 @@ function Orders() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setOrders(null);
+      return;
+    }
     supabase
       .from("orders")
       .select(
         "id, order_number, status, subtotal_paise, shipping_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, notes, cashfree_payment_id, cashfree_refund_status, refund_amount_paise, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shipping_address, order_items(name, qty, unit_price_paise, variant_label, image_url)",
       )
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) setErr(error.message);

@@ -282,23 +282,25 @@ function AdminCmsPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-4 lg:gap-8 lg:items-start">
         {/* Navigation Sidebar */}
-        <div className="lg:col-span-1 bg-white shopify-border p-4 shadow-sm space-y-1 sticky top-6">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant px-3 py-2">
+        <div className="lg:col-span-1 bg-white shopify-border p-3 md:p-4 shadow-sm space-y-1 lg:sticky lg:top-6">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant px-3 py-2 hidden lg:block">
             CMS Sections
           </p>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left text-xs font-bold rounded transition-all ${activeTab === tab.id ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:bg-surface-container-low"}`}
-            >
-              <span className="material-symbols-outlined text-base">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
+          <div className="flex gap-2 overflow-x-auto lg:block lg:space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex shrink-0 items-center gap-2 px-3 py-2.5 text-left text-[11px] font-bold rounded transition-all lg:w-full lg:gap-3 lg:px-4 lg:py-3 lg:text-xs ${activeTab === tab.id ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:bg-surface-container-low"}`}
+              >
+                <span className="material-symbols-outlined text-base">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Main Configuration Content Area */}
