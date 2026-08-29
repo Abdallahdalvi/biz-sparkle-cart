@@ -27,7 +27,9 @@ export interface Product {
 }
 
 export interface StorefrontCms {
+  hero_eyebrow_label: string;
   hero_title: string;
+  hero_title_font_size: number;
   hero_subtitle: string;
   hero_1_image: string;
   hero_1_link: string;
@@ -94,7 +96,9 @@ export interface StorefrontCms {
 }
 
 export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
-  hero_title: "The Niche Tech Revolution",
+  hero_eyebrow_label: "AGHANIMS PHONES AND GADGETS",
+  hero_title: "Discover phones and gadgets you won't find everywhere.",
+  hero_title_font_size: 52,
   hero_subtitle:
     "Engineering the return of tactile precision. Experience the Qin F22 Pro and Blackberry Android hybrids — where modern power meets the unboxing thrill of classic hardware.",
   hero_1_image:
@@ -360,6 +364,9 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
       const meta = data.metadata || {};
       dbCms = {
         hero_title: meta.hero_title || data.hero_title,
+        hero_eyebrow_label: meta.hero_eyebrow_label,
+        hero_title_font_size:
+          meta.hero_title_font_size !== undefined ? Number(meta.hero_title_font_size) : undefined,
         hero_subtitle: meta.hero_subtitle || data.hero_subtitle,
         hero_1_image: data.hero_1_image,
         hero_1_link: data.hero_1_link,
@@ -425,7 +432,12 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
   }
 
   return {
+    hero_eyebrow_label: dbCms.hero_eyebrow_label || DEFAULT_STOREFRONT_CMS.hero_eyebrow_label,
     hero_title: dbCms.hero_title || DEFAULT_STOREFRONT_CMS.hero_title,
+    hero_title_font_size:
+      dbCms.hero_title_font_size !== undefined
+        ? Math.min(76, Math.max(36, Number(dbCms.hero_title_font_size)))
+        : DEFAULT_STOREFRONT_CMS.hero_title_font_size,
     hero_subtitle: dbCms.hero_subtitle || DEFAULT_STOREFRONT_CMS.hero_subtitle,
     hero_1_image: dbCms.hero_1_image || DEFAULT_STOREFRONT_CMS.hero_1_image,
     hero_1_link: dbCms.hero_1_link || DEFAULT_STOREFRONT_CMS.hero_1_link,

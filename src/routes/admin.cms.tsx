@@ -144,7 +144,9 @@ function AdminCmsPage() {
         hero_2_link: cms.hero_2_link,
         hero_2_label: cms.hero_2_label,
         metadata: {
+          hero_eyebrow_label: cms.hero_eyebrow_label,
           hero_title: cms.hero_title,
+          hero_title_font_size: cms.hero_title_font_size,
           hero_subtitle: cms.hero_subtitle,
           trending_title: cms.trending_title,
           trending_subtitle: cms.trending_subtitle,
@@ -816,6 +818,18 @@ function AdminCmsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">
+                    Hero Top Label
+                  </label>
+                  <input
+                    type="text"
+                    value={cms.hero_eyebrow_label}
+                    onChange={(e) => setCms({ ...cms, hero_eyebrow_label: e.target.value })}
+                    placeholder="AGHANIMS PHONES AND GADGETS"
+                    className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">
                     Hero Title
                   </label>
                   <input
@@ -824,6 +838,38 @@ function AdminCmsPage() {
                     onChange={(e) => setCms({ ...cms, hero_title: e.target.value })}
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
+                </div>
+                <div className="space-y-3 md:col-span-2 bg-surface-container-lowest border border-outline-variant/40 p-4">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">
+                      Hero Title Font Size
+                    </label>
+                    <span className="text-xs font-bold text-primary">
+                      {cms.hero_title_font_size || 52}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={36}
+                    max={76}
+                    step={1}
+                    value={cms.hero_title_font_size || 52}
+                    onChange={(e) =>
+                      setCms({
+                        ...cms,
+                        hero_title_font_size: parseInt(e.target.value, 10) || 52,
+                      })
+                    }
+                    className="w-full accent-primary"
+                  />
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <span>Compact</span>
+                    <span>Large</span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">
+                    Use this if the hero headline wraps too much. Around 50–54px keeps “Discover
+                    phones and gadgets you won't find everywhere.” close to 3 lines on desktop.
+                  </p>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">

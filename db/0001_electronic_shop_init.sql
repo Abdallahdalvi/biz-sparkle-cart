@@ -331,7 +331,11 @@ values (
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCm_n1zeaqwYJAsYDw_UO82ywo_kvjRIEVnrSe0IXmiCc0w0f4amIl5GPi1qwb0x_zgKFT2Di4PiqffML-GPcSWoClZySpGw7qQ5KichDioDJ3LGIIdRDCp23b_h_HuycTaBl8fCwkN65HACqY2RyAUbuVYXAMUet7R9QZmQP_Hm2XrrGU9PNnw72oQQSSb34P6kf49pocIY_D43rLRUqke2u3g9uKBoBgCxKU3v86La9sWNrLWM38CWCn2F1LBUJKie2Quec_FQzp_',
   '/product/qin-f22-pro',
   'KEYBOARD HYBRID',
-  '{}'::jsonb
+  '{
+    "hero_eyebrow_label": "AGHANIMS PHONES AND GADGETS",
+    "hero_title": "Discover phones and gadgets you won''t find everywhere.",
+    "hero_title_font_size": 52
+  }'::jsonb
 ) on conflict (id) do nothing;
 
 -- ---------- 15. Storage Bucket for Product Images ----------

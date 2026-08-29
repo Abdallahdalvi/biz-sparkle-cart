@@ -96,6 +96,7 @@ function Index() {
   )
     ? cms.whatsapp_channel_url
     : "/legal/contact";
+  const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
 
   return (
     <SiteShell>
@@ -104,9 +105,14 @@ function Index() {
         <div className="relative z-10 w-full px-6 sm:px-12 lg:px-16 max-w-[1320px] mx-auto pt-10 pb-24 md:pt-16 md:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-16 items-center">
           <div className="space-y-6">
             <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2.5 py-1 rounded-sm inline-block shadow-sm bg-primary/5">
-              LIMITED RELEASE ENGINE
+              {cms.hero_eyebrow_label}
             </span>
-            <h1 className="text-4xl md:text-6xl text-primary leading-tight font-bold">
+            <h1
+              className="text-primary leading-tight font-bold max-w-[20ch]"
+              style={{
+                fontSize: `clamp(2.5rem, 5vw, ${heroTitleFontSize}px)`,
+              }}
+            >
               {cms.hero_title}
             </h1>
             <p className="text-lg text-on-surface-variant max-w-lg leading-relaxed">
