@@ -11,6 +11,12 @@ import {
   updateContactMessageStatus,
   type ContactMessage,
 } from "@/lib/operations.functions";
+import {
+  GOOGLE_ALL_REVIEWS_URL,
+  GOOGLE_MAPS_PLACE_URL,
+  GOOGLE_PLACE_ID,
+  GOOGLE_WRITE_REVIEW_URL,
+} from "@/lib/google-reviews";
 
 export const Route = createFileRoute("/admin/cms")({
   component: AdminCmsPage,
@@ -290,7 +296,7 @@ function AdminCmsPage() {
     { id: "videos", label: "YouTube & Insta", icon: "video_library" },
     { id: "pointers", label: "Trust Pointers", icon: "check_circle" },
     { id: "legal", label: "Footer Legal & Policy Pages", icon: "policy" },
-    { id: "reviews", label: "Google Reviews", icon: "star" },
+    { id: "reviews", label: "Google Review Highlights", icon: "star" },
   ];
 
   return (
@@ -1921,48 +1927,9 @@ function AdminCmsPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-outline-variant/30 gap-4">
                 <h3 className="text-xl font-bold text-primary flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">star</span>
-                  Google Reviews Management
+                  Google Review Highlights
                 </h3>
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toast.success("Fetching live verified reviews from Google Maps API...");
-                      setTimeout(() => {
-                        setCms((prev) => ({
-                          ...prev,
-                          reviews_heading: {
-                            ...prev.reviews_heading,
-                            total_reviews: prev.reviews_heading.total_reviews + 3,
-                          },
-                          reviews: [
-                            {
-                              author: "Gaurav Verma",
-                              time: "1 day ago",
-                              stars: 5,
-                              snippet:
-                                "Verified Purchase via Outscraper API: Absolutely stunning build quality on the Qin F22 Pro. Keypad feels exceptionally tactile!",
-                              avatar: "G",
-                            },
-                            {
-                              author: "Pooja Mehta",
-                              time: "3 days ago",
-                              stars: 5,
-                              snippet:
-                                "Verified Purchase via Google Places API: The customer support over WhatsApp was instant. Highly recommend their privacy firmware.",
-                              avatar: "P",
-                            },
-                            ...prev.reviews,
-                          ],
-                        }));
-                        toast.success("Successfully extracted real verified reviews via API!");
-                      }, 1200);
-                    }}
-                    className="bg-emerald-600 text-white px-4 py-2 font-bold text-xs uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-sm flex items-center gap-1.5"
-                  >
-                    <span className="material-symbols-outlined text-sm">cloud_sync</span> Sync API
-                    Reviews
-                  </button>
                   <button
                     type="button"
                     onClick={() =>
@@ -1987,50 +1954,58 @@ function AdminCmsPage() {
                 </div>
               </div>
 
-              {/* Real Reviews API Config Box */}
+              {/* Fixed Google Business Profile */}
               <div className="bg-emerald-50/50 border border-emerald-500/30 p-6 rounded space-y-4">
                 <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm uppercase tracking-widest">
-                  <span className="material-symbols-outlined text-emerald-600">api</span>
-                  Real Reviews Auto-Extraction API Settings
+                  <span className="material-symbols-outlined text-emerald-600">location_on</span>
+                  Connected Google Business Profile
                 </div>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  Enter your <strong>Outscraper API Key</strong> or{" "}
-                  <strong>Google Business Profile API Key</strong> and Place ID below. When
-                  configured, the system automatically scrapes real, verified Google Maps &
-                  Trustpilot reviews so you never have to put them manually!
+                  This storefront is permanently linked to the Google Maps listing below. No
+                  Outscraper, Trustpilot URL, API key, or editable Place ID is used. Google Maps
+                  shows the live profile and review count; the cards below are selected review
+                  highlights you control on the homepage.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                      Outscraper / Google API Key
-                    </label>
-                    <input
-                      type="text"
-                      value={cms.reviews_api_key || ""}
-                      onChange={(e) => setCms({ ...cms, reviews_api_key: e.target.value })}
-                      placeholder="outscraper_api_key_xxxxxxxx"
-                      className="w-full bg-white border border-outline-variant/40 p-2.5 text-sm font-medium focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                      Google Maps Place ID / Trustpilot URL
-                    </label>
-                    <input
-                      type="text"
-                      value={cms.reviews_place_id || ""}
-                      onChange={(e) => setCms({ ...cms, reviews_place_id: e.target.value })}
-                      placeholder="ChIJwe754bS55zsRwb3Q4U1xd7g"
-                      className="w-full bg-white border border-outline-variant/40 p-2.5 text-sm font-medium focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
+                <div className="rounded border border-emerald-200 bg-white p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    Fixed Google Place ID
+                  </p>
+                  <p className="mt-1 break-all font-mono text-sm font-bold text-primary">
+                    {GOOGLE_PLACE_ID}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <a
+                    href={GOOGLE_MAPS_PLACE_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border border-outline bg-white px-4 py-3 text-center text-[11px] font-bold uppercase tracking-widest text-primary hover:bg-surface-container-low"
+                  >
+                    Open Google Maps
+                  </a>
+                  <a
+                    href={GOOGLE_ALL_REVIEWS_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border border-outline bg-white px-4 py-3 text-center text-[11px] font-bold uppercase tracking-widest text-primary hover:bg-surface-container-low"
+                  >
+                    View Google Reviews
+                  </a>
+                  <a
+                    href={GOOGLE_WRITE_REVIEW_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-primary px-4 py-3 text-center text-[11px] font-bold uppercase tracking-widest text-on-primary hover:opacity-90"
+                  >
+                    Write a Review
+                  </a>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-surface-container-lowest border border-outline-variant/40">
+              <div className="p-6 bg-surface-container-lowest border border-outline-variant/40">
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                    Store Name
+                    Homepage Review Section Name
                   </label>
                   <input
                     type="text"
@@ -2039,45 +2014,6 @@ function AdminCmsPage() {
                       setCms({
                         ...cms,
                         reviews_heading: { ...cms.reviews_heading, store_name: e.target.value },
-                      })
-                    }
-                    className="w-full bg-surface-container-low border border-outline-variant/40 p-2.5 text-sm font-medium focus:border-primary focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                    Rating Value (e.g. 5.0)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={cms.reviews_heading.rating}
-                    onChange={(e) =>
-                      setCms({
-                        ...cms,
-                        reviews_heading: {
-                          ...cms.reviews_heading,
-                          rating: parseFloat(e.target.value) || 5.0,
-                        },
-                      })
-                    }
-                    className="w-full bg-surface-container-low border border-outline-variant/40 p-2.5 text-sm font-medium focus:border-primary focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                    Total Reviews Count
-                  </label>
-                  <input
-                    type="number"
-                    value={cms.reviews_heading.total_reviews}
-                    onChange={(e) =>
-                      setCms({
-                        ...cms,
-                        reviews_heading: {
-                          ...cms.reviews_heading,
-                          total_reviews: parseInt(e.target.value, 10) || 84,
-                        },
                       })
                     }
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-2.5 text-sm font-medium focus:border-primary focus:outline-none"

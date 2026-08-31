@@ -6,8 +6,11 @@ import { CookieBanner } from "@/components/CookieBanner";
 import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
-
-const GOOGLE_REVIEWS_URL = "https://share.google/QsovQvaK3NBblvoUu";
+import {
+  GOOGLE_ALL_REVIEWS_URL,
+  GOOGLE_MAPS_PLACE_URL,
+  GOOGLE_WRITE_REVIEW_URL,
+} from "@/lib/google-reviews";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -58,6 +61,7 @@ export const Route = createFileRoute("/")({
               name: "Aghanims Phones and Gadgets",
               url: "https://aghanims.dalvi.cloud/",
               logo: "https://techshop.dalvi.cloud/logo.png",
+              hasMap: GOOGLE_MAPS_PLACE_URL,
               contactPoint: [
                 {
                   "@type": "ContactPoint",
@@ -68,6 +72,7 @@ export const Route = createFileRoute("/")({
                 },
               ],
               sameAs: [
+                GOOGLE_MAPS_PLACE_URL,
                 "https://whatsapp.com/channel/0029Vaexample",
                 "https://twitter.com/AghanimsPhones",
                 "https://instagram.com/AghanimsPhones",
@@ -381,18 +386,28 @@ function Index() {
                       <span>★</span>
                     </div>
                     <p className="text-[11px] text-on-surface-variant font-medium">
-                      {cms.reviews_heading?.total_reviews || 4} Google reviews
+                      Verified Google Business Profile
                     </p>
                   </div>
                 </div>
-                <a
-                  href={GOOGLE_REVIEWS_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="border border-outline-variant/80 px-4 py-2.5 text-xs font-bold text-primary hover:bg-surface-container-low w-full text-center block mt-6 shadow-sm transition-colors"
-                >
-                  Write a review
-                </a>
+                <div className="mt-6 grid grid-cols-1 gap-2">
+                  <a
+                    href={GOOGLE_MAPS_PLACE_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border border-outline-variant/80 px-4 py-2.5 text-xs font-bold text-primary hover:bg-surface-container-low w-full text-center block shadow-sm transition-colors"
+                  >
+                    View on Google Maps
+                  </a>
+                  <a
+                    href={GOOGLE_WRITE_REVIEW_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-primary px-4 py-2.5 text-xs font-bold text-on-primary hover:opacity-90 w-full text-center block shadow-sm transition-opacity"
+                  >
+                    Write a review
+                  </a>
+                </div>
               </div>
 
               {/* Review Cards Carousel */}
@@ -442,12 +457,12 @@ function Index() {
                         </p>
                       </div>
                       <a
-                        href={GOOGLE_REVIEWS_URL}
+                        href={GOOGLE_ALL_REVIEWS_URL}
                         target="_blank"
                         rel="noreferrer"
                         className="text-[10px] text-on-surface-variant hover:underline cursor-pointer pt-2 border-t border-outline-variant/20 inline-block"
                       >
-                        Read more
+                        Read reviews on Google
                       </a>
                     </div>
                   ))}

@@ -91,8 +91,6 @@ export interface StorefrontCms {
   legal_cancellation_text?: string;
   footer_tagline?: string;
   footer_copyright?: string;
-  reviews_api_key?: string;
-  reviews_place_id?: string;
   tracking_clarity_enabled: boolean;
   tracking_clarity_project_id: string;
   tracking_meta_enabled: boolean;
@@ -289,8 +287,6 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
   footer_tagline: "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.",
   footer_copyright: "© 2026 Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.",
-  reviews_api_key: "",
-  reviews_place_id: "",
   tracking_clarity_enabled: false,
   tracking_clarity_project_id: "",
   tracking_meta_enabled: false,
