@@ -232,29 +232,28 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
       time: "August 2026",
       stars: 5,
       snippet:
-        "Bought a phone for his mother and praised the product, service, and the team's genuine support.",
+        "Jai hind Jai chatrapati shivaji maharaj ki I just bought phone from him amazing phone which one is I am looking for my mom satisfied service genuine guys....",
       avatar: "M",
     },
     {
       author: "Sumit Jadhav",
       time: "August 2026",
       stars: 5,
-      snippet:
-        "Purchased a Nokia phone and described Aghanims Phones and Gadgets as an authentic seller.",
+      snippet: "Authentic seller I purchase Nokia",
       avatar: "S",
     },
     {
       author: "Karan Mundarkar",
       time: "August 2026",
       stars: 5,
-      snippet: "Found the product nice and trustworthy.",
+      snippet: "Nice trustworthy product",
       avatar: "K",
     },
     {
       author: "Sahdevsinh Jadav",
       time: "August 2026",
       stars: 5,
-      snippet: "Called the business authentic and trustworthy.",
+      snippet: "Authentic and Trust Worthy!",
       avatar: "S",
     },
   ],
@@ -364,6 +363,30 @@ export async function getAllProducts(): Promise<Product[]> {
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   const all = await getAllProducts();
   return all.find((p) => p.slug === slug);
+}
+
+const LEGACY_REVIEW_SUMMARY_REPLACEMENTS = new Map<string, string>([
+  [
+    "Bought a phone for his mother and praised the product, service, and the team's genuine support.",
+    "Jai hind Jai chatrapati shivaji maharaj ki I just bought phone from him amazing phone which one is I am looking for my mom satisfied service genuine guys....",
+  ],
+  [
+    "Purchased a Nokia phone and described Aghanims Phones and Gadgets as an authentic seller.",
+    "Authentic seller I purchase Nokia",
+  ],
+  ["Found the product nice and trustworthy.", "Nice trustworthy product"],
+  ["Called the business authentic and trustworthy.", "Authentic and Trust Worthy!"],
+]);
+
+function replaceLegacyReviewSummaries(
+  reviews: StorefrontCms["reviews"] | undefined,
+): StorefrontCms["reviews"] {
+  const source = reviews?.length ? reviews : DEFAULT_STOREFRONT_CMS.reviews;
+
+  return source.map((review) => ({
+    ...review,
+    snippet: LEGACY_REVIEW_SUMMARY_REPLACEMENTS.get(review.snippet) || review.snippet,
+  }));
 }
 
 export async function getStorefrontCms(): Promise<StorefrontCms> {
@@ -492,7 +515,7 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     videos: dbCms.videos?.length ? dbCms.videos : DEFAULT_STOREFRONT_CMS.videos,
     pointers: dbCms.pointers?.length ? dbCms.pointers : DEFAULT_STOREFRONT_CMS.pointers,
     reviews_heading: dbCms.reviews_heading || DEFAULT_STOREFRONT_CMS.reviews_heading,
-    reviews: dbCms.reviews?.length ? dbCms.reviews : DEFAULT_STOREFRONT_CMS.reviews,
+    reviews: replaceLegacyReviewSummaries(dbCms.reviews),
     cod_charge_amount:
       dbCms.cod_charge_amount !== undefined
         ? dbCms.cod_charge_amount

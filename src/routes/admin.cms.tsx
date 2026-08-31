@@ -1938,11 +1938,11 @@ function AdminCmsPage() {
                         reviews: [
                           ...cms.reviews,
                           {
-                            author: "New Customer",
-                            time: "Just now",
+                            author: "",
+                            time: "",
                             stars: 5,
-                            snippet: "Excellent experience!",
-                            avatar: "N",
+                            snippet: "",
+                            avatar: "U",
                           },
                         ],
                       })
@@ -2020,6 +2020,10 @@ function AdminCmsPage() {
                   />
                 </div>
               </div>
+              <p className="border-l-4 border-blue-600 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-900">
+                Paste each customer's review exactly as written on Google. Do not summarize,
+                rewrite, correct, or invent review text.
+              </p>
               <div className="space-y-6">
                 {cms.reviews.map((rev, i) => (
                   <div
@@ -2097,7 +2101,7 @@ function AdminCmsPage() {
                       </div>
                       <div className="md:col-span-3">
                         <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1">
-                          Review Snippet
+                          Customer's Exact Review Text
                         </label>
                         <textarea
                           rows={2}

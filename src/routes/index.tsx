@@ -452,7 +452,7 @@ function Index() {
                             <span key={s}>★</span>
                           ))}
                         </div>
-                        <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-4">
+                        <p className="text-xs text-on-surface-variant leading-relaxed">
                           {rev.snippet}
                         </p>
                       </div>
