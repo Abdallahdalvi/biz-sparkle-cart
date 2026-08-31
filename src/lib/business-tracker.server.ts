@@ -6,7 +6,7 @@ import type { BusinessBooks, BusinessTrackerState } from "@/lib/business-tracker
  */
 export function createSeedBooks(): BusinessBooks {
   return {
-    sourceName: "Web business manager",
+    sourceName: "Web compliance tracker",
     importedAt: "",
     phones: [],
     expenses: [],

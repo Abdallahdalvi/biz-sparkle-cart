@@ -36,7 +36,7 @@ const TABS: {
   { to: "/admin", label: "Overview", exact: true },
   { to: "/admin/products", label: "Products" },
   { to: "/admin/orders", label: "Orders" },
-  { to: "/admin/compliance", label: "Compliance & Books" },
+  { to: "/admin/compliance", label: "LLP Compliance" },
   { to: "/admin/cms", label: "🏠 Storefront CMS" },
 ];
 
@@ -562,9 +562,9 @@ function AdminOverview() {
               </span>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed">
-              The private LLP tracker now separates core MCA filings, conditional tax/GST/TDS
-              reviews, state/workforce checks, and monthly bookkeeping. The imported trck.xlsx is
-              now a complete editable business manager without replacing CMS products or order data.
+              The private LLP tracker separates core MCA filings, conditional tax/GST/TDS reviews,
+              and state or workforce checks. It remains independent from CMS products and order
+              data.
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-xs text-on-surface-variant">
               <li>
@@ -584,7 +584,7 @@ function AdminOverview() {
               to="/admin/compliance"
               className="inline-flex items-center gap-2 bg-primary text-on-primary px-5 py-3 text-xs font-bold uppercase tracking-widest"
             >
-              Open Compliance & Books
+              Open Compliance Tracker
               <span className="material-symbols-outlined text-base">arrow_forward</span>
             </Link>
           </div>

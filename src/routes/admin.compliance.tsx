@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { BusinessBooksManager } from "@/components/admin/BusinessBooksManager";
 import { ComplianceChecklist } from "@/components/admin/ComplianceChecklist";
 import { supabase } from "@/integrations/supabase/client";
 import { getBusinessTracker, saveBusinessTracker } from "@/lib/business-tracker.functions";
@@ -15,7 +14,7 @@ import type {
 export const Route = createFileRoute("/admin/compliance")({
   head: () => ({
     meta: [
-      { title: "LLP Compliance & Business Manager — Aghanims Admin" },
+      { title: "LLP Compliance Tracker — Aghanims Admin" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -26,7 +25,6 @@ function AdminCompliancePage() {
   const getTrackerFn = useServerFn(getBusinessTracker);
   const saveTrackerFn = useServerFn(saveBusinessTracker);
   const [state, setState] = useState<BusinessTrackerState | null>(null);
-  const [activeView, setActiveView] = useState<"compliance" | "books">("books");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -40,7 +38,9 @@ function AdminCompliancePage() {
         const result = await getTrackerFn({ data: { token } });
         setState(result.state);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Unable to load the business manager");
+        toast.error(
+          error instanceof Error ? error.message : "Unable to load the compliance tracker",
+        );
       } finally {
         setLoading(false);
       }
@@ -67,9 +67,9 @@ function AdminCompliancePage() {
       if (!token) throw new Error("Your admin session has expired");
       const result = await saveTrackerFn({ data: { token, state } });
       setState({ ...state, updatedAt: result.updatedAt });
-      toast.success("Compliance and business books saved privately.");
+      toast.success("Compliance tracker saved privately.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save the business manager");
+      toast.error(error instanceof Error ? error.message : "Unable to save the compliance tracker");
     } finally {
       setSaving(false);
     }
@@ -103,7 +103,7 @@ function AdminCompliancePage() {
   if (!state) {
     return (
       <div className="bg-red-50 border border-red-200 p-6 text-sm text-red-800">
-        The private business manager could not be loaded. Storefront CMS, orders and products were
+        The private compliance tracker could not be loaded. Storefront CMS, orders and products were
         not changed.
       </div>
     );
@@ -116,16 +116,16 @@ function AdminCompliancePage() {
           <div className="space-y-2 max-w-3xl">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-600">business_center</span>
-                LLP Compliance & Business Manager
+                <span className="material-symbols-outlined text-amber-600">verified_user</span>
+                LLP Compliance Tracker
               </h2>
               <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded">
                 ENCRYPTED ADMIN SYSTEM
               </span>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed">
-              Manage inventory, sales, expenses, suppliers, customers and LLP work from the web. The
-              storefront CMS, checkout stock and website orders remain separate.
+              Track LLP registrations, statutory filings, tax applicability, due dates, evidence,
+              and professional review notes from one private workspace.
             </p>
             <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2">
               Never save full PAN, TAN, GSTIN, bank numbers, passwords, OTPs or document scans in
@@ -148,37 +148,13 @@ function AdminCompliancePage() {
               disabled={saving}
               className="bg-primary text-on-primary px-6 py-4 font-bold text-xs uppercase tracking-widest disabled:opacity-50"
             >
-              {saving ? "Saving everything…" : "Save all changes"}
+              {saving ? "Saving compliance…" : "Save compliance"}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-2 bg-surface-container-low p-1 w-fit max-w-full overflow-x-auto border border-outline-variant/40">
-        <button
-          type="button"
-          onClick={() => setActiveView("books")}
-          className={`px-5 py-3 text-xs font-bold uppercase tracking-widest whitespace-nowrap ${activeView === "books" ? "bg-primary text-on-primary" : "text-on-surface-variant"}`}
-        >
-          Business Manager
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveView("compliance")}
-          className={`px-5 py-3 text-xs font-bold uppercase tracking-widest whitespace-nowrap ${activeView === "compliance" ? "bg-primary text-on-primary" : "text-on-surface-variant"}`}
-        >
-          LLP Compliance
-        </button>
-      </div>
-
-      {activeView === "compliance" ? (
-        <ComplianceChecklist state={state} updateProfile={updateProfile} updateTask={updateTask} />
-      ) : (
-        <BusinessBooksManager
-          books={state.books}
-          onChange={(books) => setState((current) => (current ? { ...current, books } : current))}
-        />
-      )}
+      <ComplianceChecklist state={state} updateProfile={updateProfile} updateTask={updateTask} />
     </div>
   );
 }
