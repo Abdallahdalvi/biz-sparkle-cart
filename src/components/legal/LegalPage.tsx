@@ -49,9 +49,9 @@ export const BIZ = {
   legalShippingText:
     "We ship through Shiprocket and the courier selected for each serviceable order. Courier availability, price, and estimated delivery depend on the pickup and delivery PIN codes, parcel details, and payment mode.",
   legalReturnsText:
-    "Return eligibility and resolution depend on the product condition, reason for return, and the policy shown at the time of purchase. Contact support promptly after delivery and retain the original packaging while a request is reviewed.",
+    "No change-of-mind returns are accepted. Damage-on-arrival, wrong-item, missing-accessory, or functional-defect claims must be reported within 48 hours of delivery with clear photo/video proof and original packaging. After 48 hours, replacement, return, or refund requests are not accepted except where required by applicable law. Products damaged, misused, opened, repaired, modified, or made incomplete by the customer are not eligible for replacement or refund.",
   legalCancellationText:
-    "An order may be cancelled before it is handed to the courier. Once shipped, cancellation may no longer be possible and the applicable return process will apply.",
+    "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
   footerTagline: "Aghanims Phones and Gadgets.",
   footerCopyright: `© ${new Date().getFullYear()} Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.`,
 };

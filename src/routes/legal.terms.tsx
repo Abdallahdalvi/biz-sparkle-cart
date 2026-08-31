@@ -13,7 +13,7 @@ export const Route = createFileRoute("/legal/terms")({
     ],
   }),
   component: () => (
-    <LegalPage title="Terms & Conditions" updated="June 2026">
+    <LegalPage title="Terms & Conditions" updated="August 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalTermsText}
       </p>
@@ -49,6 +49,13 @@ export const Route = createFileRoute("/legal/terms")({
         <a href="/legal/returns">Return & Refund Policy</a>, and{" "}
         <a href="/legal/cancellation">Cancellation Policy</a>, each of which forms part of these
         Terms.
+      </p>
+      <p>
+        No change-of-mind returns are accepted. Delivery damage, wrong-item, missing-accessory, or
+        functional-defect claims must be raised within 48 hours of delivery with photo/video proof
+        and original packaging. Products damaged, used, modified, repaired, tampered with, or made
+        incomplete by the customer are not eligible for replacement or refund, subject to applicable
+        law.
       </p>
       <h2>6. Intellectual Property</h2>
       <p>

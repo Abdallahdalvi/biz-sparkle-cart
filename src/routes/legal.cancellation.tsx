@@ -5,24 +5,29 @@ export const Route = createFileRoute("/legal/cancellation")({
   head: () => ({
     meta: [
       { title: "Cancellation Policy — Aghanims Phones and Gadgets" },
-      { name: "description", content: "How to cancel a Aghanims Phones and Gadgets order before it ships." },
+      {
+        name: "description",
+        content: "How to cancel an Aghanims Phones and Gadgets order before dispatch.",
+      },
     ],
   }),
   component: () => (
-    <LegalPage title="Cancellation Policy" updated="June 2026">
+    <LegalPage title="Cancellation Policy" updated="August 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalCancellationText}
       </p>
       <h2>Before dispatch</h2>
       <p>
-        You can cancel any time before your order is marked "Shipped" — usually within 24 hours.
-        Email <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> with your order ID. A full refund is
-        issued to your original payment method within 5–7 business days.
+        You can request cancellation only before the order is packed, assigned to courier, or marked
+        shipped. Email <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> with your order ID. Approved
+        prepaid refunds are issued to the original payment method within 5–7 business days, subject
+        to payment-provider and bank timelines.
       </p>
       <h2>After dispatch</h2>
       <p>
-        Once handed to the courier we cannot cancel. You may refuse delivery and we'll process it as
-        a return (subject to our <a href="/legal/returns">Return Policy</a>).
+        Once the shipment is handed to the courier, cancellation is not available. Refusing delivery
+        is not treated as a normal return. Failed, refused, or returned-to-origin shipments are
+        reviewed case-by-case and courier/payment costs may be deducted where legally permitted.
       </p>
       <h2>Cancellations by us</h2>
       <p>
@@ -33,7 +38,7 @@ export const Route = createFileRoute("/legal/cancellation")({
       <h2>Pre-orders and limited drops</h2>
       <p>
         Pre-order cancellations are allowed any time before the dispatch date stated on the product
-        page. After dispatch the standard policy applies.
+        page. After dispatch, the standard cancellation and 48-hour delivery issue policy applies.
       </p>
     </LegalPage>
   ),

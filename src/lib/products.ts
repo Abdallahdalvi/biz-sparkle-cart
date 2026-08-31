@@ -200,8 +200,8 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     },
     {
       icon: "currency_exchange",
-      title: "RETURN & REPLACEMENT",
-      description: "Hassle-Free Returns & Full Refunds Guaranteed.",
+      title: "48-HOUR DOA SUPPORT",
+      description: "Damage or defect claims must be reported within 48 hours of delivery.",
     },
     {
       icon: "video_camera_front",
@@ -275,9 +275,9 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   legal_shipping_text:
     "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. No manual shipping fee is added to the customer order; the selected Shiprocket courier rate is recorded internally as the fulfilment cost.",
   legal_returns_text:
-    "We accept returns within 7 days of delivery for items that are unused, in original condition, and with all original packaging. Approved refunds credit to the original payment method within 5–7 business days of receipt. For damaged-on-arrival (DOA) products, we offer a free replacement if reported within 48 hours of delivery.",
+    "No change-of-mind returns are accepted. Damage-on-arrival, wrong-item, missing-accessory, or functional-defect claims must be reported within 48 hours of delivery with clear photo/video proof and original packaging. After 48 hours, replacement, return, or refund requests are not accepted except where required by applicable law. Products damaged, misused, opened, repaired, modified, or made incomplete by the customer are not eligible for replacement or refund.",
   legal_cancellation_text:
-    "You can cancel any time before your order is marked 'Shipped' — usually within 24 hours. A full refund is issued to your original payment method within 5–7 business days. Once handed to the courier we cannot cancel. You may refuse delivery and we'll process it as a return.",
+    "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
   footer_tagline: "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.",
   footer_copyright: "© 2026 Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.",
   reviews_api_key: "",

@@ -1761,7 +1761,7 @@ function AdminCmsPage() {
                     rows={4}
                     value={cms.legal_returns_text || ""}
                     onChange={(e) => setCms({ ...cms, legal_returns_text: e.target.value })}
-                    placeholder="We accept returns within 7 days of delivery..."
+                    placeholder="No change-of-mind returns. Delivery damage/defect claims must be reported within 48 hours..."
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none leading-relaxed"
                   />
                 </div>

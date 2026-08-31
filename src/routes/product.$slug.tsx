@@ -200,10 +200,10 @@ function ProductPage() {
                   cycle
                 </span>
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">
-                  7-Day Replacement
+                  48-Hour DOA Support
                 </p>
                 <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">
-                  No questions asked
+                  Proof required
                 </p>
               </div>
               <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">

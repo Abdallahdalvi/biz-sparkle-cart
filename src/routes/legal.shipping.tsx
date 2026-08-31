@@ -13,7 +13,7 @@ export const Route = createFileRoute("/legal/shipping")({
     ],
   }),
   component: () => (
-    <LegalPage title="Shipping & Delivery Policy" updated="June 2026">
+    <LegalPage title="Shipping & Delivery Policy" updated="August 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalShippingText}
       </p>
@@ -53,14 +53,16 @@ export const Route = createFileRoute("/legal/shipping")({
       <h2>Undelivered / RTO</h2>
       <p>
         If a package is returned due to incorrect address, repeated unavailability, or refusal,
-        we'll contact you to arrange re-delivery (at your cost) or issue a refund less the original
-        outbound shipping cost.
+        we'll contact you to review the case. Re-delivery, cancellation, or any refund is not
+        automatic and may have outbound, return, payment-gateway, or handling costs deducted where
+        legally permitted.
       </p>
       <h2>Damaged in transit</h2>
       <p>
         If your shipment arrives visibly damaged, please refuse delivery if possible and email{" "}
-        <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> with photos within 48 hours for a full
-        replacement or refund.
+        <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> with photos/video within 48 hours of
+        delivery. Approved cases may receive a replacement, repair support, or refund where
+        applicable. Customer-damaged, used, modified, or incomplete products are not eligible.
       </p>
       <h2>Questions</h2>
       <p>
