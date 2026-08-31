@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { load as loadCashfree } from "@cashfreepayments/cashfree-js";
 import { z } from "zod";
 import { SiteShell } from "@/components/layout/SiteShell";
@@ -12,6 +12,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { verifyCashfreePayment } from "@/lib/cashfree.functions";
 import { createSecureOrder, getCheckoutCapabilities } from "@/lib/orders.functions";
 import { getAllProducts, getStorefrontCms } from "@/lib/products";
+import { trackCommerceEvent } from "@/lib/tracking";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -50,6 +51,28 @@ function Checkout() {
   const createOrderFn = useServerFn(createSecureOrder);
   const verifyCashfree = useServerFn(verifyCashfreePayment);
   const returnVerificationStarted = useRef(false);
+  const beginCheckoutTracked = useRef(false);
+  const trackingItems = useMemo(
+    () =>
+      items.map((item) => ({
+        item_id: item.slug,
+        item_name: item.name,
+        item_variant: item.variantLabel,
+        price: item.pricePaise / 100,
+        quantity: item.qty,
+      })),
+    [items],
+  );
+
+  useEffect(() => {
+    if (beginCheckoutTracked.current || items.length === 0) return;
+    beginCheckoutTracked.current = true;
+    trackCommerceEvent("begin_checkout", {
+      currency: "INR",
+      value: total / 100,
+      items: trackingItems,
+    });
+  }, [items.length, total, trackingItems]);
 
   useEffect(() => {
     if (returnVerificationStarted.current || !search.cashfree_order_id || !search.store_order_id) {
@@ -64,6 +87,12 @@ function Checkout() {
       },
     })
       .then((result) => {
+        trackCommerceEvent("purchase", {
+          currency: "INR",
+          value: total / 100,
+          transactionId: result.orderNumber,
+          items: trackingItems,
+        });
         clear();
         toast.success(`Payment received. Order ${result.orderNumber} confirmed.`);
         navigate({
@@ -75,7 +104,16 @@ function Checkout() {
         toast.error(error instanceof Error ? error.message : "Cashfree payment is not complete");
         setBusy(false);
       });
-  }, [clear, navigate, search.cashfree_order_id, search.store_order_id, user, verifyCashfree]);
+  }, [
+    clear,
+    navigate,
+    search.cashfree_order_id,
+    search.store_order_id,
+    total,
+    trackingItems,
+    user,
+    verifyCashfree,
+  ]);
 
   if (items.length === 0) {
     return (
@@ -182,6 +220,12 @@ function Checkout() {
               const res = await createOrderFn({ data: orderPayload });
 
               if (!res.cashfreeRequired) {
+                trackCommerceEvent("purchase", {
+                  currency: "INR",
+                  value: total / 100,
+                  transactionId: res.orderNumber,
+                  items: trackingItems,
+                });
                 clear();
                 toast.success(`Order ${res.orderNumber} confirmed with Cash on Delivery.`);
                 if (!token) {
@@ -210,6 +254,12 @@ function Checkout() {
 
               const verified = await verifyCashfree({
                 data: { orderId: res.orderId, cashfreeOrderId: res.cashfreeOrderId },
+              });
+              trackCommerceEvent("purchase", {
+                currency: "INR",
+                value: effectiveTotal / 100,
+                transactionId: verified.orderNumber,
+                items: trackingItems,
               });
               clear();
               toast.success(

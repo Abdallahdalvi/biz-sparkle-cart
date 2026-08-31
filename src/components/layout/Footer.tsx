@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BIZ } from "@/components/legal/LegalPage";
 import { getStorefrontCms } from "@/lib/products";
+import { openTrackingPreferences } from "@/lib/tracking";
 
 const LEGAL = [
   { to: "/legal/contact", label: "Contact Us" },
@@ -50,6 +51,13 @@ export function Footer() {
                 {l.label}
               </Link>
             ))}
+            <button
+              type="button"
+              onClick={openTrackingPreferences}
+              className="flex-shrink-0 hover:text-primary transition-colors"
+            >
+              Cookie Settings
+            </button>
           </div>
         </div>
         <div className="border-t border-outline-variant/20 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">

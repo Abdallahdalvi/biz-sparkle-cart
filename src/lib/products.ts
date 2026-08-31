@@ -93,6 +93,15 @@ export interface StorefrontCms {
   footer_copyright?: string;
   reviews_api_key?: string;
   reviews_place_id?: string;
+  tracking_clarity_enabled: boolean;
+  tracking_clarity_project_id: string;
+  tracking_meta_enabled: boolean;
+  tracking_meta_pixel_id: string;
+  tracking_google_analytics_enabled: boolean;
+  tracking_google_analytics_id: string;
+  tracking_google_ads_enabled: boolean;
+  tracking_google_ads_id: string;
+  tracking_google_ads_purchase_label: string;
 }
 
 export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
@@ -282,6 +291,15 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   footer_copyright: "© 2026 Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.",
   reviews_api_key: "",
   reviews_place_id: "",
+  tracking_clarity_enabled: false,
+  tracking_clarity_project_id: "",
+  tracking_meta_enabled: false,
+  tracking_meta_pixel_id: "",
+  tracking_google_analytics_enabled: false,
+  tracking_google_analytics_id: "",
+  tracking_google_ads_enabled: false,
+  tracking_google_ads_id: "",
+  tracking_google_ads_purchase_label: "",
 };
 
 // No dummy/seed products — all products are managed via Supabase admin panel.
@@ -425,6 +443,15 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
         legal_cancellation_text: meta.legal_cancellation_text,
         footer_tagline: meta.footer_tagline,
         footer_copyright: meta.footer_copyright,
+        tracking_clarity_enabled: meta.tracking_clarity_enabled,
+        tracking_clarity_project_id: meta.tracking_clarity_project_id,
+        tracking_meta_enabled: meta.tracking_meta_enabled,
+        tracking_meta_pixel_id: meta.tracking_meta_pixel_id,
+        tracking_google_analytics_enabled: meta.tracking_google_analytics_enabled,
+        tracking_google_analytics_id: meta.tracking_google_analytics_id,
+        tracking_google_ads_enabled: meta.tracking_google_ads_enabled,
+        tracking_google_ads_id: meta.tracking_google_ads_id,
+        tracking_google_ads_purchase_label: meta.tracking_google_ads_purchase_label,
       };
     }
   } catch (e) {
@@ -504,6 +531,21 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
       dbCms.legal_cancellation_text || DEFAULT_STOREFRONT_CMS.legal_cancellation_text,
     footer_tagline: dbCms.footer_tagline || DEFAULT_STOREFRONT_CMS.footer_tagline,
     footer_copyright: dbCms.footer_copyright || DEFAULT_STOREFRONT_CMS.footer_copyright,
+    tracking_clarity_enabled: dbCms.tracking_clarity_enabled === true,
+    tracking_clarity_project_id:
+      dbCms.tracking_clarity_project_id || DEFAULT_STOREFRONT_CMS.tracking_clarity_project_id,
+    tracking_meta_enabled: dbCms.tracking_meta_enabled === true,
+    tracking_meta_pixel_id:
+      dbCms.tracking_meta_pixel_id || DEFAULT_STOREFRONT_CMS.tracking_meta_pixel_id,
+    tracking_google_analytics_enabled: dbCms.tracking_google_analytics_enabled === true,
+    tracking_google_analytics_id:
+      dbCms.tracking_google_analytics_id || DEFAULT_STOREFRONT_CMS.tracking_google_analytics_id,
+    tracking_google_ads_enabled: dbCms.tracking_google_ads_enabled === true,
+    tracking_google_ads_id:
+      dbCms.tracking_google_ads_id || DEFAULT_STOREFRONT_CMS.tracking_google_ads_id,
+    tracking_google_ads_purchase_label:
+      dbCms.tracking_google_ads_purchase_label ||
+      DEFAULT_STOREFRONT_CMS.tracking_google_ads_purchase_label,
   };
 }
 

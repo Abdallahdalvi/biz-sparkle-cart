@@ -5,6 +5,7 @@ import { getProductBySlug, getAllProducts, type Product } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { toast } from "sonner";
+import { trackCommerceEvent } from "@/lib/tracking";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
@@ -115,6 +116,37 @@ function ProductPage() {
 
   const cartItem = items.find((i) => i.slug === product.slug && i.variantId === variant);
   const currentQty = cartItem ? cartItem.qty : 0;
+
+  React.useEffect(() => {
+    trackCommerceEvent("view_item", {
+      currency: "INR",
+      value: product.pricePaise / 100,
+      items: [
+        {
+          item_id: product.slug,
+          item_name: product.name,
+          price: product.pricePaise / 100,
+          quantity: 1,
+        },
+      ],
+    });
+  }, [product.name, product.pricePaise, product.slug]);
+
+  function trackAddedToCart(variantLabel?: string) {
+    trackCommerceEvent("add_to_cart", {
+      currency: "INR",
+      value: product.pricePaise / 100,
+      items: [
+        {
+          item_id: product.slug,
+          item_name: product.name,
+          item_variant: variantLabel,
+          price: product.pricePaise / 100,
+          quantity: 1,
+        },
+      ],
+    });
+  }
 
   function checkPincode(e: React.FormEvent) {
     e.preventDefault();
@@ -459,6 +491,7 @@ function ProductPage() {
                         },
                         1,
                       );
+                      trackAddedToCart(v?.label);
                       toast.success(`Added ${product.name} to cart`);
                     }}
                     className="w-full bg-primary text-on-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2"
@@ -628,6 +661,7 @@ function ProductPage() {
                   },
                   1,
                 );
+                trackAddedToCart(v?.label);
                 toast.success(`Added ${product.name} to cart`);
               }}
               className="flex-1 bg-white border border-primary text-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-surface-container transition-all text-center disabled:opacity-40 shadow-sm"
@@ -651,6 +685,7 @@ function ProductPage() {
                   },
                   1,
                 );
+                trackAddedToCart(v?.label);
               }
             }}
             className="flex-1 bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all text-center block shadow-sm"

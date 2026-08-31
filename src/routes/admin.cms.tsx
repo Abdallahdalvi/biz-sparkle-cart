@@ -135,6 +135,29 @@ function AdminCmsPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      if (
+        cms.tracking_clarity_enabled &&
+        !/^[a-z0-9]+$/i.test(cms.tracking_clarity_project_id.trim())
+      ) {
+        throw new Error("Enter a valid Microsoft Clarity Project ID or switch Clarity off");
+      }
+      if (cms.tracking_meta_enabled && !/^\d{5,25}$/.test(cms.tracking_meta_pixel_id.trim())) {
+        throw new Error("Enter a valid numeric Meta Pixel ID or switch Meta Pixel off");
+      }
+      if (
+        cms.tracking_google_analytics_enabled &&
+        !/^G-[A-Z0-9]+$/i.test(cms.tracking_google_analytics_id.trim())
+      ) {
+        throw new Error("Enter a valid GA4 Measurement ID beginning with G-");
+      }
+      if (
+        cms.tracking_google_ads_enabled &&
+        (!/^AW-\d+$/i.test(cms.tracking_google_ads_id.trim()) ||
+          !cms.tracking_google_ads_purchase_label.trim())
+      ) {
+        throw new Error("Google Ads requires an AW- tag ID and a purchase conversion label");
+      }
+
       const payload = {
         id: "hero_banners",
         hero_1_image: cms.hero_1_image,
@@ -195,6 +218,15 @@ function AdminCmsPage() {
           legal_cancellation_text: cms.legal_cancellation_text,
           footer_tagline: cms.footer_tagline,
           footer_copyright: cms.footer_copyright,
+          tracking_clarity_enabled: cms.tracking_clarity_enabled,
+          tracking_clarity_project_id: cms.tracking_clarity_project_id.trim(),
+          tracking_meta_enabled: cms.tracking_meta_enabled,
+          tracking_meta_pixel_id: cms.tracking_meta_pixel_id.trim(),
+          tracking_google_analytics_enabled: cms.tracking_google_analytics_enabled,
+          tracking_google_analytics_id: cms.tracking_google_analytics_id.trim().toUpperCase(),
+          tracking_google_ads_enabled: cms.tracking_google_ads_enabled,
+          tracking_google_ads_id: cms.tracking_google_ads_id.trim().toUpperCase(),
+          tracking_google_ads_purchase_label: cms.tracking_google_ads_purchase_label.trim(),
         },
         updated_at: new Date().toISOString(),
       };
@@ -247,6 +279,7 @@ function AdminCmsPage() {
     { id: "biz", label: "Support & Business Details", icon: "corporate_fare" },
     { id: "whatsapp", label: "WhatsApp Channel & Chat", icon: "forum" },
     { id: "checkout", label: "Checkout & Charges", icon: "account_balance_wallet" },
+    { id: "tracking", label: "Ads & Analytics", icon: "monitoring" },
     { id: "hero", label: "Hero Banners", icon: "view_carousel" },
     { id: "trending", label: "Trending Gadgets", icon: "trending_up" },
     { id: "keypad", label: "Keypad Collection", icon: "phone_iphone" },
@@ -804,6 +837,106 @@ function AdminCmsPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "tracking" && (
+            <div className="bg-white shopify-border p-5 shadow-sm space-y-6 animate-fadeIn md:p-8">
+              <div className="border-b border-outline-variant/30 pb-4">
+                <h3 className="flex items-center gap-2 text-xl font-bold text-primary">
+                  <span className="material-symbols-outlined text-primary">monitoring</span>
+                  Ads & Analytics Tracking Hub
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+                  Add the IDs from each platform, switch it on, and publish. The storefront sends
+                  page views, product views, add-to-cart, checkout, and deduplicated purchase events
+                  after the visitor makes a privacy choice. Tracker IDs are public identifiers, not
+                  secret API keys.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                <TrackingCard
+                  title="Microsoft Clarity"
+                  description="Session recordings, heatmaps, and engagement analytics."
+                  enabled={cms.tracking_clarity_enabled}
+                  onEnabledChange={(enabled) =>
+                    setCms({ ...cms, tracking_clarity_enabled: enabled })
+                  }
+                >
+                  <TrackingInput
+                    label="Clarity Project ID"
+                    placeholder="e.g. abc123def4"
+                    value={cms.tracking_clarity_project_id}
+                    onChange={(value) => setCms({ ...cms, tracking_clarity_project_id: value })}
+                  />
+                </TrackingCard>
+
+                <TrackingCard
+                  title="Meta Pixel"
+                  description="Facebook and Instagram audience and conversion measurement."
+                  enabled={cms.tracking_meta_enabled}
+                  onEnabledChange={(enabled) => setCms({ ...cms, tracking_meta_enabled: enabled })}
+                >
+                  <TrackingInput
+                    label="Meta Pixel ID"
+                    placeholder="e.g. 123456789012345"
+                    inputMode="numeric"
+                    value={cms.tracking_meta_pixel_id}
+                    onChange={(value) => setCms({ ...cms, tracking_meta_pixel_id: value })}
+                  />
+                </TrackingCard>
+
+                <TrackingCard
+                  title="Google Analytics 4"
+                  description="Store traffic, acquisition, funnels, and ecommerce events."
+                  enabled={cms.tracking_google_analytics_enabled}
+                  onEnabledChange={(enabled) =>
+                    setCms({ ...cms, tracking_google_analytics_enabled: enabled })
+                  }
+                >
+                  <TrackingInput
+                    label="GA4 Measurement ID"
+                    placeholder="G-XXXXXXXXXX"
+                    value={cms.tracking_google_analytics_id}
+                    onChange={(value) => setCms({ ...cms, tracking_google_analytics_id: value })}
+                  />
+                </TrackingCard>
+
+                <TrackingCard
+                  title="Google Ads"
+                  description="Purchase conversion measurement and campaign ROAS."
+                  enabled={cms.tracking_google_ads_enabled}
+                  onEnabledChange={(enabled) =>
+                    setCms({ ...cms, tracking_google_ads_enabled: enabled })
+                  }
+                >
+                  <TrackingInput
+                    label="Google Ads Tag ID"
+                    placeholder="AW-123456789"
+                    value={cms.tracking_google_ads_id}
+                    onChange={(value) => setCms({ ...cms, tracking_google_ads_id: value })}
+                  />
+                  <TrackingInput
+                    label="Purchase Conversion Label"
+                    placeholder="e.g. AbC-D_efG-h12_34-567"
+                    value={cms.tracking_google_ads_purchase_label}
+                    onChange={(value) =>
+                      setCms({ ...cms, tracking_google_ads_purchase_label: value })
+                    }
+                  />
+                </TrackingCard>
+              </div>
+
+              <div className="rounded border border-blue-200 bg-blue-50 p-4 text-xs leading-relaxed text-blue-950">
+                <p className="font-bold">Built-in privacy and conversion safety</p>
+                <p className="mt-1 text-blue-900/80">
+                  Google Consent Mode v2 defaults analytics and advertising storage to denied.
+                  Microsoft Clarity and Meta Pixel load only after the visitor allows the relevant
+                  category. Purchase events include the unique order number to reduce duplicate
+                  conversions. Admin pages are excluded from tracking.
+                </p>
               </div>
             </div>
           )}
@@ -2062,5 +2195,72 @@ function AdminCmsPage() {
         </div>
       </div>
     </form>
+  );
+}
+
+function TrackingCard({
+  title,
+  description,
+  enabled,
+  onEnabledChange,
+  children,
+}: {
+  title: string;
+  description: string;
+  enabled: boolean;
+  onEnabledChange: (enabled: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded border border-outline-variant/40 bg-surface-container-lowest p-5 space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h4 className="text-sm font-bold text-primary">{title}</h4>
+          <p className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">{description}</p>
+        </div>
+        <label className="flex shrink-0 cursor-pointer items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(event) => onEnabledChange(event.target.checked)}
+            className="h-4 w-4"
+          />
+          {enabled ? "On" : "Off"}
+        </label>
+      </div>
+      <div className={enabled ? "space-y-4" : "space-y-4 opacity-60"}>{children}</div>
+    </section>
+  );
+}
+
+function TrackingInput({
+  label,
+  value,
+  placeholder,
+  inputMode,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block space-y-2">
+      <span className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+        {label}
+      </span>
+      <input
+        type="text"
+        inputMode={inputMode}
+        autoComplete="off"
+        spellCheck={false}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full min-w-0 border border-outline-variant/40 bg-white p-3 font-mono text-sm font-medium focus:border-primary focus:outline-none"
+      />
+    </label>
   );
 }

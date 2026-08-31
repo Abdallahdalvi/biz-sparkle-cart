@@ -14,6 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { TrackingManager } from "@/components/analytics/TrackingManager";
+import { getStorefrontCms } from "@/lib/products";
+import type { TrackingSettings } from "@/lib/tracking";
 
 function NotFoundComponent() {
   return (
@@ -50,11 +53,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <SiteShell>
       <div className="flex min-h-[70vh] items-center justify-center bg-background px-4">
         <div className="max-w-md text-center space-y-4">
-          <h1 className="text-2xl font-bold tracking-tight text-primary">
-            This page didn't load
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">This page didn't load</h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Something went wrong in our rendering engine. You can try refreshing the telemetry or head back home.
+            Something went wrong in our rendering engine. You can try refreshing the telemetry or
+            head back home.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <button
@@ -80,6 +82,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  loader: async () => {
+    const cms = await getStorefrontCms();
+    const tracking: TrackingSettings = {
+      clarityEnabled: cms.tracking_clarity_enabled,
+      clarityProjectId: cms.tracking_clarity_project_id,
+      metaEnabled: cms.tracking_meta_enabled,
+      metaPixelId: cms.tracking_meta_pixel_id,
+      googleAnalyticsEnabled: cms.tracking_google_analytics_enabled,
+      googleAnalyticsId: cms.tracking_google_analytics_id,
+      googleAdsEnabled: cms.tracking_google_ads_enabled,
+      googleAdsId: cms.tracking_google_ads_id,
+      googleAdsPurchaseLabel: cms.tracking_google_ads_purchase_label,
+    };
+    return { tracking };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -156,11 +173,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { tracking } = Route.useLoaderData();
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <TrackingManager settings={tracking} />
       <ClientToaster />
     </QueryClientProvider>
   );
