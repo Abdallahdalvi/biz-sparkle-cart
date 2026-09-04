@@ -151,6 +151,12 @@ function AdminCmsPage() {
         throw new Error("Enter a valid numeric Meta Pixel ID or switch Meta Pixel off");
       }
       if (
+        cms.tracking_meta_domain_verification.trim() &&
+        !/^[A-Za-z0-9_-]{5,200}$/.test(cms.tracking_meta_domain_verification.trim())
+      ) {
+        throw new Error("Enter only the Meta domain-verification code, not the full meta tag");
+      }
+      if (
         cms.tracking_google_analytics_enabled &&
         !/^G-[A-Z0-9]+$/i.test(cms.tracking_google_analytics_id.trim())
       ) {
@@ -228,6 +234,7 @@ function AdminCmsPage() {
           tracking_clarity_project_id: cms.tracking_clarity_project_id.trim(),
           tracking_meta_enabled: cms.tracking_meta_enabled,
           tracking_meta_pixel_id: cms.tracking_meta_pixel_id.trim(),
+          tracking_meta_domain_verification: cms.tracking_meta_domain_verification.trim(),
           tracking_google_analytics_enabled: cms.tracking_google_analytics_enabled,
           tracking_google_analytics_id: cms.tracking_google_analytics_id.trim().toUpperCase(),
           tracking_google_ads_enabled: cms.tracking_google_ads_enabled,
@@ -881,7 +888,7 @@ function AdminCmsPage() {
 
                 <TrackingCard
                   title="Meta Pixel"
-                  description="Facebook and Instagram audience and conversion measurement."
+                  description="Facebook and Instagram audience, catalog, and conversion measurement."
                   enabled={cms.tracking_meta_enabled}
                   onEnabledChange={(enabled) => setCms({ ...cms, tracking_meta_enabled: enabled })}
                 >
@@ -892,6 +899,38 @@ function AdminCmsPage() {
                     value={cms.tracking_meta_pixel_id}
                     onChange={(value) => setCms({ ...cms, tracking_meta_pixel_id: value })}
                   />
+                  <TrackingInput
+                    label="Meta Domain Verification Code"
+                    placeholder="Paste only the content value"
+                    value={cms.tracking_meta_domain_verification}
+                    onChange={(value) =>
+                      setCms({ ...cms, tracking_meta_domain_verification: value })
+                    }
+                  />
+                  <div className="space-y-2 border-t border-outline-variant/30 pt-4 text-xs leading-relaxed text-on-surface-variant">
+                    <p>
+                      <strong className="text-primary">Meta product catalog feed:</strong>{" "}
+                      <a
+                        href="/meta-catalog.xml"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="break-all font-medium text-blue-700 underline"
+                      >
+                        https://aghanimsphones.in/meta-catalog.xml
+                      </a>
+                    </p>
+                    <p>
+                      Add this URL as a scheduled data feed in Commerce Manager. Product IDs match
+                      the IDs sent by the storefront's Meta commerce events.
+                    </p>
+                    <p>
+                      For server-side Purchase events, set
+                      <code className="mx-1 bg-surface-container-low px-1 py-0.5">
+                        META_CONVERSIONS_API_TOKEN
+                      </code>
+                      on the server and rebuild the container.
+                    </p>
+                  </div>
                 </TrackingCard>
 
                 <TrackingCard

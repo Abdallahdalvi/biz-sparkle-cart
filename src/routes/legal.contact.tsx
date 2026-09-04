@@ -6,6 +6,9 @@ import { getStorefrontCms, type StorefrontCms } from "@/lib/products";
 import { useServerFn } from "@tanstack/react-start";
 import { submitContactMessage } from "@/lib/operations.functions";
 import { toast } from "sonner";
+import { GOOGLE_MAPS_EMBED_URL } from "@/lib/google-reviews";
+import { trackLead } from "@/lib/tracking";
+import { SITE_URL } from "@/lib/site";
 
 export const Route = createFileRoute("/legal/contact")({
   loader: async () => {
@@ -21,6 +24,7 @@ export const Route = createFileRoute("/legal/contact")({
           "Get in touch with Aghanims Support via WhatsApp, contact form, email, or visit our shop location.",
       },
     ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/legal/contact` }],
   }),
   component: ContactPage,
 });
@@ -45,6 +49,7 @@ function ContactPage() {
     try {
       await submitMessageFn({ data: { ...formData, website } });
       setSubmitted(true);
+      trackLead("Contact form");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to submit your message");
     } finally {
@@ -238,12 +243,12 @@ function ContactPage() {
                   Our Shop Location
                 </h2>
                 <p className="text-on-surface-variant text-xs">
-                  Visit our experience center to inspect our tactical hardware in person.
+                  Visit our shop to inspect our tactile phones and gadgets in person.
                 </p>
                 <div className="w-full aspect-[16/11] rounded overflow-hidden border border-outline-variant/30 shadow-2xs">
                   <iframe
                     title="Aghanims Phones and Gadgets Store Location"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.792015099317!2d72.83311891147576!3d19.0728445520141!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c91131105373%3A0xb331d044f15d78d2!2sBandra%20Kurla%20Complex%2C%20Bandra%20East%2C%20Mumbai%2C%20Maharashtra%20400051!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                    src={GOOGLE_MAPS_EMBED_URL}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}

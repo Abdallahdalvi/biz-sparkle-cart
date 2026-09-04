@@ -2,7 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
-import { CATEGORIES, getAllProducts, getStorefrontCms, type Category, type Product, type StorefrontCms } from "@/lib/products";
+import {
+  CATEGORIES,
+  getAllProducts,
+  getStorefrontCms,
+  type Category,
+  type Product,
+  type StorefrontCms,
+} from "@/lib/products";
+import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
 
 export const Route = createFileRoute("/catalog")({
   loader: async () => {
@@ -10,46 +18,43 @@ export const Route = createFileRoute("/catalog")({
     const cms = await getStorefrontCms();
     return { all, cms };
   },
-  head: () => ({
+  head: ({ loaderData }) => ({
     meta: [
       { title: "Catalog — Aghanims Phones and Gadgets" },
-      { name: "description", content: "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India." },
+      {
+        name: "description",
+        content:
+          "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India.",
+      },
       { property: "og:title", content: "Catalog — Aghanims Phones and Gadgets" },
-      { property: "og:description", content: "Browse boutique phones, audio, accessories and more." },
+      {
+        property: "og:description",
+        content: "Browse boutique phones, audio, accessories and more.",
+      },
+      { property: "og:image", content: SITE_SOCIAL_IMAGE_URL },
+      { property: "og:url", content: absoluteSiteUrl("/catalog") },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/catalog") }],
     scripts: [
       {
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: "Aghanims Phones and Gadgets Hardware Catalog",
-          description: "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India.",
-          url: "https://aghanims.dalvi.cloud/catalog",
+          name: `${SITE_NAME} Catalog`,
+          description:
+            "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India.",
+          url: absoluteSiteUrl("/catalog"),
           mainEntity: {
             "@type": "ItemList",
-            name: "Boutique Tech Gadgets",
-            itemListElement: [
-              {
-                "@type": "ListItem",
-                position: 1,
-                name: "The Minimalist Phone 2a",
-                url: "https://aghanims.dalvi.cloud/product/minimalist-phone-2a"
-              },
-              {
-                "@type": "ListItem",
-                position: 2,
-                name: "CyberDeck QWERTY Companion",
-                url: "https://aghanims.dalvi.cloud/product/cyberdeck-qwerty"
-              },
-              {
-                "@type": "ListItem",
-                position: 3,
-                name: "E-Ink Pocket Communicator",
-                url: "https://aghanims.dalvi.cloud/product/eink-pocket-comm"
-              }
-            ]
-          }
+            name: "Phones and Gadgets",
+            itemListElement: (loaderData?.all || []).map((product, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              name: product.name,
+              url: absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`),
+            })),
+          },
         }),
       },
     ],
@@ -59,7 +64,7 @@ export const Route = createFileRoute("/catalog")({
 
 function Catalog() {
   const { all, cms } = Route.useLoaderData() as { all: Product[]; cms: StorefrontCms };
-  
+
   // Filtering States
   const [cat, setCat] = useState<Category | "all">("all");
   const [formFactor, setFormFactor] = useState<string>("all");
@@ -67,7 +72,17 @@ function Catalog() {
   const [priceRange, setPriceRange] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("featured");
 
-  const formFactors = ["all", "QWERTY", "E-Ink", "Mini", "Rugged", "Modular", "Audio", "Accessory", "Gaming"];
+  const formFactors = [
+    "all",
+    "QWERTY",
+    "E-Ink",
+    "Mini",
+    "Rugged",
+    "Modular",
+    "Audio",
+    "Accessory",
+    "Gaming",
+  ];
 
   const filteredProducts = useMemo(() => {
     let result = [...all];
@@ -113,14 +128,15 @@ function Catalog() {
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12 md:py-16">
         <div className="mb-12">
           <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-            <Link to="/" className="hover:text-primary">Home</Link> / Catalog
+            <Link to="/" className="hover:text-primary">
+              Home
+            </Link>{" "}
+            / Catalog
           </p>
           <h1 className="text-4xl md:text-5xl font-bold text-primary max-w-2xl">
             {cms.catalog_title}
           </h1>
-          <p className="text-on-surface-variant mt-4 max-w-xl">
-            {cms.catalog_subtitle}
-          </p>
+          <p className="text-on-surface-variant mt-4 max-w-xl">{cms.catalog_subtitle}</p>
         </div>
 
         {/* Categories Tab Bar */}
@@ -149,14 +165,17 @@ function Catalog() {
               Faceted Catalog Filtering
             </h3>
             <span className="text-[11px] font-bold text-on-surface-variant">
-              {filteredProducts.length} {filteredProducts.length === 1 ? "DEVICE" : "DEVICES"} MATCHED
+              {filteredProducts.length} {filteredProducts.length === 1 ? "DEVICE" : "DEVICES"}{" "}
+              MATCHED
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Form Factor */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">Form Factor</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                Form Factor
+              </label>
               <select
                 value={formFactor}
                 onChange={(e) => setFormFactor(e.target.value)}
@@ -172,7 +191,9 @@ function Catalog() {
 
             {/* Availability */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">Availability</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                Availability
+              </label>
               <select
                 value={availability}
                 onChange={(e) => setAvailability(e.target.value)}
@@ -186,7 +207,9 @@ function Catalog() {
 
             {/* Price Range */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">Price Range</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                Price Range
+              </label>
               <select
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
@@ -201,7 +224,9 @@ function Catalog() {
 
             {/* Sort By */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">Sort By</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                Sort By
+              </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -217,8 +242,12 @@ function Catalog() {
 
         {filteredProducts.length === 0 ? (
           <div className="bg-white border border-outline-variant/30 py-20 text-center rounded shadow-sm space-y-3">
-            <span className="material-symbols-outlined text-4xl text-on-surface-variant">sentiment_dissatisfied</span>
-            <p className="text-on-surface-variant font-medium text-sm">No precision gadgets match your selected filter criteria.</p>
+            <span className="material-symbols-outlined text-4xl text-on-surface-variant">
+              sentiment_dissatisfied
+            </span>
+            <p className="text-on-surface-variant font-medium text-sm">
+              No precision gadgets match your selected filter criteria.
+            </p>
             <button
               onClick={() => {
                 setCat("all");
@@ -234,7 +263,9 @@ function Catalog() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {filteredProducts.map((p) => <ProductCard key={p.slug} product={p} />)}
+            {filteredProducts.map((p) => (
+              <ProductCard key={p.slug} product={p} />
+            ))}
           </div>
         )}
       </section>

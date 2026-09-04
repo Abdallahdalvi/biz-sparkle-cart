@@ -32,6 +32,7 @@ export type CommerceEventData = {
   currency?: "INR";
   items: TrackingItem[];
   transactionId?: string;
+  contentCategory?: string;
 };
 
 type Gtag = (...args: unknown[]) => void;
@@ -114,6 +115,13 @@ function contentIds(items: TrackingItem[]) {
   return items.map((item) => item.item_id);
 }
 
+function createEventId(prefix: string) {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}_${crypto.randomUUID()}`;
+  }
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
 function purchaseAlreadyTracked(transactionId?: string) {
   if (!transactionId || typeof window === "undefined") return false;
   const key = `aghanims-tracked-purchase:${transactionId}`;
@@ -130,7 +138,7 @@ export function trackPageView(path: string) {
     page_location: window.location.href,
     page_title: document.title,
   });
-  window.fbq?.("track", "PageView");
+  window.fbq?.("track", "PageView", {}, { eventID: createEventId("pageview") });
   window.clarity?.("event", "spa_page_view");
 }
 
@@ -140,6 +148,10 @@ export function trackCommerceEvent(event: CommerceEvent, data: CommerceEventData
   if (event === "purchase" && purchaseAlreadyTracked(data.transactionId)) return;
 
   const currency = data.currency || "INR";
+  const eventId =
+    event === "purchase" && data.transactionId
+      ? `purchase_${data.transactionId}`
+      : createEventId(event);
   window.gtag?.("event", event, {
     currency,
     value: data.value,
@@ -147,14 +159,25 @@ export function trackCommerceEvent(event: CommerceEvent, data: CommerceEventData
     items: data.items,
   });
 
-  window.fbq?.("track", metaEventName(event), {
-    content_ids: contentIds(data.items),
-    content_name: data.items.map((item) => item.item_name).join(", "),
-    content_type: "product",
-    contents: data.items.map((item) => ({ id: item.item_id, quantity: item.quantity })),
-    currency,
-    value: data.value,
-  });
+  window.fbq?.(
+    "track",
+    metaEventName(event),
+    {
+      content_ids: contentIds(data.items),
+      content_name: data.items.map((item) => item.item_name).join(", "),
+      content_type: "product",
+      content_category: data.contentCategory,
+      contents: data.items.map((item) => ({
+        id: item.item_id,
+        quantity: item.quantity,
+        item_price: item.price,
+      })),
+      currency,
+      num_items: data.items.reduce((sum, item) => sum + item.quantity, 0),
+      value: data.value,
+    },
+    { eventID: eventId },
+  );
 
   window.clarity?.("event", event);
 
@@ -172,4 +195,11 @@ export function trackCommerceEvent(event: CommerceEvent, data: CommerceEventData
       transaction_id: data.transactionId,
     });
   }
+}
+
+export function trackLead(contentName: string) {
+  if (typeof window === "undefined") return;
+  window.gtag?.("event", "generate_lead", { content_name: contentName });
+  window.fbq?.("track", "Lead", { content_name: contentName }, { eventID: createEventId("lead") });
+  window.clarity?.("event", "generate_lead");
 }

@@ -4,5 +4,6 @@ Disallow: /account
 Disallow: /cart
 Disallow: /checkout
 Disallow: /auth
+Disallow: /admin
 
-Sitemap: /sitemap.xml
+Sitemap: https://aghanimsphones.in/sitemap.xml

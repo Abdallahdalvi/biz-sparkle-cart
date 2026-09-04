@@ -95,12 +95,68 @@ export interface StorefrontCms {
   tracking_clarity_project_id: string;
   tracking_meta_enabled: boolean;
   tracking_meta_pixel_id: string;
+  tracking_meta_domain_verification: string;
   tracking_google_analytics_enabled: boolean;
   tracking_google_analytics_id: string;
   tracking_google_ads_enabled: boolean;
   tracking_google_ads_id: string;
   tracking_google_ads_purchase_label: string;
 }
+
+export const LATEST_GOOGLE_TEXT_REVIEWS: StorefrontCms["reviews"] = [
+  {
+    author: "Basavaraj Patil",
+    time: "September 2026",
+    stars: 5,
+    snippet: "Good service and product, trust worthy and this is not a scam.",
+    avatar: "B",
+  },
+  {
+    author: "Alankar Sawant",
+    time: "September 2026",
+    stars: 5,
+    snippet:
+      "Had a great experience with Aghanims phones and gadgets bought a phone which was delivered in 40 mins to my location. Hassle free delivery and genuine product was delivery.",
+    avatar: "A",
+  },
+  {
+    author: "Dippak ____",
+    time: "September 2026",
+    stars: 5,
+    snippet:
+      "Very Fast delivery.. I got my product Nokia 2720 mobile within 2.30 hrs.. Good Service.. Very polite and supporting Guy..!!\nNice experience.",
+    avatar: "D",
+  },
+  {
+    author: "MITESH RATHOD",
+    time: "August 2026",
+    stars: 5,
+    snippet:
+      "Jai hind\nJai chatrapati shivaji maharaj ki\nI just bought phone from him amazing phone which one is I am looking for my mom satisfied service genuine guys....",
+    avatar: "M",
+  },
+  {
+    author: "Sumit Jadhav",
+    time: "August 2026",
+    stars: 5,
+    snippet: "Authentic seller\nI purchase Nokia",
+    avatar: "S",
+  },
+  {
+    author: "Karan Mundarkar",
+    time: "August 2026",
+    stars: 5,
+    snippet: "Nice trustworthy product",
+    avatar: "K",
+  },
+  {
+    author: "Sahdevsinh Jadav",
+    time: "August 2026",
+    stars: 5,
+    snippet: "Authentic and Trust Worthy!",
+    avatar: "S",
+  },
+];
 
 export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   hero_eyebrow_label: "AGHANIMS PHONES AND GADGETS",
@@ -224,39 +280,9 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   reviews_heading: {
     store_name: "Aghanims Phones and Gadgets",
     rating: 5.0,
-    total_reviews: 4,
+    total_reviews: 8,
   },
-  reviews: [
-    {
-      author: "MITESH RATHOD",
-      time: "August 2026",
-      stars: 5,
-      snippet:
-        "Jai hind Jai chatrapati shivaji maharaj ki I just bought phone from him amazing phone which one is I am looking for my mom satisfied service genuine guys....",
-      avatar: "M",
-    },
-    {
-      author: "Sumit Jadhav",
-      time: "August 2026",
-      stars: 5,
-      snippet: "Authentic seller I purchase Nokia",
-      avatar: "S",
-    },
-    {
-      author: "Karan Mundarkar",
-      time: "August 2026",
-      stars: 5,
-      snippet: "Nice trustworthy product",
-      avatar: "K",
-    },
-    {
-      author: "Sahdevsinh Jadav",
-      time: "August 2026",
-      stars: 5,
-      snippet: "Authentic and Trust Worthy!",
-      avatar: "S",
-    },
-  ],
+  reviews: LATEST_GOOGLE_TEXT_REVIEWS,
   cod_charge_amount: 99,
   cod_charge_type: "advance",
   prepaid_discount_amount: 200,
@@ -290,6 +316,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   tracking_clarity_project_id: "",
   tracking_meta_enabled: false,
   tracking_meta_pixel_id: "",
+  tracking_meta_domain_verification: "",
   tracking_google_analytics_enabled: false,
   tracking_google_analytics_id: "",
   tracking_google_ads_enabled: false,
@@ -389,6 +416,17 @@ function replaceLegacyReviewSummaries(
   }));
 }
 
+function isLegacyGoogleReviewSet(reviews: StorefrontCms["reviews"] | undefined) {
+  if (!reviews?.length || reviews.length > 4) return !reviews?.length;
+  const legacyAuthors = new Set([
+    "MITESH RATHOD",
+    "Sumit Jadhav",
+    "Karan Mundarkar",
+    "Sahdevsinh Jadav",
+  ]);
+  return reviews.every((review) => legacyAuthors.has(review.author));
+}
+
 export async function getStorefrontCms(): Promise<StorefrontCms> {
   let dbCms: Partial<StorefrontCms> = {};
   try {
@@ -466,6 +504,7 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
         tracking_clarity_project_id: meta.tracking_clarity_project_id,
         tracking_meta_enabled: meta.tracking_meta_enabled,
         tracking_meta_pixel_id: meta.tracking_meta_pixel_id,
+        tracking_meta_domain_verification: meta.tracking_meta_domain_verification,
         tracking_google_analytics_enabled: meta.tracking_google_analytics_enabled,
         tracking_google_analytics_id: meta.tracking_google_analytics_id,
         tracking_google_ads_enabled: meta.tracking_google_ads_enabled,
@@ -514,8 +553,12 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     about_image: dbCms.about_image || DEFAULT_STOREFRONT_CMS.about_image,
     videos: dbCms.videos?.length ? dbCms.videos : DEFAULT_STOREFRONT_CMS.videos,
     pointers: dbCms.pointers?.length ? dbCms.pointers : DEFAULT_STOREFRONT_CMS.pointers,
-    reviews_heading: dbCms.reviews_heading || DEFAULT_STOREFRONT_CMS.reviews_heading,
-    reviews: replaceLegacyReviewSummaries(dbCms.reviews),
+    reviews_heading: isLegacyGoogleReviewSet(dbCms.reviews)
+      ? DEFAULT_STOREFRONT_CMS.reviews_heading
+      : dbCms.reviews_heading || DEFAULT_STOREFRONT_CMS.reviews_heading,
+    reviews: isLegacyGoogleReviewSet(dbCms.reviews)
+      ? DEFAULT_STOREFRONT_CMS.reviews
+      : replaceLegacyReviewSummaries(dbCms.reviews),
     cod_charge_amount:
       dbCms.cod_charge_amount !== undefined
         ? dbCms.cod_charge_amount
@@ -556,6 +599,9 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     tracking_meta_enabled: dbCms.tracking_meta_enabled === true,
     tracking_meta_pixel_id:
       dbCms.tracking_meta_pixel_id || DEFAULT_STOREFRONT_CMS.tracking_meta_pixel_id,
+    tracking_meta_domain_verification:
+      dbCms.tracking_meta_domain_verification ||
+      DEFAULT_STOREFRONT_CMS.tracking_meta_domain_verification,
     tracking_google_analytics_enabled: dbCms.tracking_google_analytics_enabled === true,
     tracking_google_analytics_id:
       dbCms.tracking_google_analytics_id || DEFAULT_STOREFRONT_CMS.tracking_google_analytics_id,

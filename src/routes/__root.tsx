@@ -17,6 +17,7 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { TrackingManager } from "@/components/analytics/TrackingManager";
 import { getStorefrontCms } from "@/lib/products";
 import type { TrackingSettings } from "@/lib/tracking";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_SOCIAL_IMAGE_URL, SITE_URL } from "@/lib/site";
 
 function NotFoundComponent() {
   return (
@@ -95,44 +96,47 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       googleAdsId: cms.tracking_google_ads_id,
       googleAdsPurchaseLabel: cms.tracking_google_ads_purchase_label,
     };
-    return { tracking };
+    return {
+      tracking,
+      metaDomainVerification: cms.tracking_meta_domain_verification,
+    };
   },
-  head: () => ({
+  head: ({ loaderData }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Aghanims Phones and Gadgets — Premium Tech Store" },
+      { title: `${SITE_NAME} — Hard-to-find phones and gadgets` },
       {
         name: "description",
-        content:
-          "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets. Shipping across India.",
+        content: SITE_DESCRIPTION,
       },
-      { name: "author", content: "Aghanims Phones and Gadgets" },
-      { property: "og:title", content: "Aghanims Phones and Gadgets — Premium Tech Store" },
+      { name: "author", content: SITE_NAME },
+      { property: "og:title", content: `${SITE_NAME} — Hard-to-find phones and gadgets` },
       {
         property: "og:description",
-        content:
-          "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets. Shipping across India.",
+        content: SITE_DESCRIPTION,
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: SITE_NAME },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:image", content: SITE_SOCIAL_IMAGE_URL },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Aghanims Phones and Gadgets — Premium Tech Store" },
+      { name: "twitter:title", content: `${SITE_NAME} — Hard-to-find phones and gadgets` },
       {
         name: "twitter:description",
-        content:
-          "Boutique tech: keypad Androids, minimalist daily drivers, and precision-engineered gadgets. Shipping across India.",
+        content: SITE_DESCRIPTION,
       },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c8e38c11-c137-4a3f-aa51-4cb8ab4e9e0b/id-preview-d342fd9e--40a3ae82-080c-4e68-8561-161d6a73169b.lovable.app-1782123698453.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c8e38c11-c137-4a3f-aa51-4cb8ab4e9e0b/id-preview-d342fd9e--40a3ae82-080c-4e68-8561-161d6a73169b.lovable.app-1782123698453.png",
-      },
+      { name: "twitter:image", content: SITE_SOCIAL_IMAGE_URL },
+      ...(loaderData?.metaDomainVerification
+        ? [
+            {
+              name: "facebook-domain-verification",
+              content: loaderData.metaDomainVerification,
+            },
+          ]
+        : []),
     ],
     links: [
       {

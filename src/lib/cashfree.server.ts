@@ -9,6 +9,7 @@ type CashfreeOrder = {
   order_currency: string;
   order_status: "ACTIVE" | "PAID" | "EXPIRED" | "TERMINATED" | string;
   payment_session_id: string;
+  order_tags?: Record<string, string>;
 };
 
 type CashfreePayment = {
@@ -86,9 +87,7 @@ function normalizeReturnOrigin(origin: string | undefined) {
     parsed.protocol === "http:" && ["127.0.0.1", "localhost"].includes(parsed.hostname);
   const isStore =
     parsed.protocol === "https:" &&
-    ["aghanimsphones.in", "www.aghanimsphones.in", "techshop.dalvi.cloud"].includes(
-      parsed.hostname,
-    );
+    ["aghanimsphones.in", "www.aghanimsphones.in"].includes(parsed.hostname);
   if (!isLocal && !isStore) {
     throw new Error("Checkout return origin is not allowed");
   }
@@ -104,6 +103,7 @@ export async function createCashfreeOrderInternal(input: {
   customerPhone: string;
   returnOrigin?: string;
   note: string;
+  marketingConsent: boolean;
 }) {
   if (!Number.isInteger(input.amountPaise) || input.amountPaise < 100) {
     throw new Error("Cashfree payments must be at least ₹1");
@@ -132,6 +132,7 @@ export async function createCashfreeOrderInternal(input: {
         order_tags: {
           store_order_number: input.storeOrderNumber,
           store_order_id: input.storeOrderId,
+          meta_marketing_consent: input.marketingConsent ? "granted" : "denied",
         },
       }),
     },
@@ -188,6 +189,7 @@ export async function getSuccessfulCashfreePaymentInternal(
     id: String(payment.cf_payment_id),
     orderId: payment.order_id,
     amountPaise,
+    marketingConsent: order.order_tags?.meta_marketing_consent === "granted",
   };
 }
 
@@ -356,6 +358,9 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
 
   void import("@/lib/order-notifications.server").then(({ notifyAdminAboutActionableOrder }) =>
     notifyAdminAboutActionableOrder(transitioned.id),
+  );
+  void import("@/lib/meta-conversions.server").then(({ sendMetaPurchaseEvent }) =>
+    sendMetaPurchaseEvent(transitioned.id, payment.marketingConsent),
   );
 
   return {

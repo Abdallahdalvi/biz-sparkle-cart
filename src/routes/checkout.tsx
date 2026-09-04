@@ -12,7 +12,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { verifyCashfreePayment } from "@/lib/cashfree.functions";
 import { createSecureOrder, getCheckoutCapabilities } from "@/lib/orders.functions";
 import { getAllProducts, getStorefrontCms } from "@/lib/products";
-import { trackCommerceEvent } from "@/lib/tracking";
+import { readTrackingConsent, trackCommerceEvent } from "@/lib/tracking";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -215,6 +215,7 @@ function Checkout() {
                 email: String(fd.get("email") ?? ""),
                 phone: String(fd.get("phone") ?? ""),
                 returnOrigin: window.location.origin,
+                marketingConsent: readTrackingConsent()?.marketing === true,
               };
 
               const res = await createOrderFn({ data: orderPayload });

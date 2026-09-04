@@ -46,10 +46,12 @@ export const Route = createFileRoute("/legal/privacy")({
       <p>
         When enabled by us and permitted by your choices, we use Microsoft Clarity for session
         analytics and heatmaps, Google Analytics for traffic and ecommerce measurement, Google Ads
-        for conversion measurement, and Meta Pixel for Facebook and Instagram advertising
-        measurement. These providers may process online identifiers, device/browser data, pages and
-        products viewed, cart or checkout actions, and purchase value/order reference. We do not
-        send card details or your shipping address through these browser trackers.
+        for conversion measurement, and Meta Pixel plus the Meta Conversions API for Facebook and
+        Instagram advertising measurement. These providers may process online identifiers,
+        device/browser data, pages and products viewed, cart or checkout actions, and purchase
+        value/order reference. When you allow advertising measurement, email, phone, and an internal
+        identifier are normalized and one-way hashed before server-side purchase transmission. We do
+        not send card details or your shipping address through these trackers.
       </p>
       <h2>4. Sharing</h2>
       <p>

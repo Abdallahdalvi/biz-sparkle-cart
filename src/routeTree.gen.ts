@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrackRouteImport } from './routes/track'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as MetaCatalogDotxmlRouteImport } from './routes/meta-catalog[.]xml'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CatalogRouteImport } from './routes/catalog'
@@ -42,6 +43,11 @@ const TrackRoute = TrackRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetaCatalogDotxmlRoute = MetaCatalogDotxmlRouteImport.update({
+  id: '/meta-catalog.xml',
+  path: '/meta-catalog.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareRoute = CompareRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/compare': typeof CompareRoute
+  '/meta-catalog.xml': typeof MetaCatalogDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/compare': typeof CompareRoute
+  '/meta-catalog.xml': typeof MetaCatalogDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/compare': typeof CompareRoute
+  '/meta-catalog.xml': typeof MetaCatalogDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/compare'
+    | '/meta-catalog.xml'
     | '/sitemap.xml'
     | '/track'
     | '/account/orders'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/compare'
+    | '/meta-catalog.xml'
     | '/sitemap.xml'
     | '/track'
     | '/account/orders'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/compare'
+    | '/meta-catalog.xml'
     | '/sitemap.xml'
     | '/track'
     | '/account/orders'
@@ -325,6 +337,7 @@ export interface RootRouteChildren {
   CatalogRoute: typeof CatalogRoute
   CheckoutRoute: typeof CheckoutRoute
   CompareRoute: typeof CompareRoute
+  MetaCatalogDotxmlRoute: typeof MetaCatalogDotxmlRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TrackRoute: typeof TrackRoute
   LegalAboutRoute: typeof LegalAboutRoute
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meta-catalog.xml': {
+      id: '/meta-catalog.xml'
+      path: '/meta-catalog.xml'
+      fullPath: '/meta-catalog.xml'
+      preLoaderRoute: typeof MetaCatalogDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare': {
@@ -547,6 +567,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogRoute: CatalogRoute,
   CheckoutRoute: CheckoutRoute,
   CompareRoute: CompareRoute,
+  MetaCatalogDotxmlRoute: MetaCatalogDotxmlRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TrackRoute: TrackRoute,
   LegalAboutRoute: LegalAboutRoute,

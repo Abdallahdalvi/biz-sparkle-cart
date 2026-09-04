@@ -13,3 +13,7 @@ export const GOOGLE_WRITE_REVIEW_URL = `https://search.google.com/local/writerev
 export const GOOGLE_ALL_REVIEWS_URL = `https://search.google.com/local/reviews?placeid=${encodeURIComponent(
   GOOGLE_PLACE_ID,
 )}`;
+
+export const GOOGLE_MAPS_EMBED_URL = `https://www.google.com/maps?q=place_id:${encodeURIComponent(
+  GOOGLE_PLACE_ID,
+)}&output=embed`;

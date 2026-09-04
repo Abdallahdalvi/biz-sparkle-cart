@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { PRODUCTS } from "@/lib/products";
-
-const BASE_URL = "";
+import { getAllProducts } from "@/lib/products";
+import { SITE_URL } from "@/lib/site";
 
 interface SitemapEntry {
   path: string;
@@ -14,6 +13,7 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
+        const products = await getAllProducts();
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/catalog", changefreq: "daily", priority: "0.9" },
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/legal/shipping", changefreq: "yearly", priority: "0.4" },
           { path: "/legal/returns", changefreq: "yearly", priority: "0.4" },
           { path: "/legal/cancellation", changefreq: "yearly", priority: "0.3" },
-          ...PRODUCTS.map((p) => ({
+          ...products.map((p) => ({
             path: `/product/${p.slug}`,
             changefreq: "weekly" as const,
             priority: "0.8",
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const urls = entries.map((e) =>
           [
             "  <url>",
-            `    <loc>${BASE_URL}${e.path}</loc>`,
+            `    <loc>${SITE_URL}${e.path}</loc>`,
             e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
             e.priority ? `    <priority>${e.priority}</priority>` : null,
             "  </url>",

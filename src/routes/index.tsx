@@ -2,15 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
-import { CookieBanner } from "@/components/CookieBanner";
 import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
 import { formatINR } from "@/lib/format";
-import { supabase } from "@/integrations/supabase/client";
 import {
   GOOGLE_ALL_REVIEWS_URL,
   GOOGLE_MAPS_PLACE_URL,
   GOOGLE_WRITE_REVIEW_URL,
 } from "@/lib/google-reviews";
+import {
+  SITE_DESCRIPTION,
+  SITE_LOGO_URL,
+  SITE_NAME,
+  SITE_SOCIAL_IMAGE_URL,
+  SITE_URL,
+} from "@/lib/site";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -18,71 +23,73 @@ export const Route = createFileRoute("/")({
     const cms = await getStorefrontCms();
     return { all, cms };
   },
-  head: () => ({
-    meta: [
-      { title: "Aghanims Phones and Gadgets — Premium Tech Store" },
-      {
-        name: "description",
-        content:
-          "Boutique keypad Androids, transparent audio, and minimalist daily drivers. Shipped across India.",
-      },
-      { property: "og:title", content: "Aghanims Phones and Gadgets — Premium Tech Store" },
-      {
-        property: "og:description",
-        content: "Boutique keypad Androids, transparent audio, and minimalist daily drivers.",
-      },
-      { property: "og:image", content: "https://aghanims.dalvi.cloud/og-image.jpg" },
-      { name: "twitter:image", content: "https://aghanims.dalvi.cloud/og-image.jpg" },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@graph": [
-            {
-              "@type": "WebSite",
-              "@id": "https://aghanims.dalvi.cloud/#website",
-              url: "https://aghanims.dalvi.cloud/",
-              name: "Aghanims Phones and Gadgets",
-              description:
-                "Boutique keypad Androids, transparent audio, and minimalist daily drivers. Shipped across India.",
-              potentialAction: [
-                {
-                  "@type": "SearchAction",
-                  target: "https://aghanims.dalvi.cloud/catalog?q={search_term_string}",
-                  "query-input": "required name=search_term_string",
-                },
-              ],
-            },
-            {
-              "@type": "Organization",
-              "@id": "https://aghanims.dalvi.cloud/#organization",
-              name: "Aghanims Phones and Gadgets",
-              url: "https://aghanims.dalvi.cloud/",
-              logo: "https://techshop.dalvi.cloud/logo.png",
-              hasMap: GOOGLE_MAPS_PLACE_URL,
-              contactPoint: [
-                {
-                  "@type": "ContactPoint",
-                  telephone: "+91-9876543210",
-                  contactType: "customer service",
-                  areaServed: "IN",
-                  availableLanguage: ["en", "hi"],
-                },
-              ],
-              sameAs: [
-                GOOGLE_MAPS_PLACE_URL,
-                "https://whatsapp.com/channel/0029Vaexample",
-                "https://twitter.com/AghanimsPhones",
-                "https://instagram.com/AghanimsPhones",
-              ],
-            },
-          ],
-        }),
-      },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const cms = loaderData?.cms;
+    const sameAs = [
+      GOOGLE_MAPS_PLACE_URL,
+      ...(cms?.whatsapp_channel_url?.startsWith("https://www.whatsapp.com/channel/")
+        ? [cms.whatsapp_channel_url]
+        : []),
+    ];
+    return {
+      meta: [
+        { title: `${SITE_NAME} — Hard-to-find phones and gadgets` },
+        { name: "description", content: SITE_DESCRIPTION },
+        { property: "og:title", content: `${SITE_NAME} — Hard-to-find phones and gadgets` },
+        { property: "og:description", content: SITE_DESCRIPTION },
+        { property: "og:image", content: SITE_SOCIAL_IMAGE_URL },
+        { property: "og:url", content: SITE_URL },
+        { name: "twitter:image", content: SITE_SOCIAL_IMAGE_URL },
+      ],
+      links: [{ rel: "canonical", href: SITE_URL }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "WebSite",
+                "@id": `${SITE_URL}/#website`,
+                url: SITE_URL,
+                name: SITE_NAME,
+                description: SITE_DESCRIPTION,
+                potentialAction: [
+                  {
+                    "@type": "SearchAction",
+                    target: `${SITE_URL}/catalog?q={search_term_string}`,
+                    "query-input": "required name=search_term_string",
+                  },
+                ],
+              },
+              {
+                "@type": "Organization",
+                "@id": `${SITE_URL}/#organization`,
+                name: SITE_NAME,
+                url: SITE_URL,
+                logo: SITE_LOGO_URL,
+                hasMap: GOOGLE_MAPS_PLACE_URL,
+                ...(cms?.biz_phone
+                  ? {
+                      contactPoint: [
+                        {
+                          "@type": "ContactPoint",
+                          telephone: cms.biz_phone,
+                          contactType: "customer service",
+                          areaServed: "IN",
+                          availableLanguage: ["en", "hi"],
+                        },
+                      ],
+                    }
+                  : {}),
+                sameAs,
+              },
+            ],
+          }),
+        },
+      ],
+    };
+  },
   component: Index,
 });
 
@@ -386,7 +393,7 @@ function Index() {
                       <span>★</span>
                     </div>
                     <p className="text-[11px] text-on-surface-variant font-medium">
-                      Verified Google Business Profile
+                      {cms.reviews_heading.total_reviews} Google reviews • Verified profile
                     </p>
                   </div>
                 </div>
@@ -452,7 +459,7 @@ function Index() {
                             <span key={s}>★</span>
                           ))}
                         </div>
-                        <p className="text-xs text-on-surface-variant leading-relaxed">
+                        <p className="whitespace-pre-line text-xs text-on-surface-variant leading-relaxed">
                           {rev.snippet}
                         </p>
                       </div>
@@ -526,32 +533,18 @@ function Index() {
             </h2>
             <p className="text-on-surface-variant text-sm leading-relaxed">
               Looking for a rare E-ink tablet, a specific Blackberry Android hybrid, or an unlisted
-              import? Drop the specs below and our sourcing team will track it down for you.
+              import? Send us the specs and our sourcing team will investigate availability.
             </p>
           </div>
-          <form
-            className="relative z-10 w-full md:w-auto flex flex-col sm:flex-row gap-0"
-            onSubmit={(e) => {
-              e.preventDefault();
-              alert("Gadget request received! Our sourcing team will investigate and reach out.");
-              (e.currentTarget as HTMLFormElement).reset();
-            }}
+          <Link
+            to="/legal/contact"
+            className="relative z-10 bg-primary text-on-primary px-8 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2 flex-shrink-0"
           >
-            <input
-              required
-              type="text"
-              placeholder="ENTER PRODUCT NAME OR SPECS..."
-              className="bg-surface-container-low border border-outline-variant/30 px-6 py-4 placeholder:text-on-surface-variant/50 font-medium text-sm w-full md:w-80 focus:outline-none focus:border-primary transition-colors box-border"
-            />
-            <button className="bg-primary text-on-primary px-8 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2 flex-shrink-0">
-              <span className="material-symbols-outlined text-base">send</span>
-              REQUEST
-            </button>
-          </form>
+            <span className="material-symbols-outlined text-base">send</span>
+            REQUEST VIA SUPPORT
+          </Link>
         </div>
       </section>
-
-      <CookieBanner />
     </SiteShell>
   );
 }

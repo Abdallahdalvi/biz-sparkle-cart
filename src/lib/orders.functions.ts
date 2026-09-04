@@ -63,6 +63,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
             return digits.length === 10 || (digits.length === 12 && digits.startsWith("91"));
           }, "Enter a valid 10-digit Indian phone number"),
         returnOrigin: z.string().url().max(200).optional(),
+        marketingConsent: z.boolean().optional().default(false),
       })
       .parse(input),
   )
@@ -252,6 +253,9 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       void import("@/lib/order-notifications.server").then(({ notifyAdminAboutActionableOrder }) =>
         notifyAdminAboutActionableOrder(order.id),
       );
+      void import("@/lib/meta-conversions.server").then(({ sendMetaPurchaseEvent }) =>
+        sendMetaPurchaseEvent(order.id, data.marketingConsent),
+      );
 
       return {
         ok: true,
@@ -276,6 +280,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
           data.payMode === "cod"
             ? `COD advance for ${order.order_number}`
             : `Online payment for ${order.order_number}`,
+        marketingConsent: data.marketingConsent,
       });
       const { error: linkError } = await supabaseAdmin
         .from("orders")

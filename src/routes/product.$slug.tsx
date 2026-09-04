@@ -5,7 +5,10 @@ import { getProductBySlug, getAllProducts, type Product } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { toast } from "sonner";
-import { trackCommerceEvent } from "@/lib/tracking";
+import { trackCommerceEvent, trackLead } from "@/lib/tracking";
+import { useServerFn } from "@tanstack/react-start";
+import { submitContactMessage } from "@/lib/operations.functions";
+import { absoluteSiteUrl, SITE_NAME } from "@/lib/site";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
@@ -18,6 +21,7 @@ export const Route = createFileRoute("/product/$slug")({
   head: ({ loaderData }) => {
     const p = loaderData?.product;
     if (!p) return { meta: [{ title: "Product — Aghanims Phones and Gadgets" }] };
+    const productUrl = absoluteSiteUrl(`/product/${encodeURIComponent(p.slug)}`);
     return {
       meta: [
         { title: `${p.name} — Aghanims Phones and Gadgets` },
@@ -28,9 +32,17 @@ export const Route = createFileRoute("/product/$slug")({
         { property: "og:title", content: `${p.name} — Aghanims Phones and Gadgets` },
         { property: "og:description", content: p.tagline },
         { property: "og:image", content: p.images[0] },
+        { property: "og:url", content: productUrl },
+        { property: "product:price:amount", content: (p.pricePaise / 100).toFixed(2) },
+        { property: "product:price:currency", content: "INR" },
+        {
+          property: "product:availability",
+          content: p.stock > 0 ? "in stock" : "out of stock",
+        },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:image", content: p.images[0] },
       ],
+      links: [{ rel: "canonical", href: productUrl }],
       scripts: [
         {
           type: "application/ld+json",
@@ -41,7 +53,8 @@ export const Route = createFileRoute("/product/$slug")({
             description: p.description,
             image: p.images,
             sku: p.slug,
-            brand: { "@type": "Brand", name: "Aghanims Phones and Gadgets" },
+            url: productUrl,
+            brand: { "@type": "Brand", name: SITE_NAME },
             offers: {
               "@type": "Offer",
               priceCurrency: "INR",
@@ -81,33 +94,11 @@ function ProductPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  // New trust & conversion states
-  const [pincode, setPincode] = useState("");
-  const [pinStatus, setPinStatus] = useState<string | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
-
-  const [timer, setTimer] = useState({ hours: 11, minutes: 40, seconds: 50 });
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return { hours: 11, minutes: 40, seconds: 50 };
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const dispatchDate = new Date();
-  dispatchDate.setDate(dispatchDate.getDate() + ((2 - dispatchDate.getDay() + 7) % 7 || 7));
-  const dispatchStr = dispatchDate.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    weekday: "long",
-  });
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const submitMessageFn = useServerFn(submitContactMessage);
 
   const items = useCart((s) => s.items);
   const add = useCart((s) => s.add);
@@ -148,42 +139,32 @@ function ProductPage() {
     });
   }
 
-  function checkPincode(e: React.FormEvent) {
+  async function handleWaitlist(e: React.FormEvent) {
     e.preventDefault();
-    const cleanPin = pincode.trim();
-    if (cleanPin.length !== 6 || isNaN(Number(cleanPin))) {
-      toast.error("Please enter a valid 6-digit Indian PIN code");
+    if (!waitlistEmail) {
+      toast.error("Please enter your email address");
       return;
     }
-    const metroPrefixes = ["11", "40", "56", "60", "70", "38", "50"];
-    const isMetro = metroPrefixes.some((prefix) => cleanPin.startsWith(prefix));
-    const days = isMetro ? 2 : 4;
-    const deliveryDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    const dateStr = deliveryDate.toLocaleDateString("en-IN", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
-    const routeSpeed = isMetro ? "metro priority route" : "standard priority route";
-
-    setPinStatus(
-      `Delivery to ${cleanPin} is serviceable by ${dateStr} on a ${routeSpeed}. Final courier is selected in Shiprocket after order placement. COD available.`,
-    );
-    toast.success(
-      "Pincode verified. Courier will be selected in Shiprocket after order placement.",
-    );
-  }
-
-  function handleWaitlist(e: React.FormEvent) {
-    e.preventDefault();
-    if (!waitlistEmail && !waitlistPhone) {
-      toast.error("Please enter either an email or WhatsApp number");
-      return;
+    setWaitlistSubmitting(true);
+    try {
+      await submitMessageFn({
+        data: {
+          name: "Product waitlist",
+          email: waitlistEmail,
+          phone: waitlistPhone,
+          subject: `Waitlist: ${product.name}`,
+          message: `Customer requested an out-of-stock notification for ${product.name}.`,
+          website: "",
+        },
+      });
+      setWaitlistSubmitted(true);
+      trackLead(`Waitlist: ${product.name}`);
+      toast.success("Your restock request has been received.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to join the waitlist");
+    } finally {
+      setWaitlistSubmitting(false);
     }
-    setWaitlistSubmitted(true);
-    toast.success(
-      "Successfully added to priority waitlist! You will be alerted first upon restock.",
-    );
   }
 
   return (
@@ -314,38 +295,18 @@ function ProductPage() {
 
             <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
 
-            {/* Pincode Serviceability Checker */}
-            <div className="bg-surface-container-lowest border border-outline-variant/40 p-5 rounded shadow-sm space-y-3">
-              <label className="text-xs font-bold uppercase tracking-widest text-primary block flex items-center gap-1.5">
+            <div className="bg-surface-container-lowest border border-outline-variant/40 p-5 rounded shadow-sm space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-base text-primary">
                   local_shipping
                 </span>
-                Check Pincode Serviceability & Delivery Time
-              </label>
-              <form onSubmit={checkPincode} className="flex gap-2">
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={pincode}
-                  onChange={(e) => {
-                    setPincode(e.target.value);
-                    setPinStatus(null);
-                  }}
-                  placeholder="Enter 6-digit PIN (e.g. 400001)"
-                  className="bg-white border border-outline-variant/40 px-4 py-2.5 text-xs focus:outline-none focus:border-primary flex-1 font-mono"
-                />
-                <button
-                  type="submit"
-                  className="bg-primary text-on-primary px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm"
-                >
-                  Check
-                </button>
-              </form>
-              {pinStatus && (
-                <p className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded animate-fadeIn">
-                  {pinStatus}
-                </p>
-              )}
+                Delivery & courier confirmation
+              </p>
+              <p className="text-xs leading-relaxed text-on-surface-variant">
+                Enter your delivery PIN code during checkout. Serviceability, the available courier,
+                and the delivery estimate are confirmed from Shiprocket when your order is prepared
+                for dispatch.
+              </p>
             </div>
 
             {product.variants && product.variants.length > 0 && (
@@ -384,32 +345,32 @@ function ProductPage() {
                   <span className="material-symbols-outlined text-base text-blue-600">
                     hourglass_top
                   </span>
-                  Priority Waitlist for Next Import Drop
+                  Restock Notification
                 </h3>
                 {waitlistSubmitted ? (
                   <div className="bg-emerald-50 border border-emerald-200 p-4 rounded text-emerald-900 text-xs space-y-1">
                     <p className="font-bold uppercase tracking-wider flex items-center gap-1">
                       <span className="material-symbols-outlined text-sm">check_circle</span> You
-                      are on the priority list!
+                      request received
                     </p>
                     <p>
-                      We have reserved your queue spot. Our sourcing team will notify you
-                      immediately via Email/WhatsApp when the shipment tracking clears customs.
+                      Our team received your request and will contact you when this product becomes
+                      available. Submitting this form does not reserve stock or guarantee a date.
                     </p>
                   </div>
                 ) : (
                   <form onSubmit={handleWaitlist} className="space-y-4">
                     <p className="text-xs text-on-surface-variant">
-                      This boutique device is currently in high demand. Join the priority queue to
-                      secure yours from the upcoming factory drop.
+                      Ask our team to contact you when this product is available again.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">
-                          Email Address
+                          Email Address *
                         </label>
                         <input
                           type="email"
+                          required
                           value={waitlistEmail}
                           onChange={(e) => setWaitlistEmail(e.target.value)}
                           placeholder="name@example.com"
@@ -431,10 +392,11 @@ function ProductPage() {
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2"
+                      disabled={waitlistSubmitting}
+                      className="w-full bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-base">person_add</span> Join
-                      Priority Waitlist
+                      <span className="material-symbols-outlined text-base">notifications</span>
+                      {waitlistSubmitting ? "Sending…" : "Request Restock Alert"}
                     </button>
                   </form>
                 )}
@@ -597,23 +559,10 @@ function ProductPage() {
         )}
       </section>
 
-      {/* Mobile Sticky Bottom Bar (Inspired by Titan UI/UX) */}
+      {/* Mobile CTA remains below the product imagery per the project layout rule. */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-outline-variant/30 shadow-[0_-4px_16px_rgba(0,0,0,0.12)] md:hidden">
-        <div className="bg-rose-50 border-b border-rose-100 text-rose-950 px-4 py-1.5 text-[11px] font-medium flex items-center justify-between">
-          <span>Dispatch By {dispatchStr} | Order within</span>
-          <span className="flex items-center gap-1 font-mono font-bold">
-            <span className="bg-black text-white px-1.5 py-0.5 rounded">
-              {String(timer.hours).padStart(2, "0")}
-            </span>
-            :
-            <span className="bg-black text-white px-1.5 py-0.5 rounded">
-              {String(timer.minutes).padStart(2, "0")}
-            </span>
-            :
-            <span className="bg-black text-white px-1.5 py-0.5 rounded">
-              {String(timer.seconds).padStart(2, "0")}
-            </span>
-          </span>
+        <div className="bg-emerald-50 border-b border-emerald-100 text-emerald-950 px-4 py-1.5 text-center text-[11px] font-medium">
+          Tracked delivery • Courier and ETA confirmed after checkout
         </div>
         <div className="flex items-center p-2 gap-2">
           {currentQty > 0 ? (
