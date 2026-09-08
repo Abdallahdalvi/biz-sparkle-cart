@@ -78,6 +78,8 @@ function Catalog() {
     "QWERTY Android",
     "Legacy QWERTY",
     "Android Flip",
+    "Luxury Flip",
+    "Slider",
     "Android Keypad",
     "4G Keypad",
     "Mini Android",
