@@ -48,7 +48,7 @@ const catalog = [
     sourceHandle: "xiaomi-mijia-qin-1s-volte-4g",
     slug: "qin-1s-plus",
     name: "Qin 1S+ 4G Keypad",
-    tagline: "4G Keypad • Dual SIM • Hotspot • QC Tested",
+    tagline: "4G Keypad • Dual SIM • Hotspot",
     formFactor: "4G Keypad",
     description:
       "A slim non-Android keypad phone with 4G VoLTE, Wi-Fi hotspot, Bluetooth, GPS, and no camera. Designed for focused calling and connectivity rather than modern Android apps. " +
@@ -70,7 +70,7 @@ const catalog = [
     sourceHandle: "xiaomi-qin-f21s-keypad-phone-mi-original",
     slug: "qin-f21s",
     name: "Qin F21S Keypad",
-    tagline: "Compact 4G Keypad • Dual SIM • No Camera • QC Tested",
+    tagline: "Compact 4G Keypad • Dual SIM • No Camera",
     formFactor: "4G Keypad",
     description:
       "A compact non-Android 4G keypad phone for calls and essential phone functions. It uses the Mocor platform and should not be confused with the Android-based F21 Pro. " +
@@ -93,7 +93,7 @@ const catalog = [
     sourceHandle: "xiomi-qin-f21-pro-qwerty-keypad-basic-simple-android-smartphone",
     slug: "qin-f21-pro",
     name: "Qin F21 Pro Google Edition",
-    tagline: "Android Keypad • Google Services • 3/32 GB • QC Tested",
+    tagline: "Android Keypad • Google Services • 3/32 GB",
     formFactor: "Android Keypad",
     description:
       "A pocket-sized Android keypad smartphone with a 2.8-inch touchscreen, Google services, cameras, 4G, and USB-C. " +
@@ -116,7 +116,7 @@ const catalog = [
     sourceHandle: "xiaomi-qin-f22-no-camera-touch-screen-16gb-2gb-smart-phone",
     slug: "qin-f22-no-camera",
     name: "Qin F22 No-Camera",
-    tagline: "Android Keypad • No Camera • 2/16 GB • QC Tested",
+    tagline: "Android Keypad • No Camera • 2/16 GB",
     formFactor: "Android Keypad",
     description:
       "A compact Android Go keypad phone intentionally built without front or rear cameras, with a 2.8-inch touchscreen and 4G connectivity. " +
@@ -139,7 +139,7 @@ const catalog = [
     sourceHandle: "xiomi-qin-f22-pro-4gb-64gb-touch-screen-phone",
     slug: "qin-f22-pro-google",
     name: "Qin F22 Pro Google Edition",
-    tagline: "Android Keypad • Google Play • 4/64 GB • QC Tested",
+    tagline: "Android Keypad • Google Play • 4/64 GB",
     formFactor: "Android Keypad",
     description:
       "A compact Android keypad smartphone with a taller touch display, Helio G85 processor, cameras, and Google Play services. " +
@@ -162,7 +162,7 @@ const catalog = [
     sourceHandle: "xiaomi-qin-f25-touchscreen-dual-sim-smart-phone",
     slug: "qin-f25-touchscreen",
     name: "Qin F25 Touchscreen 6/128 GB",
-    tagline: "Compact Android 14 • Dual SIM • 6/128 GB • QC Tested",
+    tagline: "Compact Android 14 • Dual SIM • 6/128 GB",
     formFactor: "Compact Android",
     description:
       "A compact touchscreen Android phone with dual SIM, substantial 6/128 GB memory, and a pocket-friendly narrow body. This is separate from the keypad-style Qin F25 Pro already in the store. " +
@@ -185,7 +185,7 @@ const catalog = [
     sourceHandle: "xiaomi-qin-k25-mini-smart-phone-google-edition",
     slug: "qin-k25",
     name: "Qin K25 Mini Google Edition",
-    tagline: "Mini Android 14 • Google Play • 4/128 GB • QC Tested",
+    tagline: "Mini Android 14 • Google Play • 4/128 GB",
     formFactor: "Mini Android",
     description:
       "An ultra-compact Android mini smartphone with Google services, a 3.54-inch touchscreen, modern storage, and dual cameras. " +
@@ -208,7 +208,7 @@ const catalog = [
     sourceHandle: "xiaomi-qin-2-pro-original",
     slug: "qin-2-pro",
     name: "Qin 2 Pro",
-    tagline: "Slim Mini Android • 2/64 GB • 5.05-inch • QC Tested",
+    tagline: "Slim Mini Android • 2/64 GB • 5.05-inch",
     formFactor: "Mini Android",
     description:
       "A narrow minimalist Android smartphone with a tall 5.05-inch display, single rear camera, infrared remote, and one-hand-friendly dimensions. " +
@@ -231,7 +231,7 @@ const catalog = [
     sourceHandle: "xiaomi-qin-3-mobile-phone",
     slug: "qin-3",
     name: "Qin 3",
-    tagline: "Compact Android 12 • 4/64 GB • 5.5-inch • QC Tested",
+    tagline: "Compact Android 12 • 4/64 GB • 5.5-inch",
     formFactor: "Compact Android",
     description:
       "A slim compact Android smartphone with a 5.5-inch HD+ display, 4/64 GB memory, dual cameras, and side fingerprint reader. " +
@@ -254,7 +254,7 @@ const catalog = [
     sourceHandle: "xiaomi-qin-3-ultra-android-smartphone-mi-original",
     slug: "qin-3-ultra",
     name: "Qin 3 Ultra",
-    tagline: "Compact Android 12 • Helio G99 • 8/256 GB • QC Tested",
+    tagline: "Compact Android 12 • Helio G99 • 8/256 GB",
     formFactor: "Compact Android",
     description:
       "A higher-performance compact Android smartphone with Helio G99, 8/256 GB memory, a 5.02-inch display, and pocket-friendly proportions. " +

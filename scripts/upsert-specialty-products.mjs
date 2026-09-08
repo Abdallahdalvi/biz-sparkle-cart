@@ -36,7 +36,7 @@ const products = [
   {
     slug: "blackberry-keyone",
     name: "BlackBerry KEYone",
-    tagline: "QWERTY Android • Open Box • Unlocked • QC Tested",
+    tagline: "QWERTY Android • Unlocked",
     description:
       "A compact Android smartphone with a touch-enabled physical keyboard and fingerprint-enabled spacebar. Android and security support are legacy, so current app compatibility should be confirmed before purchase. " +
       condition,
@@ -78,7 +78,7 @@ const products = [
   {
     slug: "blackberry-q10",
     name: "BlackBerry Q10",
-    tagline: "AMOLED QWERTY • Open Box • Unlocked • QC Tested",
+    tagline: "AMOLED QWERTY • Unlocked",
     description:
       "A classic BlackBerry 10 QWERTY phone with a square AMOLED touch display and removable battery. BlackBerry 10 is a discontinued legacy platform; modern apps, services, and network behavior are limited. " +
       condition,
@@ -108,7 +108,7 @@ const products = [
   {
     slug: "blackberry-classic-q20",
     name: "BlackBerry Classic (Q20)",
-    tagline: "QWERTY + Trackpad • Open Box • Unlocked • QC Tested",
+    tagline: "QWERTY + Trackpad • Unlocked",
     description:
       "The familiar BlackBerry keyboard layout with optical trackpad, navigation keys, and a square touch display. BlackBerry 10 is a discontinued legacy platform; modern apps, services, and network behavior are limited. " +
       condition,
@@ -138,7 +138,7 @@ const products = [
   {
     slug: "blackberry-passport-q30",
     name: "BlackBerry Passport (Q30)",
-    tagline: "Wide QWERTY • Open Box • Unlocked • QC Tested",
+    tagline: "Wide QWERTY • Unlocked",
     description:
       "A wide-format BlackBerry 10 device with a touch-enabled QWERTY keyboard and square high-resolution display. BlackBerry 10 is a discontinued legacy platform; modern apps, services, and network behavior are limited. " +
       condition,
@@ -168,7 +168,7 @@ const products = [
   {
     slug: "cat-s22-flip",
     name: "CAT S22 Flip",
-    tagline: "Rugged Android Flip • Open Box • Unlocked • QC Tested",
+    tagline: "Rugged Android Flip • Unlocked",
     description:
       "A rugged Android flip phone with a physical keypad, touch display, removable battery, and IP68 protection. Exact carrier variant and Indian network compatibility are confirmed before payment. " +
       condition,

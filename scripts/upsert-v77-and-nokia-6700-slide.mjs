@@ -26,7 +26,7 @@ const supplierProducts = [
       "https://www.olx.in/item/mobile-phones-c1453-used-other-mobiles-in-jogeshwari-west-mumbai-iid-1850348897",
     slug: "v77-luxury-flip",
     name: "V77 Luxury Flip (Vertu-style)",
-    tagline: "Luxury-style Flip • Dual SIM • Like New • QC Tested",
+    tagline: "Luxury-style Flip • Dual SIM",
     formFactor: "Luxury Flip",
     description:
       "A premium-look V77 flip feature phone for calling, messaging, and basic multimedia. This is a Vertu-style replica and is not represented as an official Vertu-manufactured handset. " +
@@ -60,7 +60,7 @@ const supplierProducts = [
     sourceReference: "https://www.astore.in/products/nokia-6700-slide-phone-original",
     slug: "nokia-6700-slide",
     name: "Nokia 6700 Slide (6700s)",
-    tagline: "Original Slider • Symbian • 5 MP Camera • QC Tested",
+    tagline: "Original Slider • Symbian • 5 MP Camera",
     formFactor: "Slider",
     description:
       "The original Nokia 6700 Slide combines a compact aluminium slider body, physical keypad, Symbian software, and a 5 MP autofocus camera with Carl Zeiss optics. It is a discontinued legacy phone intended for collectors and basic compatible-network use. " +

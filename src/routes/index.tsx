@@ -2,14 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
-import {
-  CATEGORIES,
-  getAllProducts,
-  getStorefrontCms,
-  type Category,
-  type Product,
-  type StorefrontCms,
-} from "@/lib/products";
+import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
 import {
   GOOGLE_ALL_REVIEWS_URL,
   GOOGLE_MAPS_PLACE_URL,
@@ -24,6 +17,22 @@ import {
 } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS } from "@/lib/social-links";
 import { getYouTubeChannelVideos, type YouTubeChannelVideo } from "@/lib/youtube.functions";
+
+const HOME_PRODUCT_LIMIT = 12;
+const HOME_PRODUCT_PRIORITY = [
+  "iphone-se-3-2022",
+  "nokia-2720-flip",
+  "v77-luxury-flip",
+  "qin-f22-pro-google",
+  "cat-s22-flip",
+  "blackberry-keyone",
+  "nokia-6700-slide",
+  "qin-f21-pro",
+  "blackberry-classic-q20",
+  "qin-f25-pro",
+  "Jio-Phone-2-Qwerty",
+  "blackberry-passport-q30",
+];
 
 function youtubeVideoId(url: string) {
   try {
@@ -181,10 +190,6 @@ function Index() {
   };
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const [expandedCategories, setExpandedCategories] = useState<Set<Category>>(new Set());
-  const shopCategories = CATEGORIES.filter(
-    (category): category is { id: Category; label: string } => category.id !== "all",
-  );
   const youtubeVideos = channelVideos.length
     ? channelVideos
     : cms.videos.flatMap((video) => {
@@ -211,15 +216,14 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
-  const inDemandSlugs = [
-    "nokia-2720-flip",
-    "v77-luxury-flip",
-    "qin-f22-pro-google",
-    "cat-s22-flip",
-  ];
-  const inDemandProducts = inDemandSlugs
-    .map((slug) => all.find((product) => product.slug === slug && product.stock > 0))
-    .filter((product): product is Product => Boolean(product));
+  const priorityProducts = HOME_PRODUCT_PRIORITY.map((slug) =>
+    all.find((product) => product.slug === slug && product.stock > 0),
+  ).filter((product): product is Product => Boolean(product));
+  const prioritySlugs = new Set(priorityProducts.map((product) => product.slug));
+  const homepageProducts = [
+    ...priorityProducts,
+    ...all.filter((product) => product.stock > 0 && !prioritySlugs.has(product.slug)),
+  ].slice(0, HOME_PRODUCT_LIMIT);
 
   return (
     <SiteShell>
@@ -342,95 +346,33 @@ function Index() {
         </section>
       )}
 
-      {/* One-page storefront grouped by product category */}
+      {/* Featured storefront products */}
       <section id="products" className="scroll-mt-20 bg-surface-container-lowest py-10 md:py-16">
         <div className="mx-auto max-w-[1280px] px-margin-mobile md:px-margin-desktop">
           <div className="mb-10">
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-              Shop the collection
+              Popular right now
             </p>
-            <h2 className="text-3xl font-bold text-primary md:text-4xl">
-              All products, right here
-            </h2>
+            <h2 className="text-3xl font-bold text-primary md:text-4xl">Most in Demand</h2>
             <p className="mt-2 max-w-xl text-sm text-on-surface-variant">
-              Browse phones and gadgets by category without leaving the homepage.
+              Explore the phones and gadgets customers are asking about most.
             </p>
           </div>
 
-          <div className="space-y-14 md:space-y-20">
-            {inDemandProducts.length > 0 && (
-              <section aria-labelledby="most-in-demand-heading">
-                <div className="mb-5 flex items-end justify-between border-b border-outline-variant/40 pb-3 md:mb-7">
-                  <div>
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                      Popular right now
-                    </p>
-                    <h3
-                      id="most-in-demand-heading"
-                      className="text-2xl font-bold text-primary md:text-3xl"
-                    >
-                      Most in Demand
-                    </h3>
-                  </div>
-                  <Link
-                    to="/catalog"
-                    className="flex flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary hover:underline"
-                  >
-                    See all
-                    <span className="material-symbols-outlined text-base">arrow_outward</span>
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
-                  {inDemandProducts.map((product) => (
-                    <ProductCard key={`demand-${product.slug}`} product={product} />
-                  ))}
-                </div>
-              </section>
-            )}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+            {homepageProducts.map((product) => (
+              <ProductCard key={product.slug} product={product} />
+            ))}
+          </div>
 
-            {shopCategories.map((category) => {
-              const products = all.filter((product) => product.category === category.id);
-              if (products.length === 0) return null;
-              const expanded = expandedCategories.has(category.id);
-              const visibleProducts = expanded ? products : products.slice(0, 4);
-              return (
-                <section key={category.id} id={`${category.id}-products`} className="scroll-mt-24">
-                  <div className="mb-5 flex items-end justify-between border-b border-outline-variant/40 pb-3 md:mb-7">
-                    <div>
-                      <h3 className="text-2xl font-bold text-primary md:text-3xl">
-                        {category.label}
-                      </h3>
-                      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                        {products.length} {products.length === 1 ? "product" : "products"}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedCategories((current) => {
-                          const next = new Set(current);
-                          if (next.has(category.id)) next.delete(category.id);
-                          else next.add(category.id);
-                          return next;
-                        })
-                      }
-                      aria-expanded={expanded}
-                      className="flex flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary hover:underline"
-                    >
-                      {expanded ? "Show less" : "See all"}
-                      <span className="material-symbols-outlined text-base">
-                        {expanded ? "north_west" : "arrow_outward"}
-                      </span>
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
-                    {visibleProducts.map((product) => (
-                      <ProductCard key={product.slug} product={product} />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
+          <div className="mt-10 flex justify-center md:mt-14">
+            <Link
+              to="/catalog"
+              className="inline-flex w-full items-center justify-center gap-2 bg-primary px-10 py-4 text-xs font-bold uppercase tracking-widest text-on-primary shadow-sm transition-opacity hover:opacity-90 sm:w-auto"
+            >
+              View all products
+              <span className="material-symbols-outlined text-base">arrow_outward</span>
+            </Link>
           </div>
         </div>
       </section>

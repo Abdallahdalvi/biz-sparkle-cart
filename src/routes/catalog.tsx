@@ -12,6 +12,8 @@ import {
 } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
 
+const PAGE_SIZE = 12;
+
 export const Route = createFileRoute("/catalog")({
   loader: async () => {
     const all = await getAllProducts();
@@ -71,6 +73,7 @@ function Catalog() {
   const [availability, setAvailability] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("featured");
+  const [page, setPage] = useState(1);
 
   const formFactors = [
     "all",
@@ -84,6 +87,7 @@ function Catalog() {
     "4G Keypad",
     "Mini Android",
     "Compact Android",
+    "Compact iPhone",
     "E-Ink",
     "Mini",
     "Rugged",
@@ -131,6 +135,12 @@ function Catalog() {
 
     return result;
   }, [all, cat, formFactor, availability, priceRange, sortBy]);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageProducts = filteredProducts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   return (
     <SiteShell>
@@ -153,7 +163,10 @@ function Catalog() {
           {CATEGORIES.map((c) => (
             <button
               key={c.id}
-              onClick={() => setCat(c.id)}
+              onClick={() => {
+                setCat(c.id);
+                setPage(1);
+              }}
               className={
                 "px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-colors " +
                 (cat === c.id
@@ -187,7 +200,10 @@ function Catalog() {
               </label>
               <select
                 value={formFactor}
-                onChange={(e) => setFormFactor(e.target.value)}
+                onChange={(e) => {
+                  setFormFactor(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
               >
                 {formFactors.map((ff) => (
@@ -205,7 +221,10 @@ function Catalog() {
               </label>
               <select
                 value={availability}
-                onChange={(e) => setAvailability(e.target.value)}
+                onChange={(e) => {
+                  setAvailability(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
               >
                 <option value="all">All Items</option>
@@ -221,7 +240,10 @@ function Catalog() {
               </label>
               <select
                 value={priceRange}
-                onChange={(e) => setPriceRange(e.target.value)}
+                onChange={(e) => {
+                  setPriceRange(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
               >
                 <option value="all">All Prices</option>
@@ -238,7 +260,10 @@ function Catalog() {
               </label>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
               >
                 <option value="featured">Featured</option>
@@ -264,6 +289,7 @@ function Catalog() {
                 setAvailability("all");
                 setPriceRange("all");
                 setSortBy("featured");
+                setPage(1);
               }}
               className="bg-primary text-on-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm inline-block mt-2"
             >
@@ -271,11 +297,51 @@ function Catalog() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {filteredProducts.map((p) => (
-              <ProductCard key={p.slug} product={p} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+              {pageProducts.map((p) => (
+                <ProductCard key={p.slug} product={p} />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <nav
+                aria-label="Catalog pages"
+                className="mt-12 flex flex-wrap items-center justify-center gap-2"
+              >
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                  className="border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    aria-current={pageNumber === currentPage ? "page" : undefined}
+                    onClick={() => setPage(pageNumber)}
+                    className={`h-9 min-w-9 border px-3 text-xs font-bold ${
+                      pageNumber === currentPage
+                        ? "border-primary bg-primary text-on-primary"
+                        : "border-outline-variant/60 bg-white text-primary"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                  className="border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  Next
+                </button>
+              </nav>
+            )}
+          </>
         )}
       </section>
     </SiteShell>
