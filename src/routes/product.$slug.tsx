@@ -1,7 +1,15 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import React, { useState } from "react";
+import { Facebook, Instagram, MessageCircle, ShieldCheck, Star, Youtube } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { getProductBySlug, getAllProducts, type Product } from "@/lib/products";
+import {
+  getProductBySlug,
+  getAllProducts,
+  getStorefrontCms,
+  STORE_TRUST_FAQS,
+  type Product,
+  type StorefrontCms,
+} from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { toast } from "sonner";
@@ -9,14 +17,24 @@ import { trackCommerceEvent, trackLead } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
 import { submitContactMessage } from "@/lib/operations.functions";
 import { absoluteSiteUrl, SITE_NAME } from "@/lib/site";
+import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-links";
+import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
+
+const LEGACY_GENERIC_FAQ_QUESTIONS = new Set([
+  "Is it a Google Play Store edition phone?",
+  "Does it support UPI and other net banking apps?",
+  "Is the Duoqin F25 Pro / F22 Pro compatible with Indian SIM cards?",
+  "Key differences between Duoqin F25 Pro and F22 Pro?",
+  "How long does the battery last?",
+]);
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
     const product = await getProductBySlug(params.slug);
     if (!product) throw notFound();
-    const all = await getAllProducts();
+    const [all, cms] = await Promise.all([getAllProducts(), getStorefrontCms()]);
     const related = all.filter((p) => p.slug !== product.slug).slice(0, 3);
-    return { product, related };
+    return { product, related, cms };
   },
   head: ({ loaderData }) => {
     const p = loaderData?.product;
@@ -89,7 +107,11 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductPage() {
-  const { product, related } = Route.useLoaderData() as { product: Product; related: Product[] };
+  const { product, related, cms } = Route.useLoaderData() as {
+    product: Product;
+    related: Product[];
+    cms: StorefrontCms;
+  };
   const [variant, setVariant] = useState(product.variants?.[0]?.id);
   const [activeImg, setActiveImg] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -99,6 +121,31 @@ function ProductPage() {
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const submitMessageFn = useServerFn(submitContactMessage);
+  const whatsappPhone = /^\d{10,15}$/.test(cms.whatsapp_chat_phone.replace(/\D/g, ""))
+    ? cms.whatsapp_chat_phone.replace(/\D/g, "")
+    : OFFICIAL_WHATSAPP_PHONE;
+  const whatsappChat = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(
+    `${cms.whatsapp_chat_message || "Hi Aghanims Support, I have a product inquiry."}\n\nProduct: ${product.name}\n${absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`)}`,
+  )}`;
+  const whatsappChannel = /^https:\/\/(?:www\.)?whatsapp\.com\/channel\//i.test(
+    cms.whatsapp_channel_url,
+  )
+    ? cms.whatsapp_channel_url
+    : OFFICIAL_SOCIAL_LINKS.whatsappChannel;
+  const productFaqs = [
+    ...STORE_TRUST_FAQS,
+    ...(product.faqs || []).filter(
+      (faq) =>
+        !LEGACY_GENERIC_FAQ_QUESTIONS.has(faq.question) &&
+        !STORE_TRUST_FAQS.some((trustFaq) => trustFaq.question === faq.question),
+    ),
+  ];
+  const socialLinks = [
+    { label: "Instagram", href: OFFICIAL_SOCIAL_LINKS.instagram, Icon: Instagram },
+    { label: "Facebook", href: OFFICIAL_SOCIAL_LINKS.facebook, Icon: Facebook },
+    { label: "YouTube", href: OFFICIAL_SOCIAL_LINKS.youtube, Icon: Youtube },
+    { label: "WhatsApp", href: whatsappChat, Icon: MessageCircle },
+  ];
 
   const items = useCart((s) => s.items);
   const add = useCart((s) => s.add);
@@ -309,6 +356,54 @@ function ProductPage() {
               </p>
             </div>
 
+            <div className="border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="mt-0.5 h-6 w-6 flex-shrink-0 text-emerald-700" />
+                <div>
+                  <h2 className="text-sm font-bold text-emerald-950">Shop with confidence</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-emerald-950/75">
+                    Verify our public presence, customer reviews, and official support channels
+                    before you order.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {socialLinks.map(({ label, href, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open Aghanims Phones and Gadgets on ${label}`}
+                    className="flex min-h-11 items-center justify-center gap-2 border border-emerald-200 bg-white px-3 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-emerald-100"
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {label}
+                  </a>
+                ))}
+              </div>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <a
+                  href={whatsappChannel}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 items-center justify-center gap-2 bg-[#128C7E] px-4 py-2 text-[11px] font-bold text-white transition-opacity hover:opacity-90"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  FOLLOW WHATSAPP CHANNEL
+                </a>
+                <a
+                  href={GOOGLE_ALL_REVIEWS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 items-center justify-center gap-2 border border-amber-300 bg-white px-4 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-amber-50"
+                >
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-500" aria-hidden="true" />
+                  VIEW {cms.reviews_heading.total_reviews} GOOGLE REVIEWS
+                </a>
+              </div>
+            </div>
+
             {product.variants && product.variants.length > 0 && (
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest mb-2">Variant</p>
@@ -350,8 +445,8 @@ function ProductPage() {
                 {waitlistSubmitted ? (
                   <div className="bg-emerald-50 border border-emerald-200 p-4 rounded text-emerald-900 text-xs space-y-1">
                     <p className="font-bold uppercase tracking-wider flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">check_circle</span> You
-                      request received
+                      <span className="material-symbols-outlined text-sm">check_circle</span>{" "}
+                      Request received
                     </p>
                     <p>
                       Our team received your request and will contact you when this product becomes
@@ -502,7 +597,7 @@ function ProductPage() {
               Frequently Asked Questions About {product.name}
             </h2>
             <div className="space-y-4">
-              {product.faqs.map((faq, i) => (
+              {productFaqs.map((faq, i) => (
                 <div
                   key={i}
                   className="border border-outline-variant/40 bg-surface-container-low/50 overflow-hidden transition-all"

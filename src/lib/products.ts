@@ -103,6 +103,34 @@ export interface StorefrontCms {
   tracking_google_ads_purchase_label: string;
 }
 
+export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
+  {
+    question: "How can I verify that Aghanims Phones and Gadgets is a genuine seller?",
+    answer:
+      "You can verify us through our official Google Business Profile and customer reviews, contact us directly on WhatsApp, and follow the official social profiles linked on every product page. Orders receive a store order number and tracked courier details when dispatched.",
+  },
+  {
+    question: "Is delivery free, and how will I receive tracking?",
+    answer:
+      "Yes. We currently do not add a separate shipping fee at checkout. Delivery is arranged through Shiprocket and its courier partners. The available courier and delivery estimate are confirmed when the order is prepared, and tracking is shared after dispatch.",
+  },
+  {
+    question: "Is Cash on Delivery available?",
+    answer:
+      "COD availability and any required online advance are shown clearly on the product page and at checkout. If a model requires an advance, only the remaining balance is collected by the courier. Models showing no advance can be paid fully on delivery.",
+  },
+  {
+    question: "Are online payments secure?",
+    answer:
+      "Online payments and COD advances are processed by Cashfree. Aghanims Phones and Gadgets does not receive or store your full card, UPI PIN, bank password, or OTP.",
+  },
+  {
+    question: "What if the product arrives damaged, incorrect, or defective?",
+    answer:
+      "Contact us within 48 hours of delivery with clear photo or video proof and the original packaging. Eligible delivery-damage, wrong-item, missing-accessory, or functional-defect claims are reviewed for replacement. Change-of-mind returns and claims made after 48 hours are not accepted except where required by law.",
+  },
+];
+
 export const LATEST_GOOGLE_TEXT_REVIEWS: StorefrontCms["reviews"] = [
   {
     author: "Basavaraj Patil",
@@ -199,33 +227,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     "Tactile Precision • Fully Unlocked Hardware • Mindful Design • Long-Term Repairability",
   about_image:
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCYlzi36glE3LwaIrIUKvCB81Co1u8zlP7Pq7LO3oPJLRSFqpTGa1nUWLm9dCEINLt2VNocO7yRQ_ByI_1WYopWEw05SvG8dvUYDm5Y4pXySE7gHoQGeK8MT_yrf4E6TsSjby8gBrJ-txwxKe5wcaKXGmEgLKrL4UbqQYyVzpd0Ata_lNWAdLpd3cDIhhEQQC1yKXGPd_xQg5zAJ_V-9Wq4RvIzH4I_W0c1coIjI1ig0fAe3s8UoX8b1DoKHEa1I4ANujj19KrouGrQ",
-  faqs: [
-    {
-      question: "Is it a Google Play Store edition phone?",
-      answer:
-        "Yes, it comes with the Google Play Store pre-installed by the company, allowing you to download and use any apps seamlessly. We only deal in the global version, not the Chinese variant.",
-    },
-    {
-      question: "Does it support UPI and other net banking apps?",
-      answer:
-        "Yes, all standard UPI apps (Google Pay, PhonePe, Paytm) and net banking applications work flawlessly on our global Android firmware.",
-    },
-    {
-      question: "Is the Duoqin F25 Pro / F22 Pro compatible with Indian SIM cards?",
-      answer:
-        "Absolutely. They support all major Indian 4G LTE bands including Jio, Airtel, Vi, and BSNL.",
-    },
-    {
-      question: "Key differences between Duoqin F25 Pro and F22 Pro?",
-      answer:
-        "The F25 Pro features an upgraded processor, slightly larger display, and refined tactile button mechanism compared to the F22 Pro.",
-    },
-    {
-      question: "How long does the battery last?",
-      answer:
-        "Due to the optimized screen sizes and power-efficient processors, most users get 1.5 to 2 days of solid usage on a single charge.",
-    },
-  ],
+  faqs: STORE_TRUST_FAQS,
   videos: [
     {
       platform: "Instagram",
@@ -297,8 +299,8 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   biz_hours: "Mon–Sat, 10:00 – 18:00 IST",
   biz_grievance_officer: "",
   business_profile_verified: false,
-  whatsapp_channel_url: "",
-  whatsapp_chat_phone: "",
+  whatsapp_channel_url: "https://whatsapp.com/channel/0029VbEHWIj6rsQlM3U2mc2U",
+  whatsapp_chat_phone: "919372168726",
   whatsapp_chat_message: "Hi Aghanims Support, I have an inquiry regarding your products.",
   legal_terms_text:
     'These Terms & Conditions ("Terms") govern your access to and use of the Aghanims Phones and Gadgets website operated by our company, and any purchase of products listed on the Site. By using the Site you agree to these Terms. All prices are in Indian Rupees (INR) and are inclusive of applicable GST. We accept the offer when we dispatch the product and email an order confirmation with tracking.',

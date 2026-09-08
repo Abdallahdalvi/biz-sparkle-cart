@@ -16,6 +16,7 @@ import {
   SITE_SOCIAL_IMAGE_URL,
   SITE_URL,
 } from "@/lib/site";
+import { OFFICIAL_SOCIAL_LINKS } from "@/lib/social-links";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -25,11 +26,15 @@ export const Route = createFileRoute("/")({
   },
   head: ({ loaderData }) => {
     const cms = loaderData?.cms;
+    const whatsappChannel = cms?.whatsapp_channel_url || "";
     const sameAs = [
       GOOGLE_MAPS_PLACE_URL,
-      ...(cms?.whatsapp_channel_url?.startsWith("https://www.whatsapp.com/channel/")
-        ? [cms.whatsapp_channel_url]
-        : []),
+      OFFICIAL_SOCIAL_LINKS.instagram,
+      OFFICIAL_SOCIAL_LINKS.facebook,
+      OFFICIAL_SOCIAL_LINKS.youtube,
+      ...(/^https:\/\/(?:www\.)?whatsapp\.com\/channel\//i.test(whatsappChannel)
+        ? [whatsappChannel]
+        : [OFFICIAL_SOCIAL_LINKS.whatsappChannel]),
     ];
     return {
       meta: [
