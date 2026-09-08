@@ -58,6 +58,7 @@ declare global {
 
 export const TRACKING_CONSENT_KEY = "aghanims-tracking-consent-v1";
 export const TRACKING_PREFERENCES_EVENT = "aghanims:open-tracking-preferences";
+export const TRACKING_CONSENT_CHANGED_EVENT = "aghanims:tracking-consent-changed";
 
 export function readTrackingConsent(): TrackingConsent | null {
   if (typeof window === "undefined") return null;
@@ -84,6 +85,7 @@ export function saveTrackingConsent(consent: Pick<TrackingConsent, "analytics" |
     version: 1,
   };
   window.localStorage.setItem(TRACKING_CONSENT_KEY, JSON.stringify(value));
+  window.dispatchEvent(new Event(TRACKING_CONSENT_CHANGED_EVENT));
   return value;
 }
 

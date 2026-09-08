@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 
 const NAV = [
-  { to: "/", label: "Store" },
-  { to: "/catalog", label: "Catalog" },
-  { to: "/compare", label: "Compare" },
-  { to: "/track", label: "Track Order" },
-  { to: "/legal/about", label: "About" },
-  { to: "/legal/contact", label: "Support" },
+  { href: "/", route: "/", label: "Home" },
+  { href: "/#products", route: null, label: "Products" },
+  { href: "/track", route: "/track", label: "Track Order" },
+  { href: "/legal/about", route: "/legal/about", label: "About" },
+  { href: "/legal/contact", route: "/legal/contact", label: "Support" },
 ] as const;
 
 export function Header() {
@@ -40,11 +39,13 @@ export function Header() {
         </Link>
         <div className="hidden md:flex items-center gap-8 font-medium text-sm uppercase tracking-wider">
           {NAV.map((n) => {
-            const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+            const active =
+              n.route === "/" ? pathname === "/" : n.route && pathname.startsWith(n.route);
             return (
-              <Link
-                key={n.to}
-                to={n.to}
+              <a
+                key={n.href}
+                href={n.href}
+                aria-current={active ? "page" : undefined}
                 className={
                   active
                     ? "text-primary border-b-2 border-primary pb-1"
@@ -52,18 +53,18 @@ export function Header() {
                 }
               >
                 {n.label}
-              </Link>
+              </a>
             );
           })}
         </div>
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <Link
-            to="/catalog"
+          <a
+            href="/#products"
             aria-label="Search"
             className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
           >
             search
-          </Link>
+          </a>
           <Link
             to="/cart"
             aria-label="Cart"
@@ -105,12 +106,14 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-outline-variant/30 px-6 py-4 space-y-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
           {NAV.map((n) => {
-            const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+            const active =
+              n.route === "/" ? pathname === "/" : n.route && pathname.startsWith(n.route);
             return (
-              <Link
-                key={n.to}
-                to={n.to}
+              <a
+                key={n.href}
+                href={n.href}
                 onClick={() => setMobileMenuOpen(false)}
+                aria-current={active ? "page" : undefined}
                 className={`block font-bold text-base uppercase tracking-wider py-1.5 ${
                   active
                     ? "text-primary border-l-4 border-primary pl-3"
@@ -118,7 +121,7 @@ export function Header() {
                 }`}
               >
                 {n.label}
-              </Link>
+              </a>
             );
           })}
         </div>

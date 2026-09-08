@@ -232,8 +232,8 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   videos: [
     {
       platform: "Instagram",
-      title: "MINI ANDROID PHONE",
-      url: "https://instagram.com",
+      title: "NOKIA 2720 FLIP",
+      url: "https://www.instagram.com/p/DcbEVJdNl8d/",
       image:
         "https://lh3.googleusercontent.com/aida-public/AB6AXuCtul4bEHAymnFjP_YwUMJ9Gm51gxXNo2pPWDTDNJa8dv5a5xXnye8_j586jPHevYSBeFWgM6guJIqfFv7-wLliLiVnWeJoKGPWVdN2Bk4GuDTAZByF190znXchXIzDdm9fvipJaYzWEM2znWrt9QI3cNzOsIzeU8WdlZNhVpIMNj81X6Pro1pBkwG1VH_EY9OKpdz01eOQyyOEaRmBDepVn6K3slmZ1FXb3iEzrGw3biPL26Tp0Iqwe2cNS7SmLw2wUggVs2AB_HrE",
       views: "145K views",

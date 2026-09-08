@@ -1,9 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
-import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
-import { formatINR } from "@/lib/format";
+import {
+  CATEGORIES,
+  getAllProducts,
+  getStorefrontCms,
+  type Category,
+  type Product,
+  type StorefrontCms,
+} from "@/lib/products";
 import {
   GOOGLE_ALL_REVIEWS_URL,
   GOOGLE_MAPS_PLACE_URL,
@@ -17,6 +23,22 @@ import {
   SITE_URL,
 } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS } from "@/lib/social-links";
+import {
+  TRACKING_CONSENT_CHANGED_EVENT,
+  openTrackingPreferences,
+  readTrackingConsent,
+} from "@/lib/tracking";
+
+function instagramEmbedUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (!/(^|\.)instagram\.com$/i.test(parsed.hostname)) return null;
+    const match = parsed.pathname.match(/^\/(p|reel|tv)\/([^/]+)/i);
+    return match ? `https://www.instagram.com/${match[1]}/${match[2]}/embed/captioned/` : null;
+  } catch {
+    return null;
+  }
+}
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -102,8 +124,14 @@ function Index() {
   const { all, cms } = Route.useLoaderData() as { all: Product[]; cms: StorefrontCms };
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const trending = all.slice(0, 3);
-  const drivers = all.slice(0, 4);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<Category>>(new Set());
+  const shopCategories = CATEGORIES.filter(
+    (category): category is { id: Category; label: string } => category.id !== "all",
+  );
+  const instagramVideos = cms.videos.filter(
+    (video) => video.platform.toLowerCase() === "instagram" && instagramEmbedUrl(video.url),
+  );
   const visibleReviews = Array.from(
     { length: Math.min(3, cms.reviews.length) },
     (_, offset) => cms.reviews[(reviewIndex + offset) % cms.reviews.length],
@@ -114,6 +142,13 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
+
+  useEffect(() => {
+    const syncConsent = () => setMarketingConsent(readTrackingConsent()?.marketing === true);
+    syncConsent();
+    window.addEventListener(TRACKING_CONSENT_CHANGED_EVENT, syncConsent);
+    return () => window.removeEventListener(TRACKING_CONSENT_CHANGED_EVENT, syncConsent);
+  }, []);
 
   return (
     <SiteShell>
@@ -136,13 +171,13 @@ function Index() {
               {cms.hero_subtitle}
             </p>
             <div className="pt-2 hidden lg:block">
-              <Link
-                to="/catalog"
+              <a
+                href="#products"
                 className="inline-flex bg-primary text-on-primary px-12 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all items-center gap-2 shadow-sm"
               >
-                VIEW CATALOG{" "}
+                SHOP PRODUCTS{" "}
                 <span className="material-symbols-outlined text-base">trending_flat</span>
-              </Link>
+              </a>
             </div>
           </div>
           <div className="flex flex-col gap-5 sm:gap-7">
@@ -201,165 +236,32 @@ function Index() {
               </div>
             </div>
             <div className="block lg:hidden w-full text-center sm:text-left">
-              <Link
-                to="/catalog"
+              <a
+                href="#products"
                 className="inline-flex bg-primary text-on-primary px-12 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all items-center justify-center gap-2 shadow-sm w-full sm:w-auto"
               >
-                VIEW CATALOG{" "}
+                SHOP PRODUCTS{" "}
                 <span className="material-symbols-outlined text-base">trending_flat</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trending */}
-      <section className="py-12 md:py-16 px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <h2 className="text-3xl text-primary mb-2 font-bold">{cms.trending_title}</h2>
-            <p className="text-on-surface-variant uppercase tracking-widest text-[11px] font-bold">
-              {cms.trending_subtitle}
-            </p>
-          </div>
-          <Link
-            to="/catalog"
-            className="text-[11px] font-bold text-primary tracking-widest flex items-center gap-1 hover:underline underline-offset-4 flex-shrink-0"
-          >
-            SEE ALL <span className="material-symbols-outlined text-sm">arrow_outward</span>
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {trending.map((p) => (
-            <ProductCard key={p.slug} product={p} />
-          ))}
-        </div>
-      </section>
-
-      {/* Keypad Android Collection */}
-      <section className="bg-white py-12 md:py-16 border-y border-outline-variant/30">
-        <div className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-20">
-          <div className="w-full md:w-1/2 space-y-6">
-            <h2 className="text-4xl text-primary font-bold">{cms.keypad_title}</h2>
-            <p className="text-lg text-on-surface-variant leading-relaxed">{cms.keypad_desc}</p>
-            <ul className="space-y-2 text-[13px] font-bold uppercase tracking-wider text-primary">
-              <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-base">check_circle</span> Full
-                Google Play Support
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-base">check_circle</span> Tactile
-                QWERTY & T9 Options
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-base">check_circle</span>{" "}
-                Privacy-Hardened Firmware
-              </li>
-            </ul>
-            <div className="pt-2 hidden md:block">
-              <Link
-                to="/catalog"
-                className="inline-block bg-primary text-on-primary px-10 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-sm"
-              >
-                SHOP THE KEYPADS
-              </Link>
-            </div>
-          </div>
-          <div className="w-full md:w-1/2 flex flex-col gap-7">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-              <a
-                href={cms.keypad_banner_1_link}
-                className="aspect-[4/5] bg-surface-container-low shopify-border overflow-hidden shadow-sm block group"
-              >
-                <img
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                  src={cms.keypad_banner_1_image}
-                  alt="Keypad Phone 1"
-                />
-              </a>
-              <a
-                href={cms.keypad_banner_2_link}
-                className="aspect-[4/5] bg-surface-container-low shopify-border overflow-hidden shadow-sm sm:mt-8 block group"
-              >
-                <img
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                  src={cms.keypad_banner_2_image}
-                  alt="Keypad Phone 2"
-                />
               </a>
             </div>
-            <div className="block md:hidden w-full text-center sm:text-left">
-              <Link
-                to="/catalog"
-                className="inline-flex bg-primary text-on-primary px-10 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all items-center justify-center shadow-sm w-full sm:w-auto"
-              >
-                SHOP THE KEYPADS
-              </Link>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Minimalist Daily Drivers */}
-      <section className="py-12 md:py-16 px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl text-primary mb-2 uppercase tracking-tight font-bold">
-            {cms.drivers_title}
-          </h2>
-          <p className="text-on-surface-variant uppercase tracking-widest text-[11px] font-bold">
-            {cms.drivers_subtitle}
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {drivers.map((p) => (
-            <Link
-              key={p.slug}
-              to="/product/$slug"
-              params={{ slug: p.slug }}
-              className="bg-white shopify-border p-5 group hover:shopify-shadow transition-all shadow-sm"
-            >
-              <div className="aspect-square mb-6 overflow-hidden shopify-border bg-surface-container-low">
-                <img
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform"
-                  src={p.images[0]}
-                  alt={p.name}
-                />
-              </div>
-              <h4 className="font-bold text-center text-sm uppercase tracking-tight mb-1">
-                {p.name}
-              </h4>
-              <p className="text-[10px] font-bold text-on-surface-variant text-center uppercase tracking-widest mb-3">
-                {p.tagline}
-              </p>
-              <div className="flex items-center justify-center gap-1.5">
-                {p.compareAtPaise && p.compareAtPaise > p.pricePaise && (
-                  <span className="text-[11px] text-on-surface-variant line-through">
-                    {formatINR(p.compareAtPaise)}
-                  </span>
-                )}
-                <span className="text-primary text-center font-bold text-base">
-                  {formatINR(p.pricePaise)}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* 4 to 8 Pointer Section (Trust & Value Props) */}
+      {/* Shopping assurances */}
       {cms.pointers && cms.pointers.length > 0 && (
-        <section className="bg-white py-12 md:py-16 border-y border-outline-variant/30">
-          <div className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+        <section className="border-b border-outline-variant/30 bg-white py-7 md:py-9">
+          <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-5 px-margin-mobile md:grid-cols-4 md:gap-8 md:px-margin-desktop">
             {cms.pointers.map((ptr, i) => (
-              <div key={i} className="flex items-start gap-4 group">
-                <span className="material-symbols-outlined text-3xl text-[#2b4c9b] flex-shrink-0 group-hover:scale-110 transition-transform">
+              <div key={i} className="flex items-start gap-3 group">
+                <span className="material-symbols-outlined flex-shrink-0 text-2xl text-[#2b4c9b] transition-transform group-hover:scale-110">
                   {ptr.icon}
                 </span>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-xs md:text-sm text-primary uppercase tracking-wider">
+                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-primary md:text-xs">
                     {ptr.title}
-                  </h4>
-                  <p className="text-[11px] md:text-xs text-on-surface-variant leading-relaxed">
+                  </h2>
+                  <p className="text-[10px] leading-relaxed text-on-surface-variant md:text-[11px]">
                     {ptr.description}
                   </p>
                 </div>
@@ -368,6 +270,69 @@ function Index() {
           </div>
         </section>
       )}
+
+      {/* One-page storefront grouped by product category */}
+      <section id="products" className="scroll-mt-20 bg-surface-container-lowest py-10 md:py-16">
+        <div className="mx-auto max-w-[1280px] px-margin-mobile md:px-margin-desktop">
+          <div className="mb-10">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
+              Shop the collection
+            </p>
+            <h2 className="text-3xl font-bold text-primary md:text-4xl">
+              All products, right here
+            </h2>
+            <p className="mt-2 max-w-xl text-sm text-on-surface-variant">
+              Browse phones and gadgets by category without leaving the homepage.
+            </p>
+          </div>
+
+          <div className="space-y-14 md:space-y-20">
+            {shopCategories.map((category) => {
+              const products = all.filter((product) => product.category === category.id);
+              if (products.length === 0) return null;
+              const expanded = expandedCategories.has(category.id);
+              const visibleProducts = expanded ? products : products.slice(0, 4);
+              return (
+                <section key={category.id} id={`${category.id}-products`} className="scroll-mt-24">
+                  <div className="mb-5 flex items-end justify-between border-b border-outline-variant/40 pb-3 md:mb-7">
+                    <div>
+                      <h3 className="text-2xl font-bold text-primary md:text-3xl">
+                        {category.label}
+                      </h3>
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                        {products.length} {products.length === 1 ? "product" : "products"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedCategories((current) => {
+                          const next = new Set(current);
+                          if (next.has(category.id)) next.delete(category.id);
+                          else next.add(category.id);
+                          return next;
+                        })
+                      }
+                      aria-expanded={expanded}
+                      className="flex flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary hover:underline"
+                    >
+                      {expanded ? "Show less" : "See all"}
+                      <span className="material-symbols-outlined text-base">
+                        {expanded ? "north_west" : "arrow_outward"}
+                      </span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+                    {visibleProducts.map((product) => (
+                      <ProductCard key={product.slug} product={product} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* Google Reviews Section */}
       {cms.reviews && cms.reviews.length > 0 && (
@@ -491,6 +456,103 @@ function Index() {
                 </button>
               </div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* CMS-managed Instagram product videos */}
+      {instagramVideos.length > 0 && (
+        <section className="border-b border-outline-variant/30 bg-white py-12 md:py-16">
+          <div className="mx-auto max-w-[1280px] px-margin-mobile md:px-margin-desktop">
+            <div className="mb-8 flex items-end justify-between gap-4">
+              <div>
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-pink-700">
+                  From Instagram
+                </p>
+                <h2 className="text-3xl font-bold tracking-tight text-primary">
+                  Watch before you buy
+                </h2>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  Real product clips, demonstrations, and new arrivals from our official profile.
+                </p>
+              </div>
+              <a
+                href={OFFICIAL_SOCIAL_LINKS.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary hover:underline sm:flex"
+              >
+                Follow us <span className="material-symbols-outlined text-base">arrow_outward</span>
+              </a>
+            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {instagramVideos.map((video, index) => (
+                <article
+                  key={`${video.url}-${index}`}
+                  className="overflow-hidden bg-white shadow-sm shopify-border"
+                >
+                  <div className="aspect-[4/5] bg-surface-container-low">
+                    {marketingConsent ? (
+                      <iframe
+                        src={instagramEmbedUrl(video.url) || undefined}
+                        title={video.title || `Aghanims Instagram video ${index + 1}`}
+                        className="h-full w-full border-0"
+                        loading="lazy"
+                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      />
+                    ) : (
+                      <div className="relative h-full w-full">
+                        <img
+                          src={video.image}
+                          alt={video.title}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/55 p-6 text-center text-white">
+                          <span className="material-symbols-outlined text-5xl">play_circle</span>
+                          <p className="text-xs font-bold">
+                            Allow marketing media to play Instagram here
+                          </p>
+                          <button
+                            type="button"
+                            onClick={openTrackingPreferences}
+                            className="bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-primary"
+                          >
+                            Cookie settings
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-primary">{video.title}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                        Instagram video
+                      </p>
+                    </div>
+                    <a
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Open ${video.title} on Instagram`}
+                      className="material-symbols-outlined flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-on-primary"
+                    >
+                      arrow_outward
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <a
+              href={OFFICIAL_SOCIAL_LINKS.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 flex w-full items-center justify-center gap-1 border border-primary px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-primary sm:hidden"
+            >
+              Follow on Instagram
+              <span className="material-symbols-outlined text-base">arrow_outward</span>
+            </a>
           </div>
         </section>
       )}
