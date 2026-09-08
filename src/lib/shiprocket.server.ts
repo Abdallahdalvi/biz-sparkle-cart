@@ -1,3 +1,9 @@
+import {
+  calculateEstimatedWalletDebitPaise,
+  calculateShiprocketOrderAmounts,
+  paiseToRupees,
+} from "@/lib/shiprocket-calculations";
+
 const SHIPROCKET_API = "https://apiv2.shiprocket.in/v1/external";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
@@ -17,12 +23,15 @@ export interface ShipmentPackage {
   heightCm: number;
   pickupLocation?: string;
   courierId?: number;
+  expectedWalletDebitPaise?: number;
 }
 
 export interface ShiprocketCourierOption {
   id: number;
   name: string;
   rate: number;
+  estimatedWalletDebit: number;
+  estimatedWalletDebitPaise: number;
   freightCharge: number;
   codCharge: number;
   etd: string;
@@ -47,6 +56,17 @@ export interface ShiprocketCourierOption {
   deliveryPerformance: number | null;
   trackingPerformance: number | null;
   rtoPerformance: number | null;
+}
+
+export interface ShiprocketActualWalletDebit {
+  actualWalletDebit: number | null;
+  actualWalletDebitPaise: number | null;
+  source: string | null;
+  appliedWeightAmount: number;
+  freightCharge: number;
+  codCharge: number;
+  coverageCharge: number;
+  otherCharges: number;
 }
 
 export interface ShiprocketCourierQuotes {
@@ -167,7 +187,7 @@ async function getOrderWithItems(orderId: string) {
   const { data: order, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, order_number, email, phone, shipping_address, subtotal_paise, shipping_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, cashfree_order_id, cashfree_payment_id, razorpay_order_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, tracking_url, status, created_at, notes",
+      "id, order_number, email, phone, shipping_address, subtotal_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, cashfree_order_id, cashfree_payment_id, razorpay_order_id, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, tracking_url, status, created_at, notes",
     )
     .eq("id", orderId)
     .single();
@@ -282,6 +302,16 @@ export async function createShiprocketOrderInternal(
       `Could not calculate the remaining COD amount: ${error instanceof Error ? error.message : "Payment verification failed"}`,
     );
   }
+  const amounts = calculateShiprocketOrderAmounts({
+    items: items.map((item) => ({
+      unitPricePaise: Number(item.unit_price_paise),
+      qty: Number(item.qty),
+    })),
+    storedSubtotalPaise: Number(order.subtotal_paise),
+    orderTotalPaise: Number(order.total_paise),
+    codCollectablePaise: Number(order.cod_collectable_paise) || 0,
+    paymentMethod: shiprocketPayment.paymentMethod,
+  });
   const payload = {
     order_id: order.order_number,
     order_date: new Date(order.created_at).toISOString().replace("T", " ").slice(0, 16),
@@ -307,8 +337,8 @@ export async function createShiprocketOrderInternal(
     })),
     payment_method: shiprocketPayment.paymentMethod,
     shipping_charges: 0,
-    total_discount: Math.max(0, Number(order.subtotal_paise) - shiprocketPayment.valuePaise) / 100,
-    sub_total: (shiprocketPayment.valuePaise / 100).toFixed(2),
+    total_discount: paiseToRupees(amounts.discountPaise).toFixed(2),
+    sub_total: paiseToRupees(amounts.grossMerchandisePaise).toFixed(2),
     length: packageDetails.lengthCm,
     breadth: packageDetails.breadthCm,
     height: packageDetails.heightCm,
@@ -364,6 +394,59 @@ function shipmentCourier(details: JsonRecord): string {
   );
 }
 
+function shipmentActualWalletDebit(details: JsonRecord): ShiprocketActualWalletDebit {
+  const data = asRecord(details.data);
+  const charges = asRecord(data.charges || details.charges);
+  const money = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+  const appliedWeightAmount = money(charges.applied_weight_amount);
+  const freightCharge = money(charges.freight_charges || charges.freight_charge);
+  const codCharge = money(charges.cod_charges || charges.cod_charge);
+  const coverageCharge = money(charges.coverage_charges || charges.coverage_charge);
+  const otherCharges = money(charges.other_charges || charges.other_charge);
+  const candidates: Array<[string, number]> = [
+    ["data.cost", money(data.cost)],
+    ["cost", money(details.cost)],
+    ["data.charges.total_charges", money(charges.total_charges)],
+    ["data.charges.total", money(charges.total)],
+  ];
+  const direct = candidates.find(([, value]) => value > 0);
+  const componentTotal = freightCharge + codCharge + coverageCharge + otherCharges;
+  const actualWalletDebit = direct?.[1] || componentTotal || appliedWeightAmount || null;
+
+  return {
+    actualWalletDebit,
+    actualWalletDebitPaise: actualWalletDebit === null ? null : Math.round(actualWalletDebit * 100),
+    source:
+      direct?.[0] ||
+      (componentTotal > 0
+        ? "shipment charge components"
+        : appliedWeightAmount > 0
+          ? "data.charges.applied_weight_amount"
+          : null),
+    appliedWeightAmount,
+    freightCharge,
+    codCharge,
+    coverageCharge,
+    otherCharges,
+  };
+}
+
+export async function getShiprocketShipmentCostInternal(orderId: string) {
+  const { order } = await getOrderWithItems(orderId);
+  if (!order.shiprocket_shipment_id) {
+    throw new Error("This order has no Shiprocket shipment yet");
+  }
+  const details = await getShipmentDetails(asString(order.shiprocket_shipment_id));
+  return {
+    shipmentId: asString(order.shiprocket_shipment_id),
+    courierName: shipmentCourier(details),
+    ...shipmentActualWalletDebit(details),
+  };
+}
+
 export async function generateShiprocketAwbInternal(
   orderId: string,
   packageDetails: ShipmentPackage,
@@ -381,10 +464,15 @@ export async function generateShiprocketAwbInternal(
   }
 
   let selectedCourier: ShiprocketCourierOption | null = null;
-  if (!order.shiprocket_shipment_id) {
+  let shipmentDetails = order.shiprocket_shipment_id
+    ? await getShipmentDetails(asString(order.shiprocket_shipment_id)).catch(() => ({}))
+    : {};
+  const existingAwb = shipmentAwb(shipmentDetails);
+  if (!existingAwb) {
     if (!packageDetails.courierId) {
-      throw new Error("Choose a courier before creating the Shiprocket order");
+      throw new Error("Choose a courier before assigning the Shiprocket AWB");
     }
+    // This is deliberately re-fetched immediately before the paid AWB action.
     const quotes = await getShiprocketCourierOptionsInternal(orderId, packageDetails);
     selectedCourier =
       quotes.options.find((option) => option.id === packageDetails.courierId) ?? null;
@@ -394,10 +482,17 @@ export async function generateShiprocketAwbInternal(
     if (quotes.paymentMode === "COD" && !selectedCourier.codAvailable) {
       throw new Error("The selected courier does not support COD for this delivery PIN code");
     }
+    if (
+      packageDetails.expectedWalletDebitPaise !== undefined &&
+      selectedCourier.estimatedWalletDebitPaise !== packageDetails.expectedWalletDebitPaise
+    ) {
+      throw new Error(
+        `The Shiprocket wallet estimate changed to ₹${selectedCourier.estimatedWalletDebit.toFixed(2)}. Refresh rates and confirm the updated amount.`,
+      );
+    }
     const { error: courierError } = await supabaseAdmin
       .from("orders")
       .update({
-        shipping_paise: Math.round(selectedCourier.rate * 100),
         shiprocket_courier_id: selectedCourier.id,
         shiprocket_courier_name: selectedCourier.name,
       })
@@ -407,7 +502,7 @@ export async function generateShiprocketAwbInternal(
   }
 
   const created = await createShiprocketOrderInternal(orderId, packageDetails);
-  let shipmentDetails = await getShipmentDetails(created.shipmentId).catch(() => ({}));
+  shipmentDetails = await getShipmentDetails(created.shipmentId).catch(() => shipmentDetails);
   let awb = shipmentAwb(shipmentDetails);
   let courier = shipmentCourier(shipmentDetails);
 
@@ -465,6 +560,8 @@ export async function generateShiprocketAwbInternal(
   }
 
   const trackingUrl = trackingUrlFor(awb);
+  shipmentDetails = await getShipmentDetails(created.shipmentId).catch(() => shipmentDetails);
+  const walletDebit = shipmentActualWalletDebit(shipmentDetails);
   const { error: updateError } = await supabaseAdmin
     .from("orders")
     .update({ tracking_url: trackingUrl, status: "shipped" })
@@ -480,7 +577,12 @@ export async function generateShiprocketAwbInternal(
     pickupScheduled,
     pickupMessage,
     labelUrl,
-    shippingRate: selectedCourier?.rate ?? Number(order.shipping_paise || 0) / 100,
+    estimatedWalletDebit: selectedCourier?.estimatedWalletDebit ?? null,
+    estimatedWalletDebitPaise: selectedCourier?.estimatedWalletDebitPaise ?? null,
+    actualWalletDebit: walletDebit.actualWalletDebit,
+    actualWalletDebitPaise: walletDebit.actualWalletDebitPaise,
+    actualChargeSource: walletDebit.source,
+    actualChargeBreakdown: walletDebit,
   };
 }
 
@@ -681,10 +783,20 @@ export async function getShiprocketCourierOptionsInternal(
         const number = Number(value);
         return Number.isFinite(number) && number > 0 ? number : null;
       };
+      const rate = Number(row.rate) || 0;
+      const coverageCharge = Number(row.coverage_charges) || 0;
+      const otherCharges = Number(row.other_charges) || 0;
+      const estimatedWalletDebitPaise = calculateEstimatedWalletDebitPaise({
+        rate,
+        coverageCharge,
+        otherCharges,
+      });
       return {
         id,
         name,
-        rate: Number(row.rate) || 0,
+        rate,
+        estimatedWalletDebit: paiseToRupees(estimatedWalletDebitPaise),
+        estimatedWalletDebitPaise,
         freightCharge: Number(row.freight_charge) || 0,
         codCharge: Number(row.cod_charges) || 0,
         etd: asString(row.etd),
@@ -702,8 +814,8 @@ export async function getShiprocketCourierOptionsInternal(
         chargeWeightKg: Number(row.charge_weight) || packageDetails.weightKg,
         minWeightKg: Number(row.min_weight) || 0,
         rtoCharge: Number(row.rto_charges) || 0,
-        coverageCharge: Number(row.coverage_charges) || 0,
-        otherCharges: Number(row.other_charges) || 0,
+        coverageCharge,
+        otherCharges,
         etdHours: Number.isFinite(Number(row.etd_hours)) ? Number(row.etd_hours) : null,
         pickupAvailableToday: asString(row.pickup_availability) === "1",
         nextPickupDate: asString(row.suppress_date),
@@ -718,7 +830,11 @@ export async function getShiprocketCourierOptionsInternal(
       };
     })
     .filter((option): option is ShiprocketCourierOption => option !== null)
-    .sort((a, b) => Number(b.recommended) - Number(a.recommended) || a.rate - b.rate);
+    .sort(
+      (a, b) =>
+        Number(b.recommended) - Number(a.recommended) ||
+        a.estimatedWalletDebitPaise - b.estimatedWalletDebitPaise,
+    );
 
   return {
     paymentMode: shiprocketPayment.paymentMethod,

@@ -120,9 +120,7 @@ function OrderThankYou() {
   const address = (confirmation.shippingAddress || {}) as Address;
   const isCod = confirmation.paymentMethod === "cod";
   const merchandiseSubtotal = confirmation.subtotalPaise;
-  const pricingAdjustment =
-    confirmation.totalPaise -
-    (merchandiseSubtotal + confirmation.shippingPaise + confirmation.taxPaise);
+  const pricingAdjustment = confirmation.totalPaise - (merchandiseSubtotal + confirmation.taxPaise);
   const estimatePending = /available after|awaiting/i.test(confirmation.tracking.estimatedDelivery);
 
   return (
@@ -236,12 +234,7 @@ function OrderThankYou() {
 
                 <div className="ml-auto mt-4 max-w-sm space-y-2 border-t border-outline-variant/50 pt-4 text-sm">
                   <AmountRow label="Merchandise subtotal" value={formatINR(merchandiseSubtotal)} />
-                  {confirmation.shippingPaise > 0 && (
-                    <AmountRow label="Shipping" value={formatINR(confirmation.shippingPaise)} />
-                  )}
-                  {confirmation.shippingPaise === 0 && (
-                    <AmountRow label="Shipping" value="Confirmed with courier" muted />
-                  )}
+                  <AmountRow label="Customer shipping" value="Free" positive />
                   {confirmation.taxPaise > 0 && (
                     <AmountRow label="Tax" value={formatINR(confirmation.taxPaise)} />
                   )}
@@ -390,16 +383,14 @@ function AmountRow({
   label,
   value,
   positive = false,
-  muted = false,
 }: {
   label: string;
   value: string;
   positive?: boolean;
-  muted?: boolean;
 }) {
   return (
     <div
-      className={`flex justify-between gap-4 ${positive ? "font-medium text-emerald-700" : muted ? "text-xs text-on-surface-variant" : "text-on-surface-variant"}`}
+      className={`flex justify-between gap-4 ${positive ? "font-medium text-emerald-700" : "text-on-surface-variant"}`}
     >
       <span>{label}</span>
       <span className="text-right">{value}</span>

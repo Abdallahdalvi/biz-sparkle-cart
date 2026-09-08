@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { sanitizeProductRow } from "./product-copy-sanitizer.mjs";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -321,7 +322,7 @@ for (const product of catalog) {
 
 const { data: savedProducts, error: productError } = await db
   .from("products")
-  .upsert(rows, { onConflict: "slug" })
+  .upsert(rows.map(sanitizeProductRow), { onConflict: "slug" })
   .select("slug,name,price_paise");
 
 if (productError) throw new Error(`Qin product upsert failed: ${productError.message}`);

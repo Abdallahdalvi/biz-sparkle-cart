@@ -21,6 +21,7 @@ const packageSchema = z.object({
   heightCm: z.number().positive().max(200),
   pickupLocation: z.string().min(1).max(100).optional(),
   courierId: z.number().int().positive().optional(),
+  expectedWalletDebitPaise: z.number().int().nonnegative().optional(),
 });
 
 export const generateShiprocketAwb = createServerFn({ method: "POST" })
@@ -29,7 +30,10 @@ export const generateShiprocketAwb = createServerFn({ method: "POST" })
       .object({
         token: z.string().min(1),
         orderId: z.string().uuid(),
-        package: packageSchema.extend({ courierId: z.number().int().positive() }),
+        package: packageSchema.extend({
+          courierId: z.number().int().positive(),
+          expectedWalletDebitPaise: z.number().int().nonnegative(),
+        }),
       })
       .parse(input),
   )
@@ -49,13 +53,24 @@ export const getShiprocketPickupLocations = createServerFn({ method: "POST" })
     return getShiprocketPickupLocationsInternal();
   });
 
+export const getShiprocketShipmentCost = createServerFn({ method: "POST" })
+  .validator((input) =>
+    z.object({ token: z.string().min(1), orderId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { getShiprocketShipmentCostInternal } = await import("@/lib/shiprocket.server");
+    return getShiprocketShipmentCostInternal(data.orderId);
+  });
+
 export const getShiprocketCourierOptions = createServerFn({ method: "POST" })
   .validator((input) =>
     z
       .object({
         token: z.string().min(1),
         orderId: z.string().uuid(),
-        package: packageSchema.omit({ courierId: true }),
+        package: packageSchema.omit({ courierId: true, expectedWalletDebitPaise: true }),
       })
       .parse(input),
   )

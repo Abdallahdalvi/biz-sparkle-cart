@@ -57,7 +57,7 @@ export async function getOrderConfirmationInternal(input: {
   const { data: order, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, user_id, order_number, email, phone, shipping_address, status, subtotal_paise, shipping_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_shipment_id, notes, cashfree_payment_id, order_items(name, qty, unit_price_paise, variant_label, image_url)",
+      "id, user_id, order_number, email, phone, shipping_address, status, subtotal_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_shipment_id, notes, cashfree_payment_id, order_items(name, qty, unit_price_paise, variant_label, image_url)",
     )
     .eq("id", input.orderId)
     .maybeSingle();
@@ -93,7 +93,6 @@ export async function getOrderConfirmationInternal(input: {
     shippingAddress: order.shipping_address,
     status: order.status,
     subtotalPaise: Number(order.subtotal_paise) || 0,
-    shippingPaise: Number(order.shipping_paise) || 0,
     taxPaise: Number(order.tax_paise) || 0,
     totalPaise: Number(order.total_paise) || 0,
     codAdvancePaise: Number(order.cod_advance_paise) || 0,

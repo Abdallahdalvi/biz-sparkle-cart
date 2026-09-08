@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { sanitizeProductRow } from "./product-copy-sanitizer.mjs";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -79,7 +80,9 @@ const iphone = {
   },
 };
 
-const { error: iphoneError } = await db.from("products").upsert(iphone, { onConflict: "slug" });
+const { error: iphoneError } = await db
+  .from("products")
+  .upsert(sanitizeProductRow(iphone), { onConflict: "slug" });
 if (iphoneError) throw new Error(`Could not save iPhone SE 3: ${iphoneError.message}`);
 
 const { data: products, error: readError } = await db

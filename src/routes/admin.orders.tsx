@@ -10,6 +10,7 @@ import {
   generateShiprocketDocument,
   getShiprocketCourierOptions,
   getShiprocketPickupLocations,
+  getShiprocketShipmentCost,
   requestShiprocketPickup,
 } from "@/lib/shiprocket.functions";
 import type { ShiprocketCourierOption, ShiprocketCourierQuotes } from "@/lib/shiprocket.functions";
@@ -47,7 +48,6 @@ interface Order {
   shipping_address?: ShippingAddress | null;
   status: string;
   subtotal_paise: number;
-  shipping_paise: number;
   tax_paise: number;
   total_paise: number;
   cod_advance_paise: number;
@@ -77,6 +77,19 @@ interface PickupLocation {
   state: string;
   pincode: string;
   active: boolean;
+}
+
+interface AwbWalletResult {
+  estimatedWalletDebit: number | null;
+  actualWalletDebit: number | null;
+  actualChargeSource: string | null;
+  actualChargeBreakdown: {
+    appliedWeightAmount: number;
+    freightCharge: number;
+    codCharge: number;
+    coverageCharge: number;
+    otherCharges: number;
+  };
 }
 
 function trackingCode(order: Order) {
@@ -117,11 +130,13 @@ function AdminOrders() {
   );
   const [courierMode, setCourierMode] = useState<"all" | "Air" | "Surface">("all");
   const [shiprocketAction, setShiprocketAction] = useState<string | null>(null);
+  const [awbWalletResults, setAwbWalletResults] = useState<Record<string, AwbWalletResult>>({});
   const [orderAction, setOrderAction] = useState<string | null>(null);
   const generateAwbFn = useServerFn(generateShiprocketAwb);
   const pickupLocationsFn = useServerFn(getShiprocketPickupLocations);
   const courierOptionsFn = useServerFn(getShiprocketCourierOptions);
   const documentFn = useServerFn(generateShiprocketDocument);
+  const shipmentCostFn = useServerFn(getShiprocketShipmentCost);
   const pickupFn = useServerFn(requestShiprocketPickup);
   const cancelShipmentFn = useServerFn(cancelShiprocketShipment);
   const cancelOrderFn = useServerFn(cancelAdminOrder);
@@ -134,7 +149,7 @@ function AdminOrders() {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "id, order_number, email, phone, shipping_address, status, subtotal_paise, shipping_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, notes, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, refund_amount_paise, cancellation_reason, order_items(name, qty, unit_price_paise, variant_label)",
+        "id, order_number, email, phone, shipping_address, status, subtotal_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, notes, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, refund_amount_paise, cancellation_reason, order_items(name, qty, unit_price_paise, variant_label)",
       )
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -252,6 +267,29 @@ function AdminOrders() {
     }
     setExpandedId(order.id);
     if (!hasRealAwb(order)) void loadCourierOptions(order.id);
+    else void loadActualWalletDebit(order.id);
+  }
+
+  async function loadActualWalletDebit(orderId: string) {
+    try {
+      const token = await getAdminToken();
+      const result = await shipmentCostFn({ data: { token, orderId } });
+      setAwbWalletResults((current) => ({
+        ...current,
+        [orderId]: {
+          estimatedWalletDebit: null,
+          actualWalletDebit: result.actualWalletDebit,
+          actualChargeSource: result.source,
+          actualChargeBreakdown: result,
+        },
+      }));
+    } catch (error) {
+      toast.warning(
+        error instanceof Error
+          ? `Shiprocket wallet debit unavailable: ${error.message}`
+          : "Shiprocket wallet debit is not available yet",
+      );
+    }
   }
 
   async function generateAWB(id: string) {
@@ -259,6 +297,30 @@ function AdminOrders() {
       toast.error("Choose a live Shiprocket courier before generating the AWB");
       return;
     }
+
+    const selectedCourier = courierOptions.find((courier) => courier.id === selectedCourierId);
+    if (!selectedCourier) {
+      toast.error("The selected quote is no longer loaded. Refresh courier rates.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      [
+        `Purchase an AWB with ${selectedCourier.name}?`,
+        "",
+        `Estimated wallet debit: ₹${selectedCourier.estimatedWalletDebit.toFixed(2)}`,
+        `Base rate: ₹${selectedCourier.rate.toFixed(2)}`,
+        `Freight breakdown (included in base rate): ₹${selectedCourier.freightCharge.toFixed(2)}`,
+        `COD fee breakdown (included in base rate): ₹${selectedCourier.codCharge.toFixed(2)}`,
+        `Coverage: ₹${selectedCourier.coverageCharge.toFixed(2)}`,
+        `Other charges: ₹${selectedCourier.otherCharges.toFixed(2)}`,
+        `Chargeable weight: ${selectedCourier.chargeWeightKg} kg`,
+        `Possible RTO fee: ₹${selectedCourier.rtoCharge.toFixed(2)}`,
+        "",
+        "Shiprocket will revalidate this quote now. Its final wallet debit can change when account pricing or final chargeable weight is applied.",
+      ].join("\n"),
+    );
+    if (!confirmed) return;
 
     setSimulatingId(id);
     try {
@@ -273,11 +335,27 @@ function AdminOrders() {
           package: {
             ...packageDetails,
             courierId: selectedCourierId,
+            expectedWalletDebitPaise: selectedCourier.estimatedWalletDebitPaise,
           },
         },
       });
+      setAwbWalletResults((current) => ({
+        ...current,
+        [id]: {
+          estimatedWalletDebit: result.estimatedWalletDebit,
+          actualWalletDebit: result.actualWalletDebit,
+          actualChargeSource: result.actualChargeSource,
+          actualChargeBreakdown: result.actualChargeBreakdown,
+        },
+      }));
       if (result.pickupScheduled) {
-        toast.success(`Real AWB ${result.awb} assigned via ${result.courier}; pickup requested.`);
+        toast.success(
+          `Real AWB ${result.awb} assigned via ${result.courier}; ${
+            result.actualWalletDebit === null
+              ? "final wallet debit is still pending from Shiprocket"
+              : `actual wallet debit ₹${result.actualWalletDebit.toFixed(2)}`
+          }.`,
+        );
       } else {
         toast.warning(
           `AWB ${result.awb} assigned, but pickup needs attention: ${result.pickupMessage}`,
@@ -537,11 +615,16 @@ function AdminOrders() {
   const visibleCourierOptions = [...courierOptions]
     .filter((courier) => courierMode === "all" || courier.mode === courierMode)
     .sort((a, b) => {
-      if (courierSort === "cheapest") return a.rate - b.rate;
+      if (courierSort === "cheapest") {
+        return a.estimatedWalletDebitPaise - b.estimatedWalletDebitPaise;
+      }
       if (courierSort === "fastest")
         return (a.etdHours ?? Number.MAX_SAFE_INTEGER) - (b.etdHours ?? Number.MAX_SAFE_INTEGER);
       if (courierSort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
-      return Number(b.recommended) - Number(a.recommended) || a.rate - b.rate;
+      return (
+        Number(b.recommended) - Number(a.recommended) ||
+        a.estimatedWalletDebitPaise - b.estimatedWalletDebitPaise
+      );
     });
 
   return (
@@ -812,6 +895,13 @@ function AdminOrders() {
                         </div>
                       </div>
 
+                      {awbWalletResults[o.id] && (
+                        <WalletDebitSummary
+                          result={awbWalletResults[o.id]}
+                          courierName={o.shiprocket_courier_name}
+                        />
+                      )}
+
                       {!hasRealAwb(o) &&
                         !["pending", "cancelled", "refunded"].includes(o.status) && (
                           <div className="rounded border border-outline-variant/40 bg-white p-4 text-xs space-y-3">
@@ -877,8 +967,11 @@ function AdminOrders() {
                                 >
                                   <div className="flex justify-between gap-3">
                                     <span className="font-bold text-primary">{courier.name}</span>
-                                    <span className="font-bold text-blue-700">
-                                      ₹{courier.rate.toFixed(2)}
+                                    <span className="text-right font-bold text-blue-700">
+                                      ₹{courier.estimatedWalletDebit.toFixed(2)}
+                                      <small className="block text-[8px] font-medium text-on-surface-variant">
+                                        Estimated wallet debit
+                                      </small>
                                     </span>
                                   </div>
                                   <p className="mt-1 text-[10px] text-on-surface-variant">
@@ -886,6 +979,16 @@ function AdminOrders() {
                                     {courier.codAvailable ? "COD available" : "Prepaid only"} · ETA{" "}
                                     {courier.etd || `${courier.estimatedDays || "?"} days`}
                                   </p>
+                                  <div className="mt-2 grid grid-cols-2 gap-1 border-t border-outline-variant/30 pt-2 text-[9px] text-on-surface-variant">
+                                    <span>Base rate ₹{courier.rate.toFixed(2)}</span>
+                                    <span>Freight* ₹{courier.freightCharge.toFixed(2)}</span>
+                                    <span>COD fee* ₹{courier.codCharge.toFixed(2)}</span>
+                                    <span>Coverage ₹{courier.coverageCharge.toFixed(2)}</span>
+                                    <span>Other ₹{courier.otherCharges.toFixed(2)}</span>
+                                    <span>Weight {courier.chargeWeightKg} kg</span>
+                                    <span>RTO ₹{courier.rtoCharge.toFixed(2)}</span>
+                                    <span className="col-span-2">*Included in the base rate</span>
+                                  </div>
                                 </button>
                               ))}
                             </div>
@@ -1241,18 +1344,11 @@ function AdminOrders() {
                                   </span>
                                   Shiprocket Package Prep
                                 </h4>
-                                {Number(o.shipping_paise || 0) > 0 && (
-                                  <div className="flex items-center justify-between rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs">
-                                    <span className="text-blue-900">
-                                      Actual courier cost
-                                      {o.shiprocket_courier_name
-                                        ? ` · ${o.shiprocket_courier_name}`
-                                        : ""}
-                                    </span>
-                                    <strong className="text-blue-900">
-                                      {formatINR(o.shipping_paise)}
-                                    </strong>
-                                  </div>
+                                {awbWalletResults[o.id] && (
+                                  <WalletDebitSummary
+                                    result={awbWalletResults[o.id]}
+                                    courierName={o.shiprocket_courier_name}
+                                  />
                                 )}
                                 <div className="space-y-3 text-xs">
                                   <div>
@@ -1451,21 +1547,33 @@ function AdminOrders() {
                                               </div>
                                               <div className="text-right shrink-0">
                                                 <div className="text-base font-bold text-blue-700">
-                                                  ₹{courier.rate.toFixed(2)}
+                                                  ₹{courier.estimatedWalletDebit.toFixed(2)}
                                                 </div>
                                                 <div className="text-[9px] text-on-surface-variant">
-                                                  total shipping
+                                                  Estimated wallet debit
                                                 </div>
                                               </div>
                                             </div>
                                             <div className="mt-3 grid grid-cols-4 gap-2 border-t border-outline-variant/30 pt-2 text-[9px]">
                                               <span>
+                                                <strong>Base rate</strong>
+                                                <br />₹{courier.rate.toFixed(2)}
+                                              </span>
+                                              <span>
                                                 <strong>Freight</strong>
-                                                <br />₹{courier.freightCharge.toFixed(2)}
+                                                <br />₹{courier.freightCharge.toFixed(2)}*
                                               </span>
                                               <span>
                                                 <strong>COD fee</strong>
-                                                <br />₹{courier.codCharge.toFixed(2)}
+                                                <br />₹{courier.codCharge.toFixed(2)}*
+                                              </span>
+                                              <span>
+                                                <strong>Coverage</strong>
+                                                <br />₹{courier.coverageCharge.toFixed(2)}
+                                              </span>
+                                              <span>
+                                                <strong>Other</strong>
+                                                <br />₹{courier.otherCharges.toFixed(2)}
                                               </span>
                                               <span>
                                                 <strong>RTO</strong>
@@ -1500,6 +1608,11 @@ function AdminOrders() {
                                                   : courier.nextPickupDate || "Next slot"}
                                               </span>
                                             </div>
+                                            <p className="mt-2 text-[9px] text-on-surface-variant">
+                                              *Freight and COD are breakdown fields already included
+                                              in the base rate. Final debit can change when
+                                              Shiprocket applies account pricing or final weight.
+                                            </p>
                                             <div className="mt-2 text-[9px] text-on-surface-variant">
                                               Delivery{" "}
                                               {courier.deliveryPerformance?.toFixed(1) ?? "N/A"}/5 ·
@@ -1626,6 +1739,49 @@ function AdminOrders() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function WalletDebitSummary({
+  result,
+  courierName,
+}: {
+  result: AwbWalletResult;
+  courierName?: string | null;
+}) {
+  const breakdown = result.actualChargeBreakdown;
+  return (
+    <div className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-blue-950">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span>
+          <strong>Actual wallet debit</strong>
+          {courierName ? ` · ${courierName}` : ""}
+        </span>
+        <strong className="text-sm">
+          {result.actualWalletDebit === null
+            ? "Pending from Shiprocket"
+            : `₹${result.actualWalletDebit.toFixed(2)}`}
+        </strong>
+      </div>
+      <p className="mt-1 text-[10px]">
+        Booking estimate:{" "}
+        {result.estimatedWalletDebit === null
+          ? "Unavailable"
+          : `₹${result.estimatedWalletDebit.toFixed(2)}`}
+        {result.actualChargeSource ? ` · Source: ${result.actualChargeSource}` : ""}
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-1 border-t border-blue-200 pt-2 text-[9px] sm:grid-cols-5">
+        <span>Applied weight ₹{breakdown.appliedWeightAmount.toFixed(2)}</span>
+        <span>Freight ₹{breakdown.freightCharge.toFixed(2)}</span>
+        <span>COD ₹{breakdown.codCharge.toFixed(2)}</span>
+        <span>Coverage ₹{breakdown.coverageCharge.toFixed(2)}</span>
+        <span>Other ₹{breakdown.otherCharges.toFixed(2)}</span>
+      </div>
+      <p className="mt-2 text-[9px] text-blue-800">
+        Internal fulfilment expense only. Customer shipping remains free and this amount is not
+        added to the order total or COD collection.
+      </p>
     </div>
   );
 }

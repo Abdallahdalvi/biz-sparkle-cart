@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { sanitizeProductRow } from "./product-copy-sanitizer.mjs";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -238,7 +239,9 @@ if (categoryError || !phoneCategory) {
   throw new Error(`Could not find Phones category: ${categoryError?.message || "missing"}`);
 }
 
-const rows = products.map((product) => ({ ...product, category_id: phoneCategory.id }));
+const rows = products.map((product) =>
+  sanitizeProductRow({ ...product, category_id: phoneCategory.id }),
+);
 const { data: savedProducts, error: productError } = await db
   .from("products")
   .upsert(rows, { onConflict: "slug" })
