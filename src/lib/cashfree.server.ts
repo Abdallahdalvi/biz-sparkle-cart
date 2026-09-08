@@ -385,5 +385,10 @@ export async function verifyCashfreeCheckoutPaymentInternal(input: {
   if (!order.cashfree_order_id || order.cashfree_order_id !== input.cashfreeOrderId) {
     throw new Error("The checkout response does not match this store order");
   }
-  return completeCashfreePaymentInternal(input.cashfreeOrderId);
+  const result = await completeCashfreePaymentInternal(input.cashfreeOrderId);
+  const { createOrderReceiptToken } = await import("@/lib/order-confirmation.server");
+  return {
+    ...result,
+    receiptToken: createOrderReceiptToken(result.orderId),
+  };
 }

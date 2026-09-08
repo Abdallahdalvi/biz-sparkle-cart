@@ -33,6 +33,7 @@ import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminComplianceRouteImport } from './routes/admin.compliance'
 import { Route as AdminCmsRouteImport } from './routes/admin.cms'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
+import { Route as OrderThankYouOrderIdRouteImport } from './routes/order.thank-you.$orderId'
 import { Route as ApiPublicWebhooksCashfreeRouteImport } from './routes/api/public/webhooks/cashfree'
 
 const TrackRoute = TrackRouteImport.update({
@@ -155,6 +156,11 @@ const AccountOrdersRoute = AccountOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AccountRoute,
 } as any)
+const OrderThankYouOrderIdRoute = OrderThankYouOrderIdRouteImport.update({
+  id: '/order/thank-you/$orderId',
+  path: '/order/thank-you/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksCashfreeRoute =
   ApiPublicWebhooksCashfreeRouteImport.update({
     id: '/api/public/webhooks/cashfree',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/order/thank-you/$orderId': typeof OrderThankYouOrderIdRoute
   '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
 }
 export interface FileRoutesByTo {
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/order/thank-you/$orderId': typeof OrderThankYouOrderIdRoute
   '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
 }
 export interface FileRoutesById {
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/order/thank-you/$orderId': typeof OrderThankYouOrderIdRoute
   '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
 }
 export interface FileRouteTypes {
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
+    | '/order/thank-you/$orderId'
     | '/api/public/webhooks/cashfree'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
+    | '/order/thank-you/$orderId'
     | '/api/public/webhooks/cashfree'
   id:
     | '__root__'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/legal/shipping'
     | '/legal/terms'
     | '/product/$slug'
+    | '/order/thank-you/$orderId'
     | '/api/public/webhooks/cashfree'
   fileRoutesById: FileRoutesById
 }
@@ -348,6 +360,7 @@ export interface RootRouteChildren {
   LegalShippingRoute: typeof LegalShippingRoute
   LegalTermsRoute: typeof LegalTermsRoute
   ProductSlugRoute: typeof ProductSlugRoute
+  OrderThankYouOrderIdRoute: typeof OrderThankYouOrderIdRoute
   ApiPublicWebhooksCashfreeRoute: typeof ApiPublicWebhooksCashfreeRoute
 }
 
@@ -521,6 +534,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountOrdersRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/order/thank-you/$orderId': {
+      id: '/order/thank-you/$orderId'
+      path: '/order/thank-you/$orderId'
+      fullPath: '/order/thank-you/$orderId'
+      preLoaderRoute: typeof OrderThankYouOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/cashfree': {
       id: '/api/public/webhooks/cashfree'
       path: '/api/public/webhooks/cashfree'
@@ -578,6 +598,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalShippingRoute: LegalShippingRoute,
   LegalTermsRoute: LegalTermsRoute,
   ProductSlugRoute: ProductSlugRoute,
+  OrderThankYouOrderIdRoute: OrderThankYouOrderIdRoute,
   ApiPublicWebhooksCashfreeRoute: ApiPublicWebhooksCashfreeRoute,
 }
 export const routeTree = rootRouteImport

@@ -7,11 +7,11 @@ import { useCart } from "@/lib/cart-store";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyCashfreePayment } from "@/lib/cashfree.functions";
 import { createSecureOrder, getCheckoutCapabilities } from "@/lib/orders.functions";
 import { getAllProducts, getStorefrontCms } from "@/lib/products";
+import { rememberOrderReceipt } from "@/lib/order-receipt-client";
 import { readTrackingConsent, trackCommerceEvent } from "@/lib/tracking";
 
 export const Route = createFileRoute("/checkout")({
@@ -47,7 +47,6 @@ function Checkout() {
   const [payMode, setPayMode] = useState<"prepaid" | "cod">(
     capabilities.onlinePaymentsConfigured ? "prepaid" : "cod",
   );
-  const { user } = useAuth();
   const createOrderFn = useServerFn(createSecureOrder);
   const verifyCashfree = useServerFn(verifyCashfreePayment);
   const returnVerificationStarted = useRef(false);
@@ -87,6 +86,7 @@ function Checkout() {
       },
     })
       .then((result) => {
+        rememberOrderReceipt(result.orderId, result.receiptToken);
         trackCommerceEvent("purchase", {
           currency: "INR",
           value: total / 100,
@@ -96,8 +96,9 @@ function Checkout() {
         clear();
         toast.success(`Payment received. Order ${result.orderNumber} confirmed.`);
         navigate({
-          to: user ? "/account/orders" : "/track",
-          search: user ? {} : { orderId: result.orderNumber },
+          to: "/order/thank-you/$orderId",
+          params: { orderId: result.orderId },
+          replace: true,
         });
       })
       .catch((error) => {
@@ -111,7 +112,6 @@ function Checkout() {
     search.store_order_id,
     total,
     trackingItems,
-    user,
     verifyCashfree,
   ]);
 
@@ -219,6 +219,7 @@ function Checkout() {
               };
 
               const res = await createOrderFn({ data: orderPayload });
+              rememberOrderReceipt(res.orderId, res.receiptToken);
 
               if (!res.cashfreeRequired) {
                 trackCommerceEvent("purchase", {
@@ -229,11 +230,11 @@ function Checkout() {
                 });
                 clear();
                 toast.success(`Order ${res.orderNumber} confirmed with Cash on Delivery.`);
-                if (!token) {
-                  navigate({ to: "/track", search: { orderId: res.orderNumber } });
-                } else {
-                  navigate({ to: "/account/orders" });
-                }
+                navigate({
+                  to: "/order/thank-you/$orderId",
+                  params: { orderId: res.orderId },
+                  replace: true,
+                });
                 return;
               }
 
@@ -256,6 +257,7 @@ function Checkout() {
               const verified = await verifyCashfree({
                 data: { orderId: res.orderId, cashfreeOrderId: res.cashfreeOrderId },
               });
+              rememberOrderReceipt(verified.orderId, verified.receiptToken);
               trackCommerceEvent("purchase", {
                 currency: "INR",
                 value: effectiveTotal / 100,
@@ -268,11 +270,11 @@ function Checkout() {
                   ? `COD advance received. ${formatINR(total - paymentAmountPaise)} remains payable on delivery for order ${verified.orderNumber}.`
                   : `Payment received. Order ${verified.orderNumber} confirmed.`,
               );
-              if (!token) {
-                navigate({ to: "/track", search: { orderId: verified.orderNumber } });
-              } else {
-                navigate({ to: "/account/orders" });
-              }
+              navigate({
+                to: "/order/thank-you/$orderId",
+                params: { orderId: verified.orderId },
+                replace: true,
+              });
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Checkout failed");
               setBusy(false);

@@ -217,6 +217,9 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       .single();
     if (orderErr || !order) throw new Error(`Order creation failed: ${orderErr?.message}`);
 
+    const { createOrderReceiptToken } = await import("@/lib/order-confirmation.server");
+    const receiptToken = createOrderReceiptToken(order.id);
+
     // Insert order items
     const itemsWithOrderId = orderItemsToInsert.map((i) => ({
       order_id: order.id,
@@ -261,6 +264,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         ok: true,
         orderId: order.id,
         orderNumber: order.order_number,
+        receiptToken,
         cashfreeRequired: false,
       };
     }
@@ -296,6 +300,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       ok: true,
       orderId: order.id,
       orderNumber: order.order_number,
+      receiptToken,
       cashfreeRequired: true,
       cashfreeOrderId: cashfree.cashfreeOrderId,
       paymentSessionId: cashfree.paymentSessionId,
