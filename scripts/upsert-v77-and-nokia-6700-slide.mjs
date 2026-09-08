@@ -65,6 +65,7 @@ const supplierProducts = [
     description:
       "The original Nokia 6700 Slide combines a compact aluminium slider body, physical keypad, Symbian software, and a 5 MP autofocus camera with Carl Zeiss optics. It is a discontinued legacy phone intended for collectors and basic compatible-network use. " +
       legacyCondition,
+    overridePricePaise: 349900,
     specs: [
       ["Condition", "Open box, like new, unlocked, individually QC tested"],
       ["Operating System", "Symbian OS 9.3, S60 3rd Edition Feature Pack 2"],
@@ -129,7 +130,6 @@ for (const product of supplierProducts) {
     is_active: true,
     category_id: phoneCategory.id,
     metadata: {
-      badge: "OPEN BOX • QC TESTED",
       form_factor: product.formFactor,
       source_reference: product.sourceReference,
       images,

@@ -40,13 +40,12 @@ const products = [
     description:
       "A compact Android smartphone with a touch-enabled physical keyboard and fingerprint-enabled spacebar. Android and security support are legacy, so current app compatibility should be confirmed before purchase. " +
       condition,
-    price_paise: 2459000,
+    price_paise: 2159000,
     cod_advance_paise: 0,
     compare_at_paise: 4999900,
     stock: 1,
     is_active: true,
     metadata: {
-      badge: "OPEN BOX • QC TESTED",
       form_factor: "QWERTY Android",
       images: ["/products/blackberry-keyone.jpg"],
       specs: [
@@ -83,13 +82,12 @@ const products = [
     description:
       "A classic BlackBerry 10 QWERTY phone with a square AMOLED touch display and removable battery. BlackBerry 10 is a discontinued legacy platform; modern apps, services, and network behavior are limited. " +
       condition,
-    price_paise: 1499900,
+    price_paise: 1199900,
     cod_advance_paise: 0,
     compare_at_paise: 3999900,
     stock: 1,
     is_active: true,
     metadata: {
-      badge: "OPEN BOX • QC TESTED",
       form_factor: "Legacy QWERTY",
       images: ["/products/blackberry-q10.jpg"],
       specs: [
@@ -114,13 +112,12 @@ const products = [
     description:
       "The familiar BlackBerry keyboard layout with optical trackpad, navigation keys, and a square touch display. BlackBerry 10 is a discontinued legacy platform; modern apps, services, and network behavior are limited. " +
       condition,
-    price_paise: 1379000,
+    price_paise: 1079000,
     cod_advance_paise: 0,
     compare_at_paise: 2999000,
     stock: 1,
     is_active: true,
     metadata: {
-      badge: "OPEN BOX • QC TESTED",
       form_factor: "Legacy QWERTY",
       images: ["/products/blackberry-classic-q20.jpg"],
       specs: [
@@ -145,13 +142,12 @@ const products = [
     description:
       "A wide-format BlackBerry 10 device with a touch-enabled QWERTY keyboard and square high-resolution display. BlackBerry 10 is a discontinued legacy platform; modern apps, services, and network behavior are limited. " +
       condition,
-    price_paise: 2199000,
+    price_paise: 1899000,
     cod_advance_paise: 0,
     compare_at_paise: 4899900,
     stock: 1,
     is_active: true,
     metadata: {
-      badge: "OPEN BOX • QC TESTED",
       form_factor: "Legacy QWERTY",
       images: ["/products/blackberry-passport-q30.png"],
       specs: [
@@ -176,13 +172,12 @@ const products = [
     description:
       "A rugged Android flip phone with a physical keypad, touch display, removable battery, and IP68 protection. Exact carrier variant and Indian network compatibility are confirmed before payment. " +
       condition,
-    price_paise: 2399000,
+    price_paise: 2099000,
     cod_advance_paise: 0,
     compare_at_paise: 2500000,
     stock: 1,
     is_active: true,
     metadata: {
-      badge: "OPEN BOX • QC TESTED",
       form_factor: "Android Flip",
       images: ["/products/cat-s22-flip.jpg"],
       specs: [

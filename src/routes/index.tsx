@@ -211,6 +211,15 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
+  const inDemandSlugs = [
+    "nokia-2720-flip",
+    "v77-luxury-flip",
+    "qin-f22-pro-google",
+    "cat-s22-flip",
+  ];
+  const inDemandProducts = inDemandSlugs
+    .map((slug) => all.find((product) => product.slug === slug && product.stock > 0))
+    .filter((product): product is Product => Boolean(product));
 
   return (
     <SiteShell>
@@ -349,6 +358,36 @@ function Index() {
           </div>
 
           <div className="space-y-14 md:space-y-20">
+            {inDemandProducts.length > 0 && (
+              <section aria-labelledby="most-in-demand-heading">
+                <div className="mb-5 flex items-end justify-between border-b border-outline-variant/40 pb-3 md:mb-7">
+                  <div>
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+                      Popular right now
+                    </p>
+                    <h3
+                      id="most-in-demand-heading"
+                      className="text-2xl font-bold text-primary md:text-3xl"
+                    >
+                      Most in Demand
+                    </h3>
+                  </div>
+                  <Link
+                    to="/catalog"
+                    className="flex flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary hover:underline"
+                  >
+                    See all
+                    <span className="material-symbols-outlined text-base">arrow_outward</span>
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+                  {inDemandProducts.map((product) => (
+                    <ProductCard key={`demand-${product.slug}`} product={product} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {shopCategories.map((category) => {
               const products = all.filter((product) => product.category === category.id);
               if (products.length === 0) return null;
