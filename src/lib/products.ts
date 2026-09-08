@@ -13,6 +13,7 @@ export interface Product {
   compareAtPaise?: number | null;
   badge?: string;
   images: string[];
+  videos?: { title: string; url: string }[];
   description: string;
   specs: { label: string; value: string }[];
   variants?: { id: string; label: string }[];
@@ -314,8 +315,8 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
   footer_tagline: "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.",
   footer_copyright: "© 2026 Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.",
-  tracking_clarity_enabled: false,
-  tracking_clarity_project_id: "",
+  tracking_clarity_enabled: true,
+  tracking_clarity_project_id: "yeys6j7w40",
   tracking_meta_enabled: false,
   tracking_meta_pixel_id: "",
   tracking_meta_domain_verification: "",
@@ -356,6 +357,11 @@ export async function getAllProducts(): Promise<Product[]> {
         : [
             "https://lh3.googleusercontent.com/aida-public/AB6AXuAN4IWZ0o1xacmmTaAaeV4gJ2JM37nCA4Vu9FMZfWJ6CWZ9FReqzNA1zUw6b0z8fcVQRPejT-QofOpAaJlfeyZecXQpvnPZozhZdiZEDOj_qYqjYW64yxxY868yjxmBThtOdw-4pzxzc42bvkJogioVcwVPkGQS6ry7BHc3bO3PdOrAO0BS-A9PtmtRSFRGsIExVtxY8Knwi18rphz2LtaWGl0UbhG2lpi0gT9sXZRW0-4tpyNY7rWZZMvKc--gTZ9bjlCWX_yVWtpO",
           ],
+      videos: Array.isArray(row.metadata?.videos)
+        ? row.metadata.videos.filter(
+            (video: { title?: unknown; url?: unknown }) => typeof video?.url === "string",
+          )
+        : [],
       description: row.description || "",
       specs: row.metadata?.specs || [],
       variants: row.product_variants?.length

@@ -119,20 +119,20 @@ function Index() {
     <SiteShell>
       {/* Hero */}
       <section className="relative bg-white overflow-hidden border-b border-outline-variant/20">
-        <div className="relative z-10 w-full px-6 sm:px-12 lg:px-16 max-w-[1320px] mx-auto pt-10 pb-24 md:pt-16 md:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-16 items-center">
-          <div className="space-y-6">
+        <div className="relative z-10 mx-auto grid w-full max-w-[1320px] grid-cols-1 items-center gap-5 px-5 pb-12 pt-5 sm:px-12 sm:pb-20 sm:pt-10 lg:grid-cols-2 lg:gap-16 lg:px-16 lg:pb-32 lg:pt-16">
+          <div className="space-y-3 sm:space-y-5 lg:space-y-6">
             <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2.5 py-1 rounded-sm inline-block shadow-sm bg-primary/5">
               {cms.hero_eyebrow_label}
             </span>
             <h1
-              className="text-primary leading-tight font-bold max-w-[20ch]"
+              className="max-w-[22ch] font-bold leading-[1.08] text-primary"
               style={{
-                fontSize: `clamp(2.5rem, 5vw, ${heroTitleFontSize}px)`,
+                fontSize: `clamp(1.8rem, 7vw, ${heroTitleFontSize}px)`,
               }}
             >
               {cms.hero_title}
             </h1>
-            <p className="text-lg text-on-surface-variant max-w-lg leading-relaxed">
+            <p className="max-w-lg text-sm leading-relaxed text-on-surface-variant sm:text-lg">
               {cms.hero_subtitle}
             </p>
             <div className="pt-2 hidden lg:block">
@@ -145,8 +145,8 @@ function Index() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-col gap-7">
-            <div className="grid grid-cols-2 gap-4 h-[380px] sm:h-[500px] w-full">
+          <div className="flex flex-col gap-5 sm:gap-7">
+            <div className="grid h-[300px] w-full grid-cols-2 gap-3 sm:h-[440px] sm:gap-4 lg:h-[500px]">
               <a
                 href={cms.hero_1_link}
                 className="relative overflow-hidden shopify-border group h-full shadow-sm block w-full"

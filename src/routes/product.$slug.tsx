@@ -28,6 +28,26 @@ const LEGACY_GENERIC_FAQ_QUESTIONS = new Set([
   "How long does the battery last?",
 ]);
 
+function youtubeEmbedUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    if (host === "youtu.be")
+      return `https://www.youtube-nocookie.com/embed/${parsed.pathname.slice(1)}`;
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      const id = parsed.searchParams.get("v") || parsed.pathname.match(/^\/shorts\/([^/]+)/)?.[1];
+      return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function isDirectVideo(url: string) {
+  return /\.(?:mp4|webm|ogg)(?:[?#].*)?$/i.test(url);
+}
+
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
     const product = await getProductBySlug(params.slug);
@@ -115,6 +135,7 @@ function ProductPage() {
   const [variant, setVariant] = useState(product.variants?.[0]?.id);
   const [activeImg, setActiveImg] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const touchStartX = React.useRef<number | null>(null);
 
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
@@ -146,6 +167,9 @@ function ProductPage() {
     { label: "YouTube", href: OFFICIAL_SOCIAL_LINKS.youtube, Icon: Youtube },
     { label: "WhatsApp", href: whatsappChat, Icon: MessageCircle },
   ];
+  const showPreviousImage = () =>
+    setActiveImg((current) => (current - 1 + product.images.length) % product.images.length);
+  const showNextImage = () => setActiveImg((current) => (current + 1) % product.images.length);
 
   const items = useCart((s) => s.items);
   const add = useCart((s) => s.add);
@@ -229,26 +253,79 @@ function ProductPage() {
         </p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           <div>
-            <div className="aspect-square bg-white shopify-border overflow-hidden mb-4 shadow-sm">
+            <div
+              className="group relative mb-3 aspect-square touch-pan-y overflow-hidden bg-white shadow-sm shopify-border"
+              onTouchStart={(event) => {
+                touchStartX.current = event.touches[0]?.clientX ?? null;
+              }}
+              onTouchEnd={(event) => {
+                if (touchStartX.current === null || product.images.length < 2) return;
+                const distance = event.changedTouches[0].clientX - touchStartX.current;
+                if (Math.abs(distance) > 45) {
+                  if (distance > 0) showPreviousImage();
+                  else showNextImage();
+                }
+                touchStartX.current = null;
+              }}
+            >
               <img
                 src={product.images[activeImg]}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+                alt={`${product.name} — image ${activeImg + 1} of ${product.images.length}`}
+                className="h-full w-full select-none object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                draggable={false}
               />
+              {product.images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={showPreviousImage}
+                    aria-label="Show previous product image"
+                    className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/90 text-2xl text-primary shadow-md transition hover:bg-white"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextImage}
+                    aria-label="Show next product image"
+                    className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/90 text-2xl text-primary shadow-md transition hover:bg-white"
+                  >
+                    ›
+                  </button>
+                  <span className="absolute bottom-3 right-3 rounded-full bg-black/75 px-3 py-1 text-[10px] font-bold text-white">
+                    {activeImg + 1} / {product.images.length}
+                  </span>
+                </>
+              )}
             </div>
             {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="flex snap-x gap-2 overflow-x-auto pb-2">
                 {product.images.map((src, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
+                    aria-label={`Show product image ${i + 1}`}
+                    aria-current={i === activeImg}
                     className={
-                      "aspect-square shopify-border overflow-hidden " +
+                      "h-16 w-16 flex-none snap-start overflow-hidden bg-white shopify-border sm:h-20 sm:w-20 " +
                       (i === activeImg ? "ring-2 ring-primary" : "")
                     }
                   >
-                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <img src={src} alt="" className="h-full w-full object-contain" />
                   </button>
+                ))}
+              </div>
+            )}
+            {product.images.length > 1 && (
+              <div className="mt-1 flex justify-center gap-1.5" aria-label="Product image position">
+                {product.images.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setActiveImg(index)}
+                    aria-label={`Go to image ${index + 1}`}
+                    className={`h-2 rounded-full transition-all ${index === activeImg ? "w-6 bg-primary" : "w-2 bg-outline-variant"}`}
+                  />
                 ))}
               </div>
             )}
@@ -497,9 +574,20 @@ function ProductPage() {
                 )}
               </div>
             ) : (
-              <div className="hidden md:grid grid-cols-2 gap-2 sm:gap-3 pt-2">
+              <div className="hidden md:grid grid-cols-2 gap-3 border border-outline-variant/50 bg-white p-4 shadow-sm">
+                <div className="col-span-2 flex items-center justify-between border-b border-outline-variant/30 pb-3">
+                  <div>
+                    <p className="text-sm font-bold text-primary">Ready to order?</p>
+                    <p className="text-[11px] text-on-surface-variant">
+                      Secure checkout with tracked delivery
+                    </p>
+                  </div>
+                  <span className="text-lg font-bold text-primary">
+                    {formatINR(product.pricePaise)}
+                  </span>
+                </div>
                 {currentQty > 0 ? (
-                  <div className="flex items-center justify-between bg-primary text-on-primary font-bold text-sm shadow-sm w-full h-full min-h-[48px]">
+                  <div className="flex min-h-14 w-full items-center justify-between bg-primary text-sm font-bold text-on-primary shadow-sm">
                     <button
                       onClick={() => {
                         if (currentQty === 1) {
@@ -551,7 +639,7 @@ function ProductPage() {
                       trackAddedToCart(v?.label);
                       toast.success(`Added ${product.name} to cart`);
                     }}
-                    className="w-full bg-primary text-on-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:opacity-90 transition-all disabled:opacity-40 shadow-sm text-center flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2"
+                    className="flex min-h-14 w-full items-center justify-center gap-2 bg-primary px-8 py-4 text-center text-sm font-bold uppercase tracking-widest text-on-primary shadow-sm transition-all hover:opacity-90 disabled:opacity-40"
                   >
                     <span>Add to Cart</span>
                     <span className="text-[11px] sm:text-sm font-bold opacity-90">
@@ -561,7 +649,7 @@ function ProductPage() {
                 )}
                 <Link
                   to="/cart"
-                  className="w-full border border-outline text-primary px-2 sm:px-8 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-tight sm:tracking-widest hover:bg-surface-container transition-all shadow-sm bg-white text-center flex items-center justify-center"
+                  className="flex min-h-14 w-full items-center justify-center border border-outline bg-surface-container-low px-8 py-4 text-center text-sm font-bold uppercase tracking-widest text-primary shadow-sm transition-all hover:bg-surface-container"
                 >
                   View Cart
                 </Link>
@@ -569,6 +657,66 @@ function ProductPage() {
             )}
           </div>
         </div>
+
+        {/* Product videos intentionally follow the purchase controls and precede specifications. */}
+        {product.videos && product.videos.length > 0 && (
+          <section className="mt-12 bg-white p-5 shadow-sm shopify-border md:mt-16 md:p-10">
+            <div className="mb-6 flex items-center gap-3">
+              <span className="material-symbols-outlined text-3xl text-primary">smart_display</span>
+              <div>
+                <h2 className="text-2xl font-bold text-primary">See the product in action</h2>
+                <p className="text-xs text-on-surface-variant">
+                  Product demonstrations and closer views before you order.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {product.videos.map((video, index) => {
+                const embedUrl = youtubeEmbedUrl(video.url);
+                return (
+                  <article key={`${video.url}-${index}`} className="space-y-2">
+                    <div className="aspect-video overflow-hidden bg-black shopify-border">
+                      {embedUrl ? (
+                        <iframe
+                          src={embedUrl}
+                          title={video.title || `${product.name} video ${index + 1}`}
+                          className="h-full w-full"
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          allowFullScreen
+                        />
+                      ) : isDirectVideo(video.url) ? (
+                        <video
+                          src={video.url}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="h-full w-full object-contain"
+                        >
+                          Your browser does not support this product video.
+                        </video>
+                      ) : (
+                        <a
+                          href={video.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex h-full w-full items-center justify-center gap-2 bg-surface-container-low text-sm font-bold text-primary"
+                        >
+                          <span className="material-symbols-outlined">open_in_new</span>
+                          Open product video
+                        </a>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-bold text-primary">
+                      {video.title || `${product.name} video ${index + 1}`}
+                    </h3>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Specs */}
         {product.specs && product.specs.length > 0 && (
@@ -591,7 +739,7 @@ function ProductPage() {
         )}
 
         {/* FAQs */}
-        {product.faqs && product.faqs.length > 0 && (
+        {productFaqs.length > 0 && (
           <div className="mt-20 bg-white shopify-border p-8 md:p-12 shadow-sm w-full">
             <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-8 text-center tracking-tight">
               Frequently Asked Questions About {product.name}

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ interface ProductMetadata {
   specs?: Array<{ label: string; value: string }>;
   variants?: Array<{ id: string; label: string }>;
   images?: string[];
+  videos?: Array<{ title: string; url: string }>;
   faqs?: Array<{ question: string; answer: string }>;
   [key: string]: unknown;
 }
@@ -47,6 +48,263 @@ interface Category {
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
+}
+
+type ProductVideo = { title: string; url: string };
+
+function fileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadProductMedia(file: File, kind: "images" | "videos") {
+  const extension =
+    file.name.split(".").pop()?.toLowerCase() || (kind === "images" ? "jpg" : "mp4");
+  const path = `${kind}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage.from("product-images").upload(path, file);
+
+  if (!error) {
+    return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+  }
+
+  if (kind === "images") return fileAsDataUrl(file);
+  throw new Error(`Video upload failed: ${error.message}`);
+}
+
+function moveEntry<T>(items: T[], from: number, to: number) {
+  if (to < 0 || to >= items.length) return items;
+  const copy = [...items];
+  const [entry] = copy.splice(from, 1);
+  copy.splice(to, 0, entry);
+  return copy;
+}
+
+function ProductMediaEditor({
+  images,
+  setImages,
+  videos,
+  setVideos,
+}: {
+  images: string[];
+  setImages: Dispatch<SetStateAction<string[]>>;
+  videos: ProductVideo[];
+  setVideos: Dispatch<SetStateAction<ProductVideo[]>>;
+}) {
+  const [uploading, setUploading] = useState<"images" | "videos" | null>(null);
+
+  async function uploadImages(files: FileList | null) {
+    if (!files?.length) return;
+    setUploading("images");
+    try {
+      const urls = await Promise.all(
+        Array.from(files).map((file) => uploadProductMedia(file, "images")),
+      );
+      setImages((current) => [...current.filter(Boolean), ...urls]);
+      toast.success(`${urls.length} image${urls.length === 1 ? "" : "s"} added.`);
+    } catch (error) {
+      toast.error(errorMessage(error, "Unable to upload the selected images"));
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  async function uploadVideos(files: FileList | null) {
+    if (!files?.length) return;
+    setUploading("videos");
+    try {
+      const selected = Array.from(files);
+      const urls = await Promise.all(selected.map((file) => uploadProductMedia(file, "videos")));
+      setVideos((current) => [
+        ...current,
+        ...urls.map((url, index) => ({ title: selected[index].name.replace(/\.[^.]+$/, ""), url })),
+      ]);
+      toast.success(`${urls.length} video${urls.length === 1 ? "" : "s"} added.`);
+    } catch (error) {
+      toast.error(errorMessage(error, "Unable to upload the selected videos"));
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  return (
+    <div className="bg-white p-4 md:p-6 shopify-border space-y-6">
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
+          3. Product Media
+        </h4>
+        <p className="mt-1 text-[11px] text-on-surface-variant">
+          Upload several images at once, reorder them, and add YouTube or direct product videos.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Images</p>
+          <div className="flex flex-wrap gap-2">
+            <label className="cursor-pointer bg-emerald-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-emerald-800 hover:bg-emerald-100">
+              {uploading === "images" ? "Uploading…" : "Bulk upload images"}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={uploading !== null}
+                onChange={(event) => {
+                  void uploadImages(event.target.files);
+                  event.currentTarget.value = "";
+                }}
+                className="sr-only"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setImages((current) => [...current, ""])}
+              className="border border-outline-variant/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-primary"
+            >
+              Add image URL
+            </button>
+          </div>
+        </div>
+
+        {images.length === 0 ? (
+          <p className="border border-dashed border-outline-variant p-6 text-center text-xs text-on-surface-variant">
+            No product images yet.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {images.map((image, index) => (
+              <div key={index} className="flex min-w-0 gap-3 border border-outline-variant/40 p-3">
+                <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-surface-container-low shopify-border">
+                  {image ? (
+                    <img
+                      src={image}
+                      alt={`Product preview ${index + 1}`}
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <span className="flex h-full items-center justify-center text-[9px] text-on-surface-variant">
+                      URL
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <input
+                    value={image}
+                    onChange={(event) =>
+                      setImages((current) =>
+                        current.map((value, i) => (i === index ? event.target.value : value)),
+                      )
+                    }
+                    placeholder="https://… image URL"
+                    className="w-full border border-outline-variant/40 px-3 py-2 text-xs font-mono"
+                  />
+                  <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => setImages((current) => moveEntry(current, index, index - 1))}
+                      className="disabled:opacity-30"
+                    >
+                      ← Earlier
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === images.length - 1}
+                      onClick={() => setImages((current) => moveEntry(current, index, index + 1))}
+                      className="disabled:opacity-30"
+                    >
+                      Later →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImages((current) => current.filter((_, i) => i !== index))}
+                      className="ml-auto text-destructive"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3 border-t border-outline-variant/30 pt-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-primary">
+            Product videos
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <label className="cursor-pointer bg-blue-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-blue-800 hover:bg-blue-100">
+              {uploading === "videos" ? "Uploading…" : "Upload video"}
+              <input
+                type="file"
+                accept="video/mp4,video/webm,video/ogg"
+                multiple
+                disabled={uploading !== null}
+                onChange={(event) => {
+                  void uploadVideos(event.target.files);
+                  event.currentTarget.value = "";
+                }}
+                className="sr-only"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() =>
+                setVideos((current) => [...current, { title: "Product video", url: "" }])
+              }
+              className="border border-outline-variant/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-primary"
+            >
+              Add video URL
+            </button>
+          </div>
+        </div>
+        {videos.map((video, index) => (
+          <div
+            key={index}
+            className="grid grid-cols-1 gap-2 border border-outline-variant/40 p-3 md:grid-cols-[0.7fr_1.3fr_auto] md:items-center"
+          >
+            <input
+              value={video.title}
+              onChange={(event) =>
+                setVideos((current) =>
+                  current.map((value, i) =>
+                    i === index ? { ...value, title: event.target.value } : value,
+                  ),
+                )
+              }
+              placeholder="Video title"
+              className="border border-outline-variant/40 px-3 py-2 text-xs"
+            />
+            <input
+              value={video.url}
+              onChange={(event) =>
+                setVideos((current) =>
+                  current.map((value, i) =>
+                    i === index ? { ...value, url: event.target.value } : value,
+                  ),
+                )
+              }
+              placeholder="YouTube or direct MP4/WebM URL"
+              className="min-w-0 border border-outline-variant/40 px-3 py-2 text-xs font-mono"
+            />
+            <button
+              type="button"
+              onClick={() => setVideos((current) => current.filter((_, i) => i !== index))}
+              className="px-2 py-2 text-[10px] font-bold uppercase text-destructive"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export const Route = createFileRoute("/admin/products")({
@@ -92,6 +350,7 @@ function AdminProducts() {
         specs: p.specs,
         variants: p.variants || [],
         images: p.images,
+        videos: p.videos || [],
         faqs: p.faqs || [],
       },
     }));
@@ -193,7 +452,7 @@ function AdminProducts() {
         <div className="min-w-0">
           <h2 className="text-2xl font-bold">Products Catalog</h2>
           <p className="text-xs text-on-surface-variant mt-1">
-            Manage specifications, variants, flagship tags, discounted pricing, and image galleries.
+            Manage pricing, stock, specifications, bulk images, and product videos.
           </p>
         </div>
         <button
@@ -246,12 +505,16 @@ function AdminProducts() {
                     <img
                       src={r.metadata.images[0]}
                       alt=""
-                      className="h-16 w-16 flex-shrink-0 object-cover shopify-border"
+                      className="h-16 w-16 flex-shrink-0 object-contain shopify-border"
                     />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-primary leading-snug break-words">{r.name}</p>
                     <p className="text-[11px] text-on-surface-variant break-all">{r.slug}</p>
+                    <p className="mt-1 text-[10px] font-medium text-on-surface-variant">
+                      {r.metadata?.images?.length || 0} images • {r.metadata?.videos?.length || 0}{" "}
+                      videos
+                    </p>
                     {r.metadata?.badge && (
                       <span className="mt-2 inline-block rounded border border-primary bg-primary/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
                         {r.metadata.badge}
@@ -351,12 +614,16 @@ function AdminProducts() {
                           <img
                             src={r.metadata.images[0]}
                             alt=""
-                            className="w-10 h-10 object-cover shopify-border flex-shrink-0"
+                            className="w-10 h-10 object-contain shopify-border flex-shrink-0"
                           />
                         )}
                         <div>
                           <p className="font-bold text-primary">{r.name}</p>
                           <p className="text-[11px] text-on-surface-variant">{r.slug}</p>
+                          <p className="text-[10px] text-on-surface-variant">
+                            {r.metadata?.images?.length || 0} images •{" "}
+                            {r.metadata?.videos?.length || 0} videos
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -464,6 +731,7 @@ function NewProductForm({
     "https://lh3.googleusercontent.com/aida-public/AB6AXuAN4IWZ0o1xacmmTaAaeV4gJ2JM37nCA4Vu9FMZfWJ6CWZ9FReqzNA1zUw6b0z8fcVQRPejT-QofOpAaJlfeyZecXQpvnPZozhZdiZEDOj_qYqjYW64yxxY868yjxmBThtOdw-4pzxzc42bvkJogioVcwVPkGQS6ry7BHc3bO3PdOrAO0BS-A9PtmtRSFRGsIExVtxY8Knwi18rphz2LtaWGl0UbhG2lpi0gT9sXZRW0-4tpyNY7rWZZMvKc--gTZ9bjlCWX_yVWtpO",
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCm_n1zeaqwYJAsYDw_UO82ywo_kvjRIEVnrSe0IXmiCc0w0f4amIl5GPi1qwb0x_zgKFT2Di4PiqffML-GPcSWoClZySpGw7qQ5KichDioDJ3LGIIdRDCp23b_h_HuycTaBl8fCwkN65HACqY2RyAUbuVYXAMUet7R9QZmQP_Hm2XrrGU9PNnw72oQQSSb34P6kf49pocIY_D43rLRUqke2u3g9uKBoBgCxKU3v86La9sWNrLWM38CWCn2F1LBUJKie2Quec_FQzp_",
   ]);
+  const [videos, setVideos] = useState<ProductVideo[]>([]);
   const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([
     {
       question: "Is this device fully unlocked?",
@@ -475,52 +743,6 @@ function NewProductForm({
       answer: "Yes, full Google Play Services and Play Store are pre-installed and certified.",
     },
   ]);
-  const [uploadingImg, setUploadingImg] = useState<number | null>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingImg(idx);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(fileName, file);
-
-      if (!uploadError) {
-        const { data: publicUrlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(fileName);
-
-        if (publicUrlData?.publicUrl) {
-          const copy = [...images];
-          copy[idx] = publicUrlData.publicUrl;
-          setImages(copy);
-          toast.success("Image uploaded successfully to Supabase storage!");
-          setUploadingImg(null);
-          return;
-        }
-      }
-
-      // Fallback to Data URL (base64) if storage bucket isn't accessible
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const copy = [...images];
-        copy[idx] = reader.result as string;
-        setImages(copy);
-        toast.success("Image loaded successfully from device storage!");
-        setUploadingImg(null);
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      toast.error("Failed to process image file.");
-      setUploadingImg(null);
-    }
-  };
-
   return (
     <form
       onSubmit={async (e) => {
@@ -544,6 +766,7 @@ function NewProductForm({
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
           images: images.filter((i) => i.trim() !== ""),
+          videos: videos.filter((video) => video.url.trim() !== ""),
           faqs: faqs.filter((f) => f.question && f.answer),
         };
 
@@ -789,66 +1012,12 @@ function NewProductForm({
         </div>
       </div>
 
-      {/* Images Gallery */}
-      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
-            3. Product Image Gallery URLs & Device Storage Upload
-          </h4>
-          <button
-            type="button"
-            onClick={() => setImages([...images, ""])}
-            className="text-xs text-primary font-bold hover:underline"
-          >
-            + Add Image Slot
-          </button>
-        </div>
-        <div className="space-y-4">
-          {images.map((img, idx) => (
-            <div
-              key={idx}
-              className="bg-surface-container-lowest p-4 border border-outline-variant/40 space-y-2 rounded"
-            >
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-primary uppercase tracking-widest">
-                  Image #{idx + 1}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                  className="text-destructive font-bold text-xs hover:underline"
-                >
-                  Remove
-                </button>
-              </div>
-              <input
-                value={img}
-                onChange={(e) => {
-                  const copy = [...images];
-                  copy[idx] = e.target.value;
-                  setImages(copy);
-                }}
-                placeholder="https://... (Image URL)"
-                className="w-full border border-outline-variant/40 px-3 py-2 text-xs font-mono focus:border-primary bg-white"
-              />
-              <div className="pt-1">
-                <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1">
-                  Or Upload from Device Storage
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, idx)}
-                  className="w-full text-xs file:mr-4 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                />
-                {uploadingImg === idx && (
-                  <p className="text-xs text-amber-600 mt-1 animate-pulse">Uploading image...</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <ProductMediaEditor
+        images={images}
+        setImages={setImages}
+        videos={videos}
+        setVideos={setVideos}
+      />
 
       {/* Precision Specifications Builder */}
       <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
@@ -1042,54 +1211,10 @@ function EditProductForm({
     prod.metadata?.variants || [],
   );
   const [images, setImages] = useState<string[]>(prod.metadata?.images || []);
+  const [videos, setVideos] = useState<ProductVideo[]>(prod.metadata?.videos || []);
   const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>(
     prod.metadata?.faqs || [],
   );
-  const [uploadingImg, setUploadingImg] = useState<number | null>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingImg(idx);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(fileName, file);
-
-      if (!uploadError) {
-        const { data: publicUrlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(fileName);
-
-        if (publicUrlData?.publicUrl) {
-          const copy = [...images];
-          copy[idx] = publicUrlData.publicUrl;
-          setImages(copy);
-          toast.success("Image uploaded successfully to Supabase storage!");
-          setUploadingImg(null);
-          return;
-        }
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const copy = [...images];
-        copy[idx] = reader.result as string;
-        setImages(copy);
-        toast.success("Image loaded successfully from device storage!");
-        setUploadingImg(null);
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      toast.error("Failed to process image file.");
-      setUploadingImg(null);
-    }
-  };
-
   return (
     <form
       onSubmit={async (e) => {
@@ -1117,6 +1242,7 @@ function EditProductForm({
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
           images: images.filter((i) => i.trim() !== ""),
+          videos: videos.filter((video) => video.url.trim() !== ""),
           faqs: faqs.filter((f) => f.question && f.answer),
         };
 
@@ -1383,66 +1509,12 @@ function EditProductForm({
         </div>
       </div>
 
-      {/* Images Gallery */}
-      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
-            3. Product Image Gallery URLs & Device Storage Upload
-          </h4>
-          <button
-            type="button"
-            onClick={() => setImages([...images, ""])}
-            className="text-xs text-primary font-bold hover:underline"
-          >
-            + Add Image Slot
-          </button>
-        </div>
-        <div className="space-y-4">
-          {images.map((img, idx) => (
-            <div
-              key={idx}
-              className="bg-surface-container-lowest p-4 border border-outline-variant/40 space-y-2 rounded"
-            >
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-primary uppercase tracking-widest">
-                  Image #{idx + 1}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                  className="text-destructive font-bold text-xs hover:underline"
-                >
-                  Remove
-                </button>
-              </div>
-              <input
-                value={img}
-                onChange={(e) => {
-                  const copy = [...images];
-                  copy[idx] = e.target.value;
-                  setImages(copy);
-                }}
-                placeholder="https://... (Image URL)"
-                className="w-full border border-outline-variant/40 px-3 py-2 text-xs font-mono focus:border-primary bg-white"
-              />
-              <div className="pt-1">
-                <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1">
-                  Or Upload from Device Storage
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, idx)}
-                  className="w-full text-xs file:mr-4 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                />
-                {uploadingImg === idx && (
-                  <p className="text-xs text-amber-600 mt-1 animate-pulse">Uploading image...</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <ProductMediaEditor
+        images={images}
+        setImages={setImages}
+        videos={videos}
+        setVideos={setVideos}
+      />
 
       {/* Precision Specifications Builder */}
       <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
