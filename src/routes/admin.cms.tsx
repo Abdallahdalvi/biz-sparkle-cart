@@ -300,7 +300,7 @@ function AdminCmsPage() {
     { id: "catalog", label: "Catalog Header", icon: "grid_view" },
     { id: "about", label: "About Us Page", icon: "info" },
     { id: "faqs", label: "Homepage FAQs", icon: "quiz" },
-    { id: "videos", label: "YouTube & Insta", icon: "video_library" },
+    { id: "videos", label: "YouTube Videos", icon: "video_library" },
     { id: "pointers", label: "Trust Pointers", icon: "check_circle" },
     { id: "legal", label: "Footer Legal & Policy Pages", icon: "policy" },
     { id: "reviews", label: "Google Review Highlights", icon: "star" },
@@ -1598,13 +1598,13 @@ function AdminCmsPage() {
             </div>
           )}
 
-          {/* 6. YouTube & Instagram Video Integration */}
+          {/* 6. YouTube Video Integration */}
           {activeTab === "videos" && (
             <div className="bg-white shopify-border p-6 md:p-8 shadow-sm space-y-6 animate-fadeIn">
               <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
                 <h3 className="text-xl font-bold text-primary flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">video_library</span>
-                  YouTube & Instagram Video Integration
+                  YouTube Video Integration
                 </h3>
                 <button
                   type="button"
@@ -1663,7 +1663,6 @@ function AdminCmsPage() {
                           }}
                           className="w-full bg-surface-container-low border border-outline-variant/40 p-2.5 text-sm font-medium focus:border-primary focus:outline-none"
                         >
-                          <option value="Instagram">Instagram</option>
                           <option value="YouTube">YouTube</option>
                         </select>
                       </div>

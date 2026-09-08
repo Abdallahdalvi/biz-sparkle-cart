@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 
 const NAV = [
-  { href: "/", route: "/", label: "Home" },
+  { href: "/", route: "/", label: "Store" },
   { href: "/#products", route: null, label: "Products" },
   { href: "/track", route: "/track", label: "Track Order" },
   { href: "/legal/about", route: "/legal/about", label: "About" },

@@ -231,31 +231,20 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   faqs: STORE_TRUST_FAQS,
   videos: [
     {
-      platform: "Instagram",
-      title: "NOKIA 2720 FLIP",
-      url: "https://www.instagram.com/p/DcbEVJdNl8d/",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuCtul4bEHAymnFjP_YwUMJ9Gm51gxXNo2pPWDTDNJa8dv5a5xXnye8_j586jPHevYSBeFWgM6guJIqfFv7-wLliLiVnWeJoKGPWVdN2Bk4GuDTAZByF190znXchXIzDdm9fvipJaYzWEM2znWrt9QI3cNzOsIzeU8WdlZNhVpIMNj81X6Pro1pBkwG1VH_EY9OKpdz01eOQyyOEaRmBDepVn6K3slmZ1FXb3iEzrGw3biPL26Tp0Iqwe2cNS7SmLw2wUggVs2AB_HrE",
-      views: "145K views",
-      likes: "20,758 likes",
+      platform: "YouTube",
+      title: "iPhone SE 3 | ₹20,999",
+      url: "https://www.youtube.com/shorts/bEH_UsI4lG0",
+      image: "https://i.ytimg.com/vi/bEH_UsI4lG0/hqdefault.jpg",
+      views: "",
+      likes: "",
     },
     {
       platform: "YouTube",
-      title: "TACTILE QWERTY REVIEW",
-      url: "https://youtube.com",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuAN4IWZ0o1xacmmTaAaeV4gJ2JM37nCA4Vu9FMZfWJ6CWZ9FReqzNA1zUw6b0z8fcVQRPejT-QofOpAaJlfeyZecXQpvnPZozhZdiZEDOj_qYqjYW64yxxY868yjxmBThtOdw-4pzxzc42bvkJogioVcwVPkGQS6ry7BHc3bO3PdOrAO0BS-A9PtmtRSFRGsIExVtxY8Knwi18rphz2LtaWGl0UbhG2lpi0gT9sXZRW0-4tpyNY7rWZZMvKc--gTZ9bjlCWX_yVWtpO",
-      views: "89K views",
-      likes: "12,430 likes",
-    },
-    {
-      platform: "YouTube",
-      title: "CYBERSPEAKER G1 BASS TEST",
-      url: "https://youtube.com",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuD6Q8Vlvrz7ols2_EjmmKMexa3lC2aSxCtKwQHbFBbGnkZKbgSEwgCTPXfZpz0VTSI_3K4nES2ljHFnGbTYRKpwOpchngDKPTV_waavEn_abVboS3xKHpg8r6_WkZ-I-OuY3qrKYqioa64U14nSw98EAdXvpuTXf8_edDXurE52Yfq5iHA0fWmbZxad1rkWVHb_IiVgl7dEVf4nKEFGmBD33rpi5aTHpBCVPHiPMaT8mYB8g-BTHgGxmd0cEig7zq16zrrmLO-aWSDj",
-      views: "210K views",
-      likes: "34,120 likes",
+      title: "Nokia 2720 Flip India | ₹3499",
+      url: "https://www.youtube.com/shorts/PLUv0cCqEB8",
+      image: "https://i.ytimg.com/vi/PLUv0cCqEB8/hqdefault.jpg",
+      views: "",
+      likes: "",
     },
   ],
   pointers: [

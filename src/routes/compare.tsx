@@ -13,9 +13,15 @@ export const Route = createFileRoute("/compare")({
   head: () => ({
     meta: [
       { title: "Device Comparison Engine — Aghanims Phones and Gadgets" },
-      { name: "description", content: "Compare boutique phones, audio engines, and mechanical accessories side-by-side." },
+      {
+        name: "description",
+        content: "Compare boutique phones, audio engines, and mechanical accessories side-by-side.",
+      },
       { property: "og:title", content: "Device Comparison Engine — Aghanims Phones and Gadgets" },
-      { property: "og:description", content: "Compare boutique phones, audio engines, and mechanical accessories side-by-side." },
+      {
+        property: "og:description",
+        content: "Compare boutique phones, audio engines, and mechanical accessories side-by-side.",
+      },
     ],
   }),
   component: ComparePage,
@@ -23,7 +29,7 @@ export const Route = createFileRoute("/compare")({
 
 function ComparePage() {
   const { all } = Route.useLoaderData() as { all: Product[] };
-  const add = useCart((s: any) => s.add);
+  const add = useCart((s) => s.add);
   const navigate = useNavigate();
 
   // Default select first 3 products if available
@@ -51,11 +57,7 @@ function ComparePage() {
 
   // Gather all unique spec labels across selected products
   const allSpecLabels = Array.from(
-    new Set(
-      selectedProducts
-        .filter(Boolean)
-        .flatMap((p) => p!.specs.map((s) => s.label))
-    )
+    new Set(selectedProducts.filter(Boolean).flatMap((p) => p!.specs.map((s) => s.label))),
   );
 
   return (
@@ -63,13 +65,17 @@ function ComparePage() {
       <section className="px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto py-12 md:py-16">
         <div className="mb-12">
           <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-            <Link to="/" className="hover:text-primary">Home</Link> / Compare
+            <Link to="/" className="hover:text-primary">
+              Home
+            </Link>{" "}
+            / Compare
           </p>
           <h1 className="text-4xl md:text-5xl font-bold text-primary max-w-2xl">
             Device Comparison Engine
           </h1>
           <p className="text-on-surface-variant mt-4 max-w-xl">
-            Compare precision-engineered mechanics, battery stamina, tactile key mechanisms, and acoustic specifications side-by-side.
+            Compare precision-engineered mechanics, battery stamina, tactile key mechanisms, and
+            acoustic specifications side-by-side.
           </p>
         </div>
 
@@ -78,7 +84,10 @@ function ComparePage() {
           {[0, 1, 2].map((slotIndex) => {
             const currentProduct = selectedProducts[slotIndex];
             return (
-              <div key={slotIndex} className="bg-surface-container-lowest border border-outline-variant/40 p-6 rounded shadow-sm flex flex-col justify-between space-y-6">
+              <div
+                key={slotIndex}
+                className="bg-surface-container-lowest border border-outline-variant/40 p-6 rounded shadow-sm flex flex-col justify-between space-y-6"
+              >
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
                     Slot {slotIndex + 1} Device
@@ -107,11 +116,17 @@ function ComparePage() {
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-primary">{currentProduct.name}</h3>
-                        <p className="text-xs text-on-surface-variant mt-1">{currentProduct.tagline}</p>
+                        <p className="text-xs text-on-surface-variant mt-1">
+                          {currentProduct.tagline}
+                        </p>
                         <div className="mt-3 flex items-center justify-center gap-2">
-                          <span className="text-base font-bold text-primary">{formatINR(currentProduct.pricePaise)}</span>
+                          <span className="text-base font-bold text-primary">
+                            {formatINR(currentProduct.pricePaise)}
+                          </span>
                           {currentProduct.compareAtPaise && (
-                            <span className="text-xs text-on-surface-variant line-through">{formatINR(currentProduct.compareAtPaise)}</span>
+                            <span className="text-xs text-on-surface-variant line-through">
+                              {formatINR(currentProduct.compareAtPaise)}
+                            </span>
                           )}
                         </div>
                         {currentProduct.badge && (
@@ -124,7 +139,9 @@ function ComparePage() {
                   ) : (
                     <div className="aspect-square bg-surface-container-lowest border border-dashed border-outline-variant/60 rounded flex flex-col items-center justify-center text-on-surface-variant text-center p-6 space-y-2">
                       <span className="material-symbols-outlined text-3xl">ad_units</span>
-                      <p className="text-xs font-medium">Select a gadget from the dropdown above to begin side-by-side comparison.</p>
+                      <p className="text-xs font-medium">
+                        Select a gadget from the dropdown above to begin side-by-side comparison.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -134,17 +151,21 @@ function ComparePage() {
                     {currentProduct.stock > 0 ? (
                       <button
                         onClick={() => {
-                          add({
-                            slug: currentProduct.slug,
-                            name: currentProduct.name,
-                            pricePaise: currentProduct.pricePaise,
-                            image: currentProduct.images[0],
-                          }, 1);
+                          add(
+                            {
+                              slug: currentProduct.slug,
+                              name: currentProduct.name,
+                              pricePaise: currentProduct.pricePaise,
+                              image: currentProduct.images[0],
+                            },
+                            1,
+                          );
                           toast.success(`Added ${currentProduct.name} to cart`);
                         }}
                         className="w-full bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2"
                       >
-                        <span className="material-symbols-outlined text-base">shopping_cart</span> Add to Cart
+                        <span className="material-symbols-outlined text-base">shopping_cart</span>{" "}
+                        Add to Cart
                       </button>
                     ) : (
                       <Link
@@ -152,7 +173,8 @@ function ComparePage() {
                         params={{ slug: currentProduct.slug }}
                         className="w-full bg-surface-container text-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-colors shadow-sm flex items-center justify-center gap-2 block text-center"
                       >
-                        <span className="material-symbols-outlined text-base">hourglass_top</span> Join Waitlist
+                        <span className="material-symbols-outlined text-base">hourglass_top</span>{" "}
+                        Join Waitlist
                       </Link>
                     )}
                   </div>
@@ -180,7 +202,10 @@ function ComparePage() {
                 {[0, 1, 2].map((slotIndex) => {
                   const p = selectedProducts[slotIndex];
                   return (
-                    <div key={slotIndex} className="p-5 text-xs font-semibold text-primary md:border-r last:border-0 border-outline-variant/30 flex items-center justify-center text-center">
+                    <div
+                      key={slotIndex}
+                      className="p-5 text-xs font-semibold text-primary md:border-r last:border-0 border-outline-variant/30 flex items-center justify-center text-center"
+                    >
                       {p ? p.formFactor || p.category : "—"}
                     </div>
                   );
@@ -195,12 +220,19 @@ function ComparePage() {
                 {[0, 1, 2].map((slotIndex) => {
                   const p = selectedProducts[slotIndex];
                   return (
-                    <div key={slotIndex} className="p-5 text-xs font-semibold md:border-r last:border-0 border-outline-variant/30 flex items-center justify-center text-center">
+                    <div
+                      key={slotIndex}
+                      className="p-5 text-xs font-semibold md:border-r last:border-0 border-outline-variant/30 flex items-center justify-center text-center"
+                    >
                       {p ? (
                         p.stock > 0 ? (
-                          <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">In Stock ({p.stock} units)</span>
+                          <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                            In Stock ({p.stock} units)
+                          </span>
                         ) : (
-                          <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">Priority Waitlist Open</span>
+                          <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">
+                            Priority Waitlist Open
+                          </span>
                         )
                       ) : (
                         "—"
@@ -212,7 +244,10 @@ function ComparePage() {
 
               {/* Dynamic Specs Rows */}
               {allSpecLabels.map((specLabel) => (
-                <div key={specLabel} className="grid grid-cols-1 md:grid-cols-4 hover:bg-surface-container-lowest/50 transition-colors">
+                <div
+                  key={specLabel}
+                  className="grid grid-cols-1 md:grid-cols-4 hover:bg-surface-container-lowest/50 transition-colors"
+                >
                   <div className="p-5 font-bold text-xs uppercase tracking-widest text-on-surface-variant bg-surface-container-lowest/30 md:border-r border-outline-variant/30 flex items-center">
                     {specLabel}
                   </div>
@@ -220,7 +255,10 @@ function ComparePage() {
                     const p = selectedProducts[slotIndex];
                     const specObj = p?.specs.find((s) => s.label === specLabel);
                     return (
-                      <div key={slotIndex} className="p-5 text-xs text-primary md:border-r last:border-0 border-outline-variant/30 flex items-center justify-center text-center leading-relaxed">
+                      <div
+                        key={slotIndex}
+                        className="p-5 text-xs text-primary md:border-r last:border-0 border-outline-variant/30 flex items-center justify-center text-center leading-relaxed"
+                      >
                         {specObj ? specObj.value : "—"}
                       </div>
                     );

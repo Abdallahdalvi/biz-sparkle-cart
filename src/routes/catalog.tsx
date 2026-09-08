@@ -75,6 +75,9 @@ function Catalog() {
   const formFactors = [
     "all",
     "QWERTY",
+    "QWERTY Android",
+    "Legacy QWERTY",
+    "Android Flip",
     "E-Ink",
     "Mini",
     "Rugged",

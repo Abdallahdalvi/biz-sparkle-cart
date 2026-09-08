@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
 import {
@@ -23,28 +23,91 @@ import {
   SITE_URL,
 } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS } from "@/lib/social-links";
-import {
-  TRACKING_CONSENT_CHANGED_EVENT,
-  openTrackingPreferences,
-  readTrackingConsent,
-} from "@/lib/tracking";
+import { getYouTubeChannelVideos, type YouTubeChannelVideo } from "@/lib/youtube.functions";
 
-function instagramEmbedUrl(url: string) {
+function youtubeVideoId(url: string) {
   try {
     const parsed = new URL(url);
-    if (!/(^|\.)instagram\.com$/i.test(parsed.hostname)) return null;
-    const match = parsed.pathname.match(/^\/(p|reel|tv)\/([^/]+)/i);
-    return match ? `https://www.instagram.com/${match[1]}/${match[2]}/embed/captioned/` : null;
+    const host = parsed.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") return parsed.pathname.slice(1) || null;
+    if (host !== "youtube.com" && host !== "m.youtube.com") return null;
+    return (
+      parsed.searchParams.get("v") ||
+      parsed.pathname.match(/^\/(?:shorts|embed)\/([^/]+)/)?.[1] ||
+      null
+    );
   } catch {
     return null;
   }
 }
 
+function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <article className="overflow-hidden bg-white shadow-sm shopify-border">
+      <div className="relative aspect-video overflow-hidden bg-black">
+        {playing ? (
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&playsinline=1`}
+            title={video.title}
+            className="h-full w-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPlaying(true)}
+            aria-label={`Play ${video.title}`}
+            className="group relative h-full w-full text-left"
+          >
+            <img
+              src={video.thumbnail}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              loading="lazy"
+            />
+            <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
+            <span className="material-symbols-outlined absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-600 text-4xl text-white shadow-lg transition-transform group-hover:scale-105">
+              play_arrow
+            </span>
+            <span className="absolute bottom-3 left-3 right-3 line-clamp-2 text-sm font-bold text-white">
+              {video.title}
+            </span>
+          </button>
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-bold text-primary">{video.title}</h3>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+            {video.views === null
+              ? "Official channel"
+              : `${video.views.toLocaleString("en-IN")} views`}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setPlaying(true)}
+          className="flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-red-700 hover:underline"
+        >
+          Play here
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const all = await getAllProducts();
-    const cms = await getStorefrontCms();
-    return { all, cms };
+    const [all, cms, channelVideos] = await Promise.all([
+      getAllProducts(),
+      getStorefrontCms(),
+      getYouTubeChannelVideos(),
+    ]);
+    return { all, cms, channelVideos };
   },
   head: ({ loaderData }) => {
     const cms = loaderData?.cms;
@@ -121,17 +184,33 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { all, cms } = Route.useLoaderData() as { all: Product[]; cms: StorefrontCms };
+  const { all, cms, channelVideos } = Route.useLoaderData() as {
+    all: Product[];
+    cms: StorefrontCms;
+    channelVideos: YouTubeChannelVideo[];
+  };
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const [marketingConsent, setMarketingConsent] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<Category>>(new Set());
   const shopCategories = CATEGORIES.filter(
     (category): category is { id: Category; label: string } => category.id !== "all",
   );
-  const instagramVideos = cms.videos.filter(
-    (video) => video.platform.toLowerCase() === "instagram" && instagramEmbedUrl(video.url),
-  );
+  const youtubeVideos = channelVideos.length
+    ? channelVideos
+    : cms.videos.flatMap((video) => {
+        const id = video.platform.toLowerCase() === "youtube" ? youtubeVideoId(video.url) : null;
+        return id
+          ? [
+              {
+                id,
+                title: video.title,
+                thumbnail: video.image || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+                publishedAt: "",
+                views: null,
+              },
+            ]
+          : [];
+      });
   const visibleReviews = Array.from(
     { length: Math.min(3, cms.reviews.length) },
     (_, offset) => cms.reviews[(reviewIndex + offset) % cms.reviews.length],
@@ -142,13 +221,6 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
-
-  useEffect(() => {
-    const syncConsent = () => setMarketingConsent(readTrackingConsent()?.marketing === true);
-    syncConsent();
-    window.addEventListener(TRACKING_CONSENT_CHANGED_EVENT, syncConsent);
-    return () => window.removeEventListener(TRACKING_CONSENT_CHANGED_EVENT, syncConsent);
-  }, []);
 
   return (
     <SiteShell>
@@ -460,97 +532,44 @@ function Index() {
         </section>
       )}
 
-      {/* CMS-managed Instagram product videos */}
-      {instagramVideos.length > 0 && (
+      {/* Official YouTube uploads: one click starts privacy-enhanced playback in place. */}
+      {youtubeVideos.length > 0 && (
         <section className="border-b border-outline-variant/30 bg-white py-12 md:py-16">
           <div className="mx-auto max-w-[1280px] px-margin-mobile md:px-margin-desktop">
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-pink-700">
-                  From Instagram
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-red-700">
+                  From YouTube
                 </p>
                 <h2 className="text-3xl font-bold tracking-tight text-primary">
                   Watch before you buy
                 </h2>
                 <p className="mt-2 text-sm text-on-surface-variant">
-                  Real product clips, demonstrations, and new arrivals from our official profile.
+                  Watch every upload from our official channel without leaving the store.
                 </p>
               </div>
               <a
-                href={OFFICIAL_SOCIAL_LINKS.instagram}
+                href={OFFICIAL_SOCIAL_LINKS.youtube}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden flex-shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary hover:underline sm:flex"
               >
-                Follow us <span className="material-symbols-outlined text-base">arrow_outward</span>
+                View channel{" "}
+                <span className="material-symbols-outlined text-base">arrow_outward</span>
               </a>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {instagramVideos.map((video, index) => (
-                <article
-                  key={`${video.url}-${index}`}
-                  className="overflow-hidden bg-white shadow-sm shopify-border"
-                >
-                  <div className="aspect-[4/5] bg-surface-container-low">
-                    {marketingConsent ? (
-                      <iframe
-                        src={instagramEmbedUrl(video.url) || undefined}
-                        title={video.title || `Aghanims Instagram video ${index + 1}`}
-                        className="h-full w-full border-0"
-                        loading="lazy"
-                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                      />
-                    ) : (
-                      <div className="relative h-full w-full">
-                        <img
-                          src={video.image}
-                          alt={video.title}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/55 p-6 text-center text-white">
-                          <span className="material-symbols-outlined text-5xl">play_circle</span>
-                          <p className="text-xs font-bold">
-                            Allow marketing media to play Instagram here
-                          </p>
-                          <button
-                            type="button"
-                            onClick={openTrackingPreferences}
-                            className="bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-primary"
-                          >
-                            Cookie settings
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-primary">{video.title}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                        Instagram video
-                      </p>
-                    </div>
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Open ${video.title} on Instagram`}
-                      className="material-symbols-outlined flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-on-primary"
-                    >
-                      arrow_outward
-                    </a>
-                  </div>
-                </article>
+              {youtubeVideos.map((video) => (
+                <YouTubeVideoCard key={video.id} video={video} />
               ))}
             </div>
             <a
-              href={OFFICIAL_SOCIAL_LINKS.instagram}
+              href={OFFICIAL_SOCIAL_LINKS.youtube}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 flex w-full items-center justify-center gap-1 border border-primary px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-primary sm:hidden"
             >
-              Follow on Instagram
+              View YouTube channel
               <span className="material-symbols-outlined text-base">arrow_outward</span>
             </a>
           </div>
