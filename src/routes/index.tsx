@@ -46,7 +46,7 @@ function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
 
   return (
     <article className="overflow-hidden bg-white shadow-sm shopify-border">
-      <div className="relative aspect-video overflow-hidden bg-black">
+      <div className="relative aspect-[9/16] overflow-hidden bg-black">
         {playing ? (
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&playsinline=1`}
@@ -70,16 +70,13 @@ function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
               loading="lazy"
             />
             <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
-            <span className="material-symbols-outlined absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-600 text-4xl text-white shadow-lg transition-transform group-hover:scale-105">
-              play_arrow
-            </span>
             <span className="absolute bottom-3 left-3 right-3 line-clamp-2 text-sm font-bold text-white">
               {video.title}
             </span>
           </button>
         )}
       </div>
-      <div className="flex items-center justify-between gap-3 p-4">
+      <div className="p-3 sm:p-4">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-bold text-primary">{video.title}</h3>
           <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
@@ -88,13 +85,6 @@ function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
               : `${video.views.toLocaleString("en-IN")} views`}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setPlaying(true)}
-          className="flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-red-700 hover:underline"
-        >
-          Play here
-        </button>
       </div>
     </article>
   );
@@ -558,7 +548,7 @@ function Index() {
                 <span className="material-symbols-outlined text-base">arrow_outward</span>
               </a>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
               {youtubeVideos.map((video) => (
                 <YouTubeVideoCard key={video.id} video={video} />
               ))}
