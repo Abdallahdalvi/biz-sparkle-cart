@@ -29,7 +29,10 @@ export const getYouTubeChannelVideos = createServerFn({ method: "GET" }).handler
     try {
       const response = await fetch(
         `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`,
-        { headers: { accept: "application/atom+xml" } },
+        {
+          headers: { accept: "application/atom+xml" },
+          cache: "no-store",
+        },
       );
       if (!response.ok) return [];
 
@@ -51,7 +54,7 @@ export const getYouTubeChannelVideos = createServerFn({ method: "GET" }).handler
           };
         })
         .filter((video) => video.id && video.title)
-        .slice(0, 15);
+        .slice(0, 12);
     } catch {
       return [];
     }

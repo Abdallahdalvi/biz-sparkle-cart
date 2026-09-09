@@ -256,9 +256,8 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       void import("@/lib/order-notifications.server").then(({ notifyAdminAboutActionableOrder }) =>
         notifyAdminAboutActionableOrder(order.id),
       );
-      void import("@/lib/meta-conversions.server").then(({ sendMetaPurchaseEvent }) =>
-        sendMetaPurchaseEvent(order.id, data.marketingConsent),
-      );
+      const { sendMetaPurchaseEvent } = await import("@/lib/meta-conversions.server");
+      await sendMetaPurchaseEvent(order.id, data.marketingConsent);
 
       return {
         ok: true,

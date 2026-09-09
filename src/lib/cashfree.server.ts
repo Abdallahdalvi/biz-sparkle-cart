@@ -359,9 +359,8 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
   void import("@/lib/order-notifications.server").then(({ notifyAdminAboutActionableOrder }) =>
     notifyAdminAboutActionableOrder(transitioned.id),
   );
-  void import("@/lib/meta-conversions.server").then(({ sendMetaPurchaseEvent }) =>
-    sendMetaPurchaseEvent(transitioned.id, payment.marketingConsent),
-  );
+  const { sendMetaPurchaseEvent } = await import("@/lib/meta-conversions.server");
+  await sendMetaPurchaseEvent(transitioned.id, payment.marketingConsent);
 
   return {
     ok: true,

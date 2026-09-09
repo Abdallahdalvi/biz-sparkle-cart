@@ -134,6 +134,13 @@ export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
 
 export const LATEST_GOOGLE_TEXT_REVIEWS: StorefrontCms["reviews"] = [
   {
+    author: "gagandeep kochar",
+    time: "September 2026",
+    stars: 5,
+    snippet: "Genuine guy and genuine buy. Bought a Tab from him and he was kind in dealing.",
+    avatar: "G",
+  },
+  {
     author: "Basavaraj Patil",
     time: "September 2026",
     stars: 5,
@@ -272,7 +279,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   reviews_heading: {
     store_name: "Aghanims Phones and Gadgets",
     rating: 5.0,
-    total_reviews: 8,
+    total_reviews: 9,
   },
   reviews: LATEST_GOOGLE_TEXT_REVIEWS,
   cod_charge_amount: 99,

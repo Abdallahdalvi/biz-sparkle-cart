@@ -51,24 +51,36 @@ function youtubeVideoId(url: string) {
 }
 
 function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
-  const [playing, setPlaying] = useState(false);
+  const [hoverPreview, setHoverPreview] = useState(false);
+  const [manualPlayback, setManualPlayback] = useState(false);
+  const playing = hoverPreview || manualPlayback;
+  const publishedLabel = video.publishedAt
+    ? new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(
+        new Date(video.publishedAt),
+      )
+    : "Official channel";
 
   return (
-    <article className="overflow-hidden bg-white shadow-sm shopify-border">
+    <article
+      className="overflow-hidden bg-white shadow-sm transition-shadow hover:shadow-lg shopify-border"
+      onMouseEnter={() => setHoverPreview(true)}
+      onMouseLeave={() => setHoverPreview(false)}
+    >
       <div className="relative aspect-[9/16] overflow-hidden bg-black">
         {playing ? (
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&playsinline=1`}
+            src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&mute=1&rel=0&playsinline=1&controls=1`}
             title={video.title}
             className="h-full w-full border-0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
+            loading="lazy"
           />
         ) : (
           <button
             type="button"
-            onClick={() => setPlaying(true)}
+            onClick={() => setManualPlayback(true)}
             aria-label={`Play ${video.title}`}
             className="group relative h-full w-full text-left"
           >
@@ -79,6 +91,10 @@ function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
               loading="lazy"
             />
             <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
+            <span className="absolute left-3 top-3 bg-black/70 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm sm:text-xs">
+              <span className="sm:hidden">Tap to play</span>
+              <span className="hidden sm:inline">Hover to preview</span>
+            </span>
             <span className="absolute bottom-3 left-3 right-3 line-clamp-2 text-sm font-bold text-white">
               {video.title}
             </span>
@@ -88,10 +104,10 @@ function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
       <div className="p-3 sm:p-4">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-bold text-primary">{video.title}</h3>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+          <p className="mt-1 text-xs font-medium text-on-surface-variant">
             {video.views === null
-              ? "Official channel"
-              : `${video.views.toLocaleString("en-IN")} views`}
+              ? publishedLabel
+              : `${video.views.toLocaleString("en-IN")} views • ${publishedLabel}`}
           </p>
         </div>
       </div>
@@ -550,7 +566,7 @@ function Index() {
                 <span className="material-symbols-outlined text-base">arrow_outward</span>
               </a>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6">
               {youtubeVideos.map((video) => (
                 <YouTubeVideoCard key={video.id} video={video} />
               ))}

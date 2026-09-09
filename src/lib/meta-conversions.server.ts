@@ -58,11 +58,13 @@ export async function sendMetaPurchaseEvent(orderId: string, marketingConsent: b
       item_price: Number(item.unit_price_paise) / 100,
     }));
 
+    const normalizedEmail = normalizeEmail(order.email);
+    const normalizedPhone = normalizePhone(order.phone);
     const userData: Record<string, string[]> = {
-      em: [sha256(normalizeEmail(order.email))],
-      ph: [sha256(normalizePhone(order.phone))],
       external_id: [sha256(String(order.user_id || order.id))],
     };
+    if (normalizedEmail) userData.em = [sha256(normalizedEmail)];
+    if (/^\d{10,15}$/.test(normalizedPhone)) userData.ph = [sha256(normalizedPhone)];
     const event = {
       event_name: "Purchase",
       event_time: Math.floor(Date.now() / 1000),
@@ -77,6 +79,7 @@ export async function sendMetaPurchaseEvent(orderId: string, marketingConsent: b
         content_ids: contents.map((item) => item.id),
         contents,
         num_items: contents.reduce((sum, item) => sum + item.quantity, 0),
+        order_id: order.order_number,
       },
     };
     const graphVersion = process.env.META_GRAPH_API_VERSION?.trim() || "v23.0";
