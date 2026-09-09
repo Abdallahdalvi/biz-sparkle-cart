@@ -260,3 +260,41 @@ export const updateStoreSettings = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+export const updateProductOrder = createServerFn({ method: "POST" })
+  .validator((input) =>
+    z
+      .object({
+        token: z.string(),
+        slugs: z.array(z.string().min(1)).max(500),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: settings, error: readError } = await supabaseAdmin
+      .from("store_settings")
+      .select("metadata")
+      .eq("id", "hero_banners")
+      .single();
+
+    if (readError || !settings) {
+      throw new Error(`Could not load storefront settings: ${readError?.message || "not found"}`);
+    }
+
+    const metadata =
+      settings.metadata && typeof settings.metadata === "object" ? settings.metadata : {};
+    const { error } = await supabaseAdmin
+      .from("store_settings")
+      .update({
+        metadata: { ...metadata, product_order: data.slugs },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", "hero_banners");
+
+    if (error) throw new Error(`Product order update failed: ${error.message}`);
+    return { ok: true };
+  });

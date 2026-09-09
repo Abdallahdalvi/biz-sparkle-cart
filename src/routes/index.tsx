@@ -2,7 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
-import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
+import {
+  getAllProducts,
+  getStorefrontCms,
+  orderProducts,
+  type Product,
+  type StorefrontCms,
+} from "@/lib/products";
 import {
   GOOGLE_ALL_REVIEWS_URL,
   GOOGLE_MAPS_PLACE_URL,
@@ -19,21 +25,6 @@ import { OFFICIAL_SOCIAL_LINKS } from "@/lib/social-links";
 import { getYouTubeChannelVideos, type YouTubeChannelVideo } from "@/lib/youtube.functions";
 
 const HOME_PRODUCT_LIMIT = 12;
-const HOME_PRODUCT_PRIORITY = [
-  "iphone-se-3-2022",
-  "nokia-2720-flip",
-  "v77-luxury-flip",
-  "qin-f22-pro-google",
-  "cat-s22-flip",
-  "blackberry-keyone",
-  "nokia-6700-slide",
-  "qin-f21-pro",
-  "blackberry-classic-q20",
-  "qin-f25-pro",
-  "Jio-Phone-2-Qwerty",
-  "blackberry-passport-q30",
-];
-
 function youtubeVideoId(url: string) {
   try {
     const parsed = new URL(url);
@@ -234,14 +225,10 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
-  const priorityProducts = HOME_PRODUCT_PRIORITY.map((slug) =>
-    all.find((product) => product.slug === slug && product.stock > 0),
-  ).filter((product): product is Product => Boolean(product));
-  const prioritySlugs = new Set(priorityProducts.map((product) => product.slug));
-  const homepageProducts = [
-    ...priorityProducts,
-    ...all.filter((product) => product.stock > 0 && !prioritySlugs.has(product.slug)),
-  ].slice(0, HOME_PRODUCT_LIMIT);
+  const homepageProducts = orderProducts(
+    all.filter((product) => product.stock > 0),
+    cms.product_order,
+  ).slice(0, HOME_PRODUCT_LIMIT);
 
   return (
     <SiteShell>
@@ -273,8 +260,8 @@ function Index() {
               </a>
             </div>
           </div>
-          <div className="flex flex-col gap-5 sm:gap-7">
-            <div className="grid h-[300px] w-full grid-cols-2 gap-3 sm:h-[440px] sm:gap-4 lg:h-[500px]">
+          <div className="relative isolate flex flex-col">
+            <div className="relative z-0 grid h-[300px] w-full grid-cols-2 gap-3 sm:h-[440px] sm:gap-4 lg:h-[500px]">
               <a
                 href={cms.hero_1_link}
                 className="relative overflow-hidden shopify-border group h-full shadow-sm block w-full"
@@ -328,7 +315,7 @@ function Index() {
                 </a>
               </div>
             </div>
-            <div className="block lg:hidden w-full text-center sm:text-left">
+            <div className="relative z-10 mt-4 block w-full text-center sm:mt-6 sm:text-left lg:hidden">
               <a
                 href="#products"
                 className="inline-flex bg-primary text-on-primary px-12 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all items-center justify-center gap-2 shadow-sm w-full sm:w-auto"

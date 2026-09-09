@@ -240,6 +240,7 @@ function AdminCmsPage() {
           tracking_google_ads_enabled: cms.tracking_google_ads_enabled,
           tracking_google_ads_id: cms.tracking_google_ads_id.trim().toUpperCase(),
           tracking_google_ads_purchase_label: cms.tracking_google_ads_purchase_label.trim(),
+          product_order: cms.product_order,
         },
         updated_at: new Date().toISOString(),
       };

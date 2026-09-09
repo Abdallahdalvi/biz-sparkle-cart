@@ -3,13 +3,14 @@ import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
-import { PRODUCTS } from "@/lib/products";
+import { getStorefrontCms, orderProducts, PRODUCTS } from "@/lib/products";
 import { useServerFn } from "@tanstack/react-start";
 import {
   createProduct,
   updateProduct,
   updateProductStatus,
   deleteProduct,
+  updateProductOrder,
 } from "@/lib/admin.functions";
 
 interface ProductMetadata {
@@ -318,14 +319,19 @@ function AdminProducts() {
   const [editingProduct, setEditingProduct] = useState<Row | null>(null);
   const updateStatusFn = useServerFn(updateProductStatus);
   const deleteProdFn = useServerFn(deleteProduct);
+  const updateOrderFn = useServerFn(updateProductOrder);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   async function refresh() {
-    const { data, error } = await supabase
-      .from("products")
-      .select(
-        "id, slug, name, tagline, description, price_paise, cod_advance_paise, compare_at_paise, stock, is_active, category_id, metadata",
-      )
-      .order("created_at", { ascending: false });
+    const [{ data, error }, cms] = await Promise.all([
+      supabase
+        .from("products")
+        .select(
+          "id, slug, name, tagline, description, price_paise, cod_advance_paise, compare_at_paise, stock, is_active, category_id, metadata",
+        )
+        .order("created_at", { ascending: false }),
+      getStorefrontCms(),
+    ]);
     if (error) toast.error(error.message);
     const dbRows = (data as Row[]) ?? [];
     const dbSlugs = new Set(dbRows.map((r) => r.slug));
@@ -354,7 +360,7 @@ function AdminProducts() {
         faqs: p.faqs || [],
       },
     }));
-    setRows([...dbRows, ...staticRows]);
+    setRows(orderProducts([...dbRows, ...staticRows], cms.product_order));
   }
 
   useEffect(() => {
@@ -446,13 +452,35 @@ function AdminProducts() {
     }
   }
 
+  async function moveProduct(index: number, direction: -1 | 1) {
+    if (!rows || savingOrder) return;
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= rows.length) return;
+    const previousRows = rows;
+    const nextRows = moveEntry(rows, index, nextIndex);
+    setRows(nextRows);
+    setSavingOrder(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not logged in");
+      await updateOrderFn({ data: { token, slugs: nextRows.map((row) => row.slug) } });
+      toast.success("Storefront product order saved");
+    } catch (error) {
+      setRows(previousRows);
+      toast.error(errorMessage(error, "Failed to save product order"));
+    } finally {
+      setSavingOrder(false);
+    }
+  }
+
   return (
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-2xl font-bold">Products Catalog</h2>
           <p className="text-xs text-on-surface-variant mt-1">
-            Manage pricing, stock, specifications, bulk images, and product videos.
+            Manage pricing, stock, media, and storefront order. Use the arrows to move products.
           </p>
         </div>
         <button
@@ -498,7 +526,7 @@ function AdminProducts() {
       ) : (
         <>
           <div className="space-y-3 md:hidden">
-            {rows.map((r) => (
+            {rows.map((r, index) => (
               <div key={r.id} className="bg-white shopify-border p-4 shadow-sm space-y-4">
                 <div className="flex gap-3">
                   {r.metadata?.images?.[0] && (
@@ -560,6 +588,26 @@ function AdminProducts() {
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
+                    <button
+                      type="button"
+                      disabled={savingOrder || index === 0}
+                      onClick={() => void moveProduct(index, -1)}
+                      className="rounded border border-outline-variant/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label={`Move ${r.name} earlier`}
+                    >
+                      ↑ Earlier
+                    </button>
+                    <button
+                      type="button"
+                      disabled={savingOrder || index === rows.length - 1}
+                      onClick={() => void moveProduct(index, 1)}
+                      className="rounded border border-outline-variant/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label={`Move ${r.name} later`}
+                    >
+                      ↓ Later
+                    </button>
+                  </div>
                   <button
                     onClick={() => toggle(r)}
                     className={
@@ -602,11 +650,12 @@ function AdminProducts() {
                   <th className="p-4">Stock</th>
                   <th className="p-4">Specs & Variants</th>
                   <th className="p-4">Status</th>
+                  <th className="p-4">Store order</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/40">
-                {rows.map((r) => (
+                {rows.map((r, index) => (
                   <tr key={r.id} className="hover:bg-surface-container-lowest transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -674,6 +723,33 @@ function AdminProducts() {
                       >
                         {r.is_active ? "Active" : "Hidden"}
                       </button>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={savingOrder || index === 0}
+                          onClick={() => void moveProduct(index, -1)}
+                          className="flex h-8 w-8 items-center justify-center border border-outline-variant/50 font-bold text-primary disabled:cursor-not-allowed disabled:opacity-25"
+                          aria-label={`Move ${r.name} earlier`}
+                          title="Move earlier"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={savingOrder || index === rows.length - 1}
+                          onClick={() => void moveProduct(index, 1)}
+                          className="flex h-8 w-8 items-center justify-center border border-outline-variant/50 font-bold text-primary disabled:cursor-not-allowed disabled:opacity-25"
+                          aria-label={`Move ${r.name} later`}
+                          title="Move later"
+                        >
+                          ↓
+                        </button>
+                        <span className="ml-1 text-[10px] font-bold text-on-surface-variant">
+                          {index + 1}
+                        </span>
+                      </div>
                     </td>
                     <td className="p-4 text-right">
                       <button

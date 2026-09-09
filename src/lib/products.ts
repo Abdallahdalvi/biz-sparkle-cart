@@ -102,6 +102,7 @@ export interface StorefrontCms {
   tracking_google_ads_enabled: boolean;
   tracking_google_ads_id: string;
   tracking_google_ads_purchase_label: string;
+  product_order: string[];
 }
 
 export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
@@ -321,6 +322,20 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   tracking_google_ads_enabled: false,
   tracking_google_ads_id: "",
   tracking_google_ads_purchase_label: "",
+  product_order: [
+    "iphone-se-3-2022",
+    "nokia-2720-flip",
+    "v77-luxury-flip",
+    "qin-f22-pro-google",
+    "cat-s22-flip",
+    "blackberry-keyone",
+    "nokia-6700-slide",
+    "qin-f21-pro",
+    "blackberry-classic-q20",
+    "qin-f25-pro",
+    "Jio-Phone-2-Qwerty",
+    "blackberry-passport-q30",
+  ],
 };
 
 // No dummy/seed products — all products are managed via Supabase admin panel.
@@ -514,6 +529,9 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
         tracking_google_ads_enabled: meta.tracking_google_ads_enabled,
         tracking_google_ads_id: meta.tracking_google_ads_id,
         tracking_google_ads_purchase_label: meta.tracking_google_ads_purchase_label,
+        product_order: Array.isArray(meta.product_order)
+          ? meta.product_order.filter((slug: unknown): slug is string => typeof slug === "string")
+          : undefined,
       };
     }
   } catch (e) {
@@ -615,7 +633,26 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     tracking_google_ads_purchase_label:
       dbCms.tracking_google_ads_purchase_label ||
       DEFAULT_STOREFRONT_CMS.tracking_google_ads_purchase_label,
+    product_order: dbCms.product_order || DEFAULT_STOREFRONT_CMS.product_order,
   };
+}
+
+export function orderProducts<T extends { slug: string }>(products: T[], productOrder: string[]) {
+  if (!productOrder.length) return products;
+  const positions = new Map(productOrder.map((slug, index) => [slug, index]));
+  return products
+    .map((product, originalIndex) => ({ product, originalIndex }))
+    .sort((left, right) => {
+      const leftPosition = positions.get(left.product.slug);
+      const rightPosition = positions.get(right.product.slug);
+      if (leftPosition === undefined && rightPosition === undefined) {
+        return left.originalIndex - right.originalIndex;
+      }
+      if (leftPosition === undefined) return 1;
+      if (rightPosition === undefined) return -1;
+      return leftPosition - rightPosition;
+    })
+    .map(({ product }) => product);
 }
 
 export const CATEGORIES: { id: Category | "all"; label: string }[] = [

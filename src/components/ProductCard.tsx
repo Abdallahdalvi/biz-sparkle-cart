@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
       <Link
         to="/product/$slug"
         params={{ slug: product.slug }}
-        className="relative block aspect-[4/5] overflow-hidden bg-gradient-to-b from-surface-container-lowest to-surface-container-low p-2.5 sm:p-5"
+        className="relative block aspect-square overflow-hidden bg-gradient-to-b from-surface-container-lowest to-surface-container-low p-2.5 sm:aspect-[4/5] sm:p-5"
         aria-label={`View ${product.name}`}
       >
         <img
@@ -59,22 +59,22 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-3 sm:p-4">
+      <div className="flex flex-1 flex-col p-2.5 sm:p-4">
         <Link
           to="/product/$slug"
           params={{ slug: product.slug }}
           className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-snug text-on-surface transition-colors group-hover:text-[#2b4c9b] sm:min-h-[3rem] sm:text-base">
+          <h3 className="line-clamp-2 min-h-[2.25rem] text-[13px] font-bold leading-snug text-on-surface transition-colors group-hover:text-[#2b4c9b] sm:min-h-[3rem] sm:text-base">
             {product.name}
           </h3>
         </Link>
 
-        <p className="mt-1.5 line-clamp-2 min-h-9 text-xs leading-relaxed text-on-surface-variant sm:min-h-10 sm:text-sm">
+        <p className="mt-1 min-w-0 truncate whitespace-nowrap text-[11px] leading-relaxed text-on-surface-variant sm:line-clamp-2 sm:min-h-10 sm:whitespace-normal sm:text-sm">
           {product.tagline}
         </p>
 
-        <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:mt-3">
           <span className="text-base font-extrabold tracking-tight text-on-surface sm:text-xl">
             {formatINR(product.pricePaise)}
           </span>
@@ -85,41 +85,12 @@ export function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="inline-flex items-center gap-1 bg-[#eef4ff] px-2 py-1 text-[10px] font-bold text-[#25488f] sm:text-xs">
-            <span className="material-symbols-outlined text-sm" aria-hidden="true">
-              local_shipping
-            </span>
-            Free delivery
-          </span>
-          <span className="inline-flex items-center gap-1 bg-[#edf8f1] px-2 py-1 text-[10px] font-bold text-[#08783e] sm:text-xs">
-            <span className="material-symbols-outlined text-sm" aria-hidden="true">
-              payments
-            </span>
-            {product.codAdvancePaise > 0
-              ? `COD: ${formatINR(product.codAdvancePaise)} advance`
-              : "Full COD"}
-          </span>
-        </div>
-
-        <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-on-surface-variant sm:text-xs">
-          <span
-            className={`h-2 w-2 rounded-full ${product.stock > 0 ? "bg-emerald-500" : "bg-red-500"}`}
-            aria-hidden="true"
-          />
-          {product.stock > 0
-            ? product.stock <= 8
-              ? `Only ${product.stock} left in stock`
-              : "Ready to order"
-            : "Currently unavailable"}
-        </p>
-
         <Link
           to="/product/$slug"
           params={{ slug: product.slug }}
-          className="mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 bg-primary px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-on-primary shadow-sm transition-all hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-sm"
+          className="mt-3 flex min-h-10 w-full items-center justify-center gap-1 bg-primary px-2 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-on-primary shadow-sm transition-all hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:mt-4 sm:min-h-11 sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm sm:tracking-wide"
         >
-          View details
+          <span className="whitespace-nowrap">View details</span>
           <span className="material-symbols-outlined text-base" aria-hidden="true">
             arrow_forward
           </span>
