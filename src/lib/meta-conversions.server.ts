@@ -13,7 +13,48 @@ function normalizePhone(value: string) {
   return digits.length === 10 ? `91${digits}` : digits;
 }
 
-export async function sendMetaPurchaseEvent(orderId: string, marketingConsent: boolean) {
+export type MetaAttributionContext = {
+  fbp?: string;
+  fbc?: string;
+  clientIpAddress?: string;
+  clientUserAgent?: string;
+};
+
+function cleanAttributionValue(value: string | undefined, maxLength: number) {
+  const cleaned = value?.trim();
+  return cleaned ? cleaned.slice(0, maxLength) : undefined;
+}
+
+export function buildMetaUserData(input: {
+  email: string;
+  phone: string;
+  externalId: string;
+  attribution?: MetaAttributionContext;
+}) {
+  const normalizedEmail = normalizeEmail(input.email);
+  const normalizedPhone = normalizePhone(input.phone);
+  const attribution = input.attribution || {};
+  const userData: Record<string, string | string[]> = {
+    external_id: [sha256(input.externalId)],
+  };
+  if (normalizedEmail) userData.em = [sha256(normalizedEmail)];
+  if (/^\d{10,15}$/.test(normalizedPhone)) userData.ph = [sha256(normalizedPhone)];
+  const fbp = cleanAttributionValue(attribution.fbp, 250);
+  const fbc = cleanAttributionValue(attribution.fbc, 250);
+  const clientIpAddress = cleanAttributionValue(attribution.clientIpAddress, 64);
+  const clientUserAgent = cleanAttributionValue(attribution.clientUserAgent, 300);
+  if (fbp) userData.fbp = fbp;
+  if (fbc) userData.fbc = fbc;
+  if (clientIpAddress) userData.client_ip_address = clientIpAddress;
+  if (clientUserAgent) userData.client_user_agent = clientUserAgent;
+  return userData;
+}
+
+export async function sendMetaPurchaseEvent(
+  orderId: string,
+  marketingConsent: boolean,
+  attribution: MetaAttributionContext = {},
+) {
   if (!marketingConsent) return { sent: false, reason: "consent_not_granted" as const };
   const accessToken = process.env.META_CONVERSIONS_API_TOKEN?.trim();
   if (!accessToken) return { sent: false, reason: "not_configured" as const };
@@ -58,13 +99,12 @@ export async function sendMetaPurchaseEvent(orderId: string, marketingConsent: b
       item_price: Number(item.unit_price_paise) / 100,
     }));
 
-    const normalizedEmail = normalizeEmail(order.email);
-    const normalizedPhone = normalizePhone(order.phone);
-    const userData: Record<string, string[]> = {
-      external_id: [sha256(String(order.user_id || order.id))],
-    };
-    if (normalizedEmail) userData.em = [sha256(normalizedEmail)];
-    if (/^\d{10,15}$/.test(normalizedPhone)) userData.ph = [sha256(normalizedPhone)];
+    const userData = buildMetaUserData({
+      email: order.email,
+      phone: order.phone,
+      externalId: String(order.user_id || order.id),
+      attribution,
+    });
     const event = {
       event_name: "Purchase",
       event_time: Math.floor(Date.now() / 1000),

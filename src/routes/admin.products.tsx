@@ -3,7 +3,7 @@ import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
-import { getStorefrontCms, orderProducts, PRODUCTS } from "@/lib/products";
+import { getStorefrontCms, inferProductBrand, orderProducts, PRODUCTS } from "@/lib/products";
 import { useServerFn } from "@tanstack/react-start";
 import {
   createProduct,
@@ -834,6 +834,7 @@ function NewProductForm({
         const packagingRupees = Number(fd.get("packaging_cost") || 50);
 
         const metadata = {
+          brand: String(fd.get("brand") ?? "").trim(),
           badge: String(fd.get("badge") ?? ""),
           cost_price_paise: Math.round(costRupees * 100),
           gst_rate: gstRate,
@@ -913,6 +914,17 @@ function NewProductForm({
             required
             pattern="[a-z0-9-]+"
             placeholder="e.g. qin-f22-pro"
+            className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
+            Brand *
+          </label>
+          <input
+            name="brand"
+            required
+            placeholder="e.g. Nokia, Apple, BlackBerry"
             className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
           />
         </div>
@@ -1310,6 +1322,7 @@ function EditProductForm({
 
         const metadata = {
           ...productMetadata,
+          brand: String(fd.get("brand") ?? "").trim(),
           badge: String(fd.get("badge") ?? ""),
           cost_price_paise: Math.round(costRupees * 100),
           gst_rate: gstRate,
@@ -1391,6 +1404,18 @@ function EditProductForm({
             required
             pattern="[a-z0-9-]+"
             placeholder="e.g. qin-f22-pro"
+            className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
+            Brand *
+          </label>
+          <input
+            name="brand"
+            defaultValue={String(prod.metadata?.brand || inferProductBrand(prod.name))}
+            required
+            placeholder="e.g. Nokia, Apple, BlackBerry"
             className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
           />
         </div>

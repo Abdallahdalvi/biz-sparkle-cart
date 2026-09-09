@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { inferProductBrand } from "@/lib/product-brand";
+export { inferProductBrand } from "@/lib/product-brand";
 
 export type Category = "phones" | "audio" | "accessories" | "wearables" | "gaming";
 
@@ -6,6 +8,7 @@ export interface Product {
   id?: string;
   slug: string;
   name: string;
+  brand: string;
   tagline: string;
   category: Category;
   pricePaise: number;
@@ -357,6 +360,7 @@ export async function getAllProducts(): Promise<Product[]> {
       id: row.id,
       slug: row.slug,
       name: row.name,
+      brand: row.metadata?.brand || inferProductBrand(row.name),
       tagline: row.tagline || "",
       category: (row.categories?.slug || "phones") as Category,
       pricePaise: row.price_paise,

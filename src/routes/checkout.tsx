@@ -36,6 +36,19 @@ export const Route = createFileRoute("/checkout")({
   component: Checkout,
 });
 
+function readBrowserCookie(name: string) {
+  if (typeof document === "undefined") return undefined;
+  const prefix = `${name}=`;
+  const part = document.cookie.split(";").find((item) => item.trim().startsWith(prefix));
+  if (!part) return undefined;
+  const rawValue = part.trim().slice(prefix.length);
+  try {
+    return decodeURIComponent(rawValue);
+  } catch {
+    return rawValue;
+  }
+}
+
 function Checkout() {
   const { cms, capabilities, products } = Route.useLoaderData();
   const search = Route.useSearch();
@@ -89,7 +102,7 @@ function Checkout() {
         rememberOrderReceipt(result.orderId, result.receiptToken);
         trackCommerceEvent("purchase", {
           currency: "INR",
-          value: total / 100,
+          value: result.totalPaise / 100,
           transactionId: result.orderNumber,
           items: trackingItems,
         });
@@ -203,6 +216,7 @@ function Checkout() {
               const { data: sessionData } = await supabase.auth.getSession();
               const token = sessionData.session?.access_token;
 
+              const marketingConsent = readTrackingConsent()?.marketing === true;
               const orderPayload = {
                 token,
                 items: items.map((i) => ({
@@ -215,7 +229,9 @@ function Checkout() {
                 email: String(fd.get("email") ?? ""),
                 phone: String(fd.get("phone") ?? ""),
                 returnOrigin: window.location.origin,
-                marketingConsent: readTrackingConsent()?.marketing === true,
+                marketingConsent,
+                metaFbp: marketingConsent ? readBrowserCookie("_fbp") : undefined,
+                metaFbc: marketingConsent ? readBrowserCookie("_fbc") : undefined,
               };
 
               const res = await createOrderFn({ data: orderPayload });
@@ -224,7 +240,7 @@ function Checkout() {
               if (!res.cashfreeRequired) {
                 trackCommerceEvent("purchase", {
                   currency: "INR",
-                  value: total / 100,
+                  value: res.totalPaise / 100,
                   transactionId: res.orderNumber,
                   items: trackingItems,
                 });
@@ -260,7 +276,7 @@ function Checkout() {
               rememberOrderReceipt(verified.orderId, verified.receiptToken);
               trackCommerceEvent("purchase", {
                 currency: "INR",
-                value: effectiveTotal / 100,
+                value: verified.totalPaise / 100,
                 transactionId: verified.orderNumber,
                 items: trackingItems,
               });

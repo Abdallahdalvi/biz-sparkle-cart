@@ -1,3 +1,5 @@
+import type { MetaAttributionContext } from "@/lib/meta-conversions.server";
+
 const CASHFREE_API_VERSION = "2025-01-01";
 
 export type CashfreeEnvironment = "sandbox" | "production";
@@ -104,6 +106,7 @@ export async function createCashfreeOrderInternal(input: {
   returnOrigin?: string;
   note: string;
   marketingConsent: boolean;
+  metaAttribution?: MetaAttributionContext;
 }) {
   if (!Number.isInteger(input.amountPaise) || input.amountPaise < 100) {
     throw new Error("Cashfree payments must be at least ₹1");
@@ -133,6 +136,18 @@ export async function createCashfreeOrderInternal(input: {
           store_order_number: input.storeOrderNumber,
           store_order_id: input.storeOrderId,
           meta_marketing_consent: input.marketingConsent ? "granted" : "denied",
+          ...(input.marketingConsent && input.metaAttribution?.fbp
+            ? { meta_fbp: input.metaAttribution.fbp.slice(0, 250) }
+            : {}),
+          ...(input.marketingConsent && input.metaAttribution?.fbc
+            ? { meta_fbc: input.metaAttribution.fbc.slice(0, 250) }
+            : {}),
+          ...(input.marketingConsent && input.metaAttribution?.clientIpAddress
+            ? { meta_client_ip: input.metaAttribution.clientIpAddress.slice(0, 64) }
+            : {}),
+          ...(input.marketingConsent && input.metaAttribution?.clientUserAgent
+            ? { meta_client_user_agent: input.metaAttribution.clientUserAgent.slice(0, 300) }
+            : {}),
         },
       }),
     },
@@ -190,6 +205,12 @@ export async function getSuccessfulCashfreePaymentInternal(
     orderId: payment.order_id,
     amountPaise,
     marketingConsent: order.order_tags?.meta_marketing_consent === "granted",
+    metaAttribution: {
+      fbp: order.order_tags?.meta_fbp,
+      fbc: order.order_tags?.meta_fbc,
+      clientIpAddress: order.order_tags?.meta_client_ip,
+      clientUserAgent: order.order_tags?.meta_client_user_agent,
+    },
   };
 }
 
@@ -331,6 +352,7 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
       alreadyProcessed: true,
       orderId: existing.id,
       orderNumber: existing.order_number,
+      totalPaise: Number(linkedOrder.total_paise),
     };
   }
 
@@ -360,13 +382,14 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
     notifyAdminAboutActionableOrder(transitioned.id),
   );
   const { sendMetaPurchaseEvent } = await import("@/lib/meta-conversions.server");
-  await sendMetaPurchaseEvent(transitioned.id, payment.marketingConsent);
+  await sendMetaPurchaseEvent(transitioned.id, payment.marketingConsent, payment.metaAttribution);
 
   return {
     ok: true,
     alreadyProcessed: false,
     orderId: transitioned.id,
     orderNumber: transitioned.order_number,
+    totalPaise: Number(linkedOrder.total_paise),
   };
 }
 

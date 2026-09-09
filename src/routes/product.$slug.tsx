@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { trackCommerceEvent, trackLead } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
 import { submitContactMessage } from "@/lib/operations.functions";
-import { absoluteSiteUrl, SITE_NAME } from "@/lib/site";
+import { absoluteSiteUrl } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-links";
 import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
 
@@ -92,7 +92,7 @@ export const Route = createFileRoute("/product/$slug")({
             image: p.images,
             sku: p.slug,
             url: productUrl,
-            brand: { "@type": "Brand", name: SITE_NAME },
+            brand: { "@type": "Brand", name: p.brand },
             offers: {
               "@type": "Offer",
               priceCurrency: "INR",

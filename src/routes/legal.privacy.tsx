@@ -50,8 +50,10 @@ export const Route = createFileRoute("/legal/privacy")({
         Instagram advertising measurement. These providers may process online identifiers,
         device/browser data, pages and products viewed, cart or checkout actions, and purchase
         value/order reference. When you allow advertising measurement, email, phone, and an internal
-        identifier are normalized and one-way hashed before server-side purchase transmission. We do
-        not send card details or your shipping address through these trackers.
+        identifier are normalized and one-way hashed before server-side purchase transmission. Meta
+        may also receive its browser/click identifiers (_fbp and _fbc), IP address, and browser user
+        agent so browser and server purchase events can be matched and deduplicated. We do not send
+        card details or your shipping address through these trackers.
       </p>
       <h2>4. Sharing</h2>
       <p>

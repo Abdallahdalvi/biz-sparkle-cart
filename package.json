@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "test:meta": "node --experimental-strip-types --test tests/meta-conversions.test.ts tests/product-brand.test.ts",
     "test:shiprocket": "node --experimental-strip-types --test tests/shiprocket-calculations.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."

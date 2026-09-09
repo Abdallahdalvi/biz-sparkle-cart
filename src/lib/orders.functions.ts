@@ -64,11 +64,32 @@ export const createSecureOrder = createServerFn({ method: "POST" })
           }, "Enter a valid 10-digit Indian phone number"),
         returnOrigin: z.string().url().max(200).optional(),
         marketingConsent: z.boolean().optional().default(false),
+        metaFbp: z.string().trim().max(250).optional(),
+        metaFbc: z.string().trim().max(250).optional(),
       })
       .parse(input),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let clientIpAddress: string | undefined;
+    let clientUserAgent: string | undefined;
+    if (data.marketingConsent) {
+      try {
+        const { getRequestHeader, getRequestIP } = await import("@tanstack/react-start/server");
+        clientIpAddress = getRequestIP({ xForwardedFor: true }) || undefined;
+        clientUserAgent = getRequestHeader("user-agent")?.slice(0, 300);
+      } catch {
+        // Attribution headers are helpful but must never block checkout.
+      }
+    }
+    const metaAttribution = data.marketingConsent
+      ? {
+          fbp: data.metaFbp,
+          fbc: data.metaFbc,
+          clientIpAddress,
+          clientUserAgent,
+        }
+      : {};
 
     let userId: string | null = null;
     if (data.token) {
@@ -257,7 +278,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         notifyAdminAboutActionableOrder(order.id),
       );
       const { sendMetaPurchaseEvent } = await import("@/lib/meta-conversions.server");
-      await sendMetaPurchaseEvent(order.id, data.marketingConsent);
+      await sendMetaPurchaseEvent(order.id, data.marketingConsent, metaAttribution);
 
       return {
         ok: true,
@@ -265,6 +286,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         orderNumber: order.order_number,
         receiptToken,
         cashfreeRequired: false,
+        totalPaise: effectiveTotal,
       };
     }
 
@@ -284,6 +306,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
             ? `COD advance for ${order.order_number}`
             : `Online payment for ${order.order_number}`,
         marketingConsent: data.marketingConsent,
+        metaAttribution,
       });
       const { error: linkError } = await supabaseAdmin
         .from("orders")
@@ -307,5 +330,6 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       amountPaise: paymentAmountPaise,
       currency: "INR",
       email: data.email,
+      totalPaise: effectiveTotal,
     };
   });
