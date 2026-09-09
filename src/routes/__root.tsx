@@ -15,8 +15,7 @@ import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { TrackingManager } from "@/components/analytics/TrackingManager";
-import { getStorefrontCms } from "@/lib/products";
-import type { TrackingSettings } from "@/lib/tracking";
+import { getTrackingConfiguration } from "@/lib/tracking-settings.functions";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_SOCIAL_IMAGE_URL, SITE_URL } from "@/lib/site";
 
 function NotFoundComponent() {
@@ -84,22 +83,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async () => {
-    const cms = await getStorefrontCms();
-    const tracking: TrackingSettings = {
-      clarityEnabled: cms.tracking_clarity_enabled,
-      clarityProjectId: cms.tracking_clarity_project_id,
-      metaEnabled: cms.tracking_meta_enabled,
-      metaPixelId: cms.tracking_meta_pixel_id,
-      googleAnalyticsEnabled: cms.tracking_google_analytics_enabled,
-      googleAnalyticsId: cms.tracking_google_analytics_id,
-      googleAdsEnabled: cms.tracking_google_ads_enabled,
-      googleAdsId: cms.tracking_google_ads_id,
-      googleAdsPurchaseLabel: cms.tracking_google_ads_purchase_label,
-    };
-    return {
-      tracking,
-      metaDomainVerification: cms.tracking_meta_domain_verification,
-    };
+    return getTrackingConfiguration();
   },
   head: ({ loaderData }) => ({
     meta: [

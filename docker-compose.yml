@@ -28,6 +28,9 @@ services:
       - META_PIXEL_ID=${META_PIXEL_ID:-}
       - META_GRAPH_API_VERSION=${META_GRAPH_API_VERSION:-v23.0}
       - META_TEST_EVENT_CODE=${META_TEST_EVENT_CODE:-}
+      - GOOGLE_ANALYTICS_ID=${GOOGLE_ANALYTICS_ID:-}
+      - GOOGLE_ADS_ID=${GOOGLE_ADS_ID:-}
+      - GOOGLE_ADS_PURCHASE_LABEL=${GOOGLE_ADS_PURCHASE_LABEL:-}
     network_mode: bridge
     labels:
       - "com.centurylinklabs.watchtower.enable=true"

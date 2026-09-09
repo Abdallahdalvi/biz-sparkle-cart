@@ -206,22 +206,24 @@ function Index() {
   };
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const youtubeVideos = channelVideos.length
-    ? channelVideos
-    : cms.videos.flatMap((video) => {
-        const id = video.platform.toLowerCase() === "youtube" ? youtubeVideoId(video.url) : null;
-        return id
-          ? [
-              {
-                id,
-                title: video.title,
-                thumbnail: video.image || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-                publishedAt: "",
-                views: null,
-              },
-            ]
-          : [];
-      });
+  const youtubeVideos = (
+    channelVideos.length
+      ? channelVideos
+      : cms.videos.flatMap((video) => {
+          const id = video.platform.toLowerCase() === "youtube" ? youtubeVideoId(video.url) : null;
+          return id
+            ? [
+                {
+                  id,
+                  title: video.title,
+                  thumbnail: video.image || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+                  publishedAt: "",
+                  views: null,
+                },
+              ]
+            : [];
+        })
+  ).slice(0, 4);
   const visibleReviews = Array.from(
     { length: Math.min(3, cms.reviews.length) },
     (_, offset) => cms.reviews[(reviewIndex + offset) % cms.reviews.length],
@@ -566,7 +568,7 @@ function Index() {
                 <span className="material-symbols-outlined text-base">arrow_outward</span>
               </a>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
               {youtubeVideos.map((video) => (
                 <YouTubeVideoCard key={video.id} video={video} />
               ))}
