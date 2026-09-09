@@ -3,58 +3,126 @@ import type { Product } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 
 export function ProductCard({ product }: { product: Product }) {
+  const discountPercent =
+    product.compareAtPaise && product.compareAtPaise > product.pricePaise
+      ? Math.round(((product.compareAtPaise - product.pricePaise) / product.compareAtPaise) * 100)
+      : 0;
+  const categoryLabel =
+    product.category === "phones"
+      ? "Phone"
+      : product.category === "audio"
+        ? "Audio"
+        : product.category === "wearables"
+          ? "Wearable"
+          : product.category === "gaming"
+            ? "Gaming"
+            : "Accessory";
+
   return (
-    <article className="group flex h-full min-w-0 flex-col">
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden border border-outline-variant/70 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_14px_32px_rgba(15,23,42,0.10)]">
       <Link
         to="/product/$slug"
         params={{ slug: product.slug }}
-        className="relative mb-3 block aspect-square overflow-hidden bg-white shopify-border"
+        className="relative block aspect-[4/5] overflow-hidden bg-gradient-to-b from-surface-container-lowest to-surface-container-low p-2.5 sm:p-5"
+        aria-label={`View ${product.name}`}
       >
         <img
           src={product.images[0]}
           alt={product.name}
           loading="lazy"
-          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.045]"
         />
-        {product.badge && (
-          <div className="absolute left-2 top-2 sm:left-4 sm:top-4">
-            <span className="bg-primary px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-on-primary shadow-sm sm:text-[10px] sm:tracking-widest">
+        <div className="absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
+          {product.badge && (
+            <span className="bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-on-primary shadow-sm sm:text-xs">
               {product.badge}
             </span>
-          </div>
-        )}
-      </Link>
-      <div className="flex flex-1 flex-col">
-        <div className="min-w-0 sm:flex sm:items-start sm:justify-between sm:gap-3">
-          <h3 className="text-xs font-bold uppercase leading-snug tracking-tight text-on-surface sm:text-base">
-            {product.name}
-          </h3>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:mt-0 sm:flex-shrink-0 sm:justify-end">
-            {product.compareAtPaise && product.compareAtPaise > product.pricePaise && (
-              <span className="text-[10px] font-medium text-on-surface-variant line-through sm:text-xs">
-                {formatINR(product.compareAtPaise)}
-              </span>
-            )}
-            <span className="text-sm font-bold text-on-surface sm:text-base">
-              {formatINR(product.pricePaise)}
+          )}
+          {discountPercent > 0 && (
+            <span className="bg-[#e8f7ee] px-2 py-1 text-[10px] font-bold text-[#08783e] shadow-sm sm:text-xs">
+              {discountPercent}% off
             </span>
-          </div>
+          )}
         </div>
-        <p className="mt-1 line-clamp-2 min-h-8 text-[9px] font-medium uppercase leading-relaxed tracking-wider text-on-surface-variant sm:text-[11px] sm:tracking-widest">
-          {product.tagline}
-        </p>
-        <p className="mb-3 mt-2 text-[9px] font-bold leading-snug text-emerald-800 sm:text-[10px]">
-          {product.codAdvancePaise > 0
-            ? `${formatINR(product.codAdvancePaise)} COD advance`
-            : "Full COD available"}{" "}
-          • Free delivery
-        </p>
+        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2 sm:bottom-3 sm:left-3 sm:right-3">
+          <span className="border border-outline-variant/70 bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-on-surface shadow-sm backdrop-blur sm:text-xs">
+            {categoryLabel}
+          </span>
+          {product.images.length > 1 && (
+            <span className="flex items-center gap-1 border border-outline-variant/70 bg-white/95 px-2 py-1 text-[10px] font-semibold text-on-surface-variant shadow-sm backdrop-blur sm:text-xs">
+              <span className="material-symbols-outlined text-sm" aria-hidden="true">
+                photo_library
+              </span>
+              {product.images.length}
+            </span>
+          )}
+        </div>
+      </Link>
+
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         <Link
           to="/product/$slug"
           params={{ slug: product.slug }}
-          className="mt-auto block w-full border border-primary py-2.5 text-center text-[9px] font-bold uppercase tracking-wider text-primary shadow-sm transition-colors hover:bg-primary hover:text-white sm:py-3 sm:text-[11px] sm:tracking-widest"
+          className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          View Product
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-snug text-on-surface transition-colors group-hover:text-[#2b4c9b] sm:min-h-[3rem] sm:text-base">
+            {product.name}
+          </h3>
+        </Link>
+
+        <p className="mt-1.5 line-clamp-2 min-h-9 text-xs leading-relaxed text-on-surface-variant sm:min-h-10 sm:text-sm">
+          {product.tagline}
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="text-base font-extrabold tracking-tight text-on-surface sm:text-xl">
+            {formatINR(product.pricePaise)}
+          </span>
+          {product.compareAtPaise && product.compareAtPaise > product.pricePaise && (
+            <span className="text-xs font-medium text-on-surface-variant line-through sm:text-sm">
+              {formatINR(product.compareAtPaise)}
+            </span>
+          )}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <span className="inline-flex items-center gap-1 bg-[#eef4ff] px-2 py-1 text-[10px] font-bold text-[#25488f] sm:text-xs">
+            <span className="material-symbols-outlined text-sm" aria-hidden="true">
+              local_shipping
+            </span>
+            Free delivery
+          </span>
+          <span className="inline-flex items-center gap-1 bg-[#edf8f1] px-2 py-1 text-[10px] font-bold text-[#08783e] sm:text-xs">
+            <span className="material-symbols-outlined text-sm" aria-hidden="true">
+              payments
+            </span>
+            {product.codAdvancePaise > 0
+              ? `COD: ${formatINR(product.codAdvancePaise)} advance`
+              : "Full COD"}
+          </span>
+        </div>
+
+        <p className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-on-surface-variant sm:text-xs">
+          <span
+            className={`h-2 w-2 rounded-full ${product.stock > 0 ? "bg-emerald-500" : "bg-red-500"}`}
+            aria-hidden="true"
+          />
+          {product.stock > 0
+            ? product.stock <= 8
+              ? `Only ${product.stock} left in stock`
+              : "Ready to order"
+            : "Currently unavailable"}
+        </p>
+
+        <Link
+          to="/product/$slug"
+          params={{ slug: product.slug }}
+          className="mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 bg-primary px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-on-primary shadow-sm transition-all hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-sm"
+        >
+          View details
+          <span className="material-symbols-outlined text-base" aria-hidden="true">
+            arrow_forward
+          </span>
         </Link>
       </div>
     </article>

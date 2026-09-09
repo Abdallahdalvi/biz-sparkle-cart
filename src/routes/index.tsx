@@ -347,31 +347,52 @@ function Index() {
       )}
 
       {/* Featured storefront products */}
-      <section id="products" className="scroll-mt-20 bg-surface-container-lowest py-10 md:py-16">
+      <section
+        id="products"
+        className="scroll-mt-20 border-b border-outline-variant/30 bg-surface-container-low py-12 md:py-20"
+      >
         <div className="mx-auto max-w-[1280px] px-margin-mobile md:px-margin-desktop">
-          <div className="mb-10">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">
-              Popular right now
-            </p>
-            <h2 className="text-3xl font-bold text-primary md:text-4xl">Most in Demand</h2>
-            <p className="mt-2 max-w-xl text-sm text-on-surface-variant">
-              Explore the phones and gadgets customers are asking about most.
-            </p>
+          <div className="mb-7 flex items-end justify-between gap-5 md:mb-10">
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="h-px w-8 bg-[#2b4c9b]" aria-hidden="true" />
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2b4c9b]">
+                  Popular right now
+                </p>
+              </div>
+              <h2 className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl md:text-4xl">
+                Most in-demand products
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-on-surface-variant sm:text-base">
+                Shop customer favourites with COD options and free delivery.
+              </p>
+            </div>
+            <Link
+              to="/catalog"
+              className="hidden min-h-11 flex-shrink-0 items-center gap-2 border border-primary bg-white px-5 py-3 text-xs font-bold uppercase tracking-wide text-primary shadow-sm transition-colors hover:bg-primary hover:text-on-primary sm:inline-flex"
+            >
+              View all
+              <span className="material-symbols-outlined text-base" aria-hidden="true">
+                arrow_forward
+              </span>
+            </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
             {homepageProducts.map((product) => (
               <ProductCard key={product.slug} product={product} />
             ))}
           </div>
 
-          <div className="mt-10 flex justify-center md:mt-14">
+          <div className="mt-8 flex justify-center sm:hidden">
             <Link
               to="/catalog"
-              className="inline-flex w-full items-center justify-center gap-2 bg-primary px-10 py-4 text-xs font-bold uppercase tracking-widest text-on-primary shadow-sm transition-opacity hover:opacity-90 sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-on-primary shadow-sm transition-opacity hover:opacity-90"
             >
               View all products
-              <span className="material-symbols-outlined text-base">arrow_outward</span>
+              <span className="material-symbols-outlined text-base" aria-hidden="true">
+                arrow_forward
+              </span>
             </Link>
           </div>
         </div>
