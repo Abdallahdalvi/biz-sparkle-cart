@@ -864,10 +864,10 @@ function AdminCmsPage() {
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
                   Add the IDs from each platform, switch it on, and publish. The storefront sends
-                  page views, product views, add-to-cart, checkout, and deduplicated purchase events
-                  after the visitor makes a privacy choice. Tracker IDs are public identifiers, not
-                  secret API keys. Google IDs saved here take priority over optional server
-                  environment fallbacks.
+                  page views, product searches, product views, add-to-cart, checkout,
+                  payment-method, lead, and deduplicated purchase events after the visitor makes a
+                  privacy choice. Tracker IDs are public identifiers, not secret API keys. Google
+                  IDs saved here take priority over optional server environment fallbacks.
                 </p>
               </div>
 

@@ -64,6 +64,7 @@ function Checkout() {
   const verifyCashfree = useServerFn(verifyCashfreePayment);
   const returnVerificationStarted = useRef(false);
   const beginCheckoutTracked = useRef(false);
+  const paymentMethodsTracked = useRef(new Set<string>());
   const trackingItems = useMemo(
     () =>
       items.map((item) => ({
@@ -217,6 +218,15 @@ function Checkout() {
               const token = sessionData.session?.access_token;
 
               const marketingConsent = readTrackingConsent()?.marketing === true;
+              if (!paymentMethodsTracked.current.has(payMode)) {
+                trackCommerceEvent("add_payment_info", {
+                  currency: "INR",
+                  value: effectiveTotal / 100,
+                  items: trackingItems,
+                  paymentMethod: payMode === "cod" ? "Cash on Delivery" : "Cashfree online",
+                });
+                paymentMethodsTracked.current.add(payMode);
+              }
               const orderPayload = {
                 token,
                 items: items.map((i) => ({

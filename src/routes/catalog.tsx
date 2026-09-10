@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
 import {
@@ -11,6 +11,7 @@ import {
   type StorefrontCms,
 } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
+import { trackCommerceEvent } from "@/lib/tracking";
 
 const PAGE_SIZE = 12;
 
@@ -73,7 +74,9 @@ function Catalog() {
   const [availability, setAvailability] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("featured");
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
+  const trackedSearches = useRef(new Set<string>());
 
   const formFactors = [
     "all",
@@ -99,6 +102,15 @@ function Catalog() {
 
   const filteredProducts = useMemo(() => {
     let result = [...all];
+
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase();
+    if (normalizedSearch) {
+      result = result.filter((product) =>
+        [product.name, product.brand, product.tagline, product.formFactor, product.category]
+          .filter(Boolean)
+          .some((value) => String(value).toLocaleLowerCase().includes(normalizedSearch)),
+      );
+    }
 
     // Category filter
     if (cat !== "all") {
@@ -134,7 +146,37 @@ function Catalog() {
     }
 
     return result;
-  }, [all, cat, formFactor, availability, priceRange, sortBy]);
+  }, [all, cat, formFactor, availability, priceRange, searchTerm, sortBy]);
+
+  useEffect(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase();
+    if (normalizedSearch.length < 2 || trackedSearches.current.has(normalizedSearch)) return;
+
+    const timer = window.setTimeout(() => {
+      const matches = all
+        .filter((product) =>
+          [product.name, product.brand, product.tagline, product.formFactor, product.category]
+            .filter(Boolean)
+            .some((value) => String(value).toLocaleLowerCase().includes(normalizedSearch)),
+        )
+        .slice(0, PAGE_SIZE);
+
+      trackCommerceEvent("search", {
+        currency: "INR",
+        value: 0,
+        searchString: searchTerm.trim(),
+        items: matches.map((product) => ({
+          item_id: product.slug,
+          item_name: product.name,
+          price: product.pricePaise / 100,
+          quantity: 1,
+        })),
+      });
+      trackedSearches.current.add(normalizedSearch);
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [all, searchTerm]);
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageProducts = filteredProducts.slice(
@@ -178,6 +220,25 @@ function Catalog() {
             </button>
           ))}
         </div>
+
+        <label className="mb-6 block">
+          <span className="sr-only">Search products</span>
+          <span className="relative block">
+            <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-on-surface-variant">
+              search
+            </span>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search phones and gadgets"
+              className="w-full border border-outline-variant/50 bg-white py-3.5 pl-12 pr-4 text-sm text-primary shadow-sm outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary"
+            />
+          </span>
+        </label>
 
         {/* Faceted Filtering Bar */}
         <div className="bg-surface-container-lowest border border-outline-variant/40 p-6 rounded shadow-sm mb-12 space-y-6">
@@ -289,6 +350,7 @@ function Catalog() {
                 setAvailability("all");
                 setPriceRange("all");
                 setSortBy("featured");
+                setSearchTerm("");
                 setPage(1);
               }}
               className="bg-primary text-on-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm inline-block mt-2"

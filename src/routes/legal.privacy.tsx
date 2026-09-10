@@ -29,9 +29,9 @@ export const Route = createFileRoute("/legal/privacy")({
           and a provider reference — never card details.
         </li>
         <li>
-          <strong>Usage:</strong> with your optional-cookie choices, pages and products viewed, cart
-          and checkout actions, purchases, approximate device/browser details, IP-derived region,
-          cookies, and similar identifiers.
+          <strong>Usage:</strong> with your optional-cookie choices, pages and products viewed,
+          product searches, cart, checkout and payment-method actions, purchases, approximate
+          device/browser details, IP-derived region, cookies, and similar identifiers.
         </li>
       </ul>
       <h2>2. How we use it</h2>

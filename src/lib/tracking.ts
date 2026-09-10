@@ -25,7 +25,13 @@ export type TrackingItem = {
   item_variant?: string;
 };
 
-export type CommerceEvent = "view_item" | "add_to_cart" | "begin_checkout" | "purchase";
+export type CommerceEvent =
+  | "search"
+  | "view_item"
+  | "add_to_cart"
+  | "begin_checkout"
+  | "add_payment_info"
+  | "purchase";
 
 export type CommerceEventData = {
   value: number;
@@ -33,6 +39,8 @@ export type CommerceEventData = {
   items: TrackingItem[];
   transactionId?: string;
   contentCategory?: string;
+  searchString?: string;
+  paymentMethod?: string;
 };
 
 type Gtag = (...args: unknown[]) => void;
@@ -106,9 +114,11 @@ export function hasConfiguredTracking(settings: TrackingSettings) {
 
 function metaEventName(event: CommerceEvent) {
   return {
+    search: "Search",
     view_item: "ViewContent",
     add_to_cart: "AddToCart",
     begin_checkout: "InitiateCheckout",
+    add_payment_info: "AddPaymentInfo",
     purchase: "Purchase",
   }[event];
 }
@@ -158,6 +168,8 @@ export function trackCommerceEvent(event: CommerceEvent, data: CommerceEventData
     currency,
     value: data.value,
     transaction_id: data.transactionId,
+    search_term: data.searchString,
+    payment_type: data.paymentMethod,
     items: data.items,
   });
 
@@ -169,6 +181,8 @@ export function trackCommerceEvent(event: CommerceEvent, data: CommerceEventData
       content_name: data.items.map((item) => item.item_name).join(", "),
       content_type: "product",
       content_category: data.contentCategory,
+      search_string: data.searchString,
+      payment_method: data.paymentMethod,
       contents: data.items.map((item) => ({
         id: item.item_id,
         quantity: item.quantity,

@@ -378,7 +378,7 @@ function Index() {
                 </a>
               </div>
             </div>
-            <div className="relative z-10 mt-4 block w-full text-center sm:mt-6 sm:text-left lg:hidden">
+            <div className="relative z-10 block w-full pt-6 text-center sm:pt-8 sm:text-left lg:hidden">
               <a
                 href="#products"
                 className="inline-flex bg-primary text-on-primary px-12 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all items-center justify-center gap-2 shadow-sm w-full sm:w-auto"
