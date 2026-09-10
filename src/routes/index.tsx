@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
 import {
@@ -44,6 +45,7 @@ function youtubeVideoId(url: string) {
 function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
   const [hoverPreview, setHoverPreview] = useState(false);
   const [manualPlayback, setManualPlayback] = useState(false);
+  const [mobileFullscreen, setMobileFullscreen] = useState(false);
   const playing = hoverPreview || manualPlayback;
   const publishedLabel = video.publishedAt
     ? new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(
@@ -51,58 +53,119 @@ function YouTubeVideoCard({ video }: { video: YouTubeChannelVideo }) {
       )
     : "Official channel";
 
+  useEffect(() => {
+    if (!mobileFullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileFullscreen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [mobileFullscreen]);
+
+  const beginPlayback = () => {
+    if (window.matchMedia("(max-width: 639px)").matches) {
+      setMobileFullscreen(true);
+      return;
+    }
+    setManualPlayback(true);
+  };
+
   return (
-    <article
-      className="overflow-hidden bg-white shadow-sm transition-shadow hover:shadow-lg shopify-border"
-      onMouseEnter={() => setHoverPreview(true)}
-      onMouseLeave={() => setHoverPreview(false)}
-    >
-      <div className="relative aspect-[9/16] overflow-hidden bg-black">
-        {playing ? (
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&mute=1&rel=0&playsinline=1&controls=1`}
-            title={video.title}
-            className="h-full w-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-            loading="lazy"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setManualPlayback(true)}
-            aria-label={`Play ${video.title}`}
-            className="group relative h-full w-full text-left"
-          >
-            <img
-              src={video.thumbnail}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+    <>
+      <article
+        className="overflow-hidden bg-white shadow-sm transition-shadow hover:shadow-lg shopify-border"
+        onMouseEnter={() => {
+          if (window.matchMedia("(min-width: 640px) and (hover: hover)").matches) {
+            setHoverPreview(true);
+          }
+        }}
+        onMouseLeave={() => setHoverPreview(false)}
+      >
+        <div className="relative aspect-[9/16] overflow-hidden bg-black">
+          {playing ? (
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&mute=1&rel=0&playsinline=1&controls=1`}
+              title={video.title}
+              className="h-full w-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
               loading="lazy"
             />
-            <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
-            <span className="absolute left-3 top-3 bg-black/70 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm sm:text-xs">
-              <span className="sm:hidden">Tap to play</span>
-              <span className="hidden sm:inline">Hover to preview</span>
-            </span>
-            <span className="absolute bottom-3 left-3 right-3 line-clamp-2 text-sm font-bold text-white">
-              {video.title}
-            </span>
-          </button>
-        )}
-      </div>
-      <div className="p-3 sm:p-4">
-        <div className="min-w-0">
-          <h3 className="truncate text-sm font-bold text-primary">{video.title}</h3>
-          <p className="mt-1 text-xs font-medium text-on-surface-variant">
-            {video.views === null
-              ? publishedLabel
-              : `${video.views.toLocaleString("en-IN")} views • ${publishedLabel}`}
-          </p>
+          ) : (
+            <button
+              type="button"
+              onClick={beginPlayback}
+              aria-label={`Play ${video.title} full screen`}
+              className="group relative h-full w-full text-left"
+            >
+              <img
+                src={video.thumbnail}
+                alt=""
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                loading="lazy"
+              />
+              <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
+              <span className="absolute left-3 top-3 bg-black/70 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm sm:text-xs">
+                <span className="sm:hidden">Tap for full screen</span>
+                <span className="hidden sm:inline">Hover to preview</span>
+              </span>
+              <span className="absolute bottom-3 left-3 right-3 line-clamp-2 text-sm font-bold text-white">
+                {video.title}
+              </span>
+            </button>
+          )}
         </div>
-      </div>
-    </article>
+        <div className="p-3 sm:p-4">
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-bold text-primary">{video.title}</h3>
+            <p className="mt-1 text-xs font-medium text-on-surface-variant">
+              {video.views === null
+                ? publishedLabel
+                : `${video.views.toLocaleString("en-IN")} views • ${publishedLabel}`}
+            </p>
+          </div>
+        </div>
+      </article>
+
+      {mobileFullscreen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex h-[100dvh] w-screen items-center justify-center bg-black"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${video.title} full-screen video`}
+          >
+            <button
+              type="button"
+              onClick={() => setMobileFullscreen(false)}
+              className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur"
+              aria-label="Close video"
+            >
+              <span className="material-symbols-outlined text-2xl" aria-hidden="true">
+                close
+              </span>
+            </button>
+            <div className="h-full max-h-[100dvh] w-full max-w-[min(100vw,56.25vh)] bg-black">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&mute=0&rel=0&playsinline=1&controls=1`}
+                title={video.title}
+                className="h-full w-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 

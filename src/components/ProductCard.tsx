@@ -32,7 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
           loading="lazy"
           className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.045]"
         />
-        <div className="absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap gap-1.5 sm:left-3 sm:top-3">
+        <div className="absolute left-3 top-3 hidden max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5 sm:flex">
           {product.badge && (
             <span className="bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-on-primary shadow-sm sm:text-xs">
               {product.badge}
@@ -44,8 +44,8 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           )}
         </div>
-        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2 sm:bottom-3 sm:left-3 sm:right-3">
-          <span className="border border-outline-variant/70 bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-on-surface shadow-sm backdrop-blur sm:text-xs">
+        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-end gap-2 sm:bottom-3 sm:left-3 sm:right-3 sm:justify-between">
+          <span className="hidden border border-outline-variant/70 bg-white/95 px-2 py-1 text-xs font-bold uppercase tracking-wide text-on-surface shadow-sm backdrop-blur sm:inline-flex">
             {categoryLabel}
           </span>
           {product.images.length > 1 && (
