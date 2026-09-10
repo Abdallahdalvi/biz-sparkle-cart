@@ -324,10 +324,10 @@ function Index() {
             </div>
           </div>
           <div className="relative isolate flex flex-col">
-            <div className="relative z-0 grid h-[300px] w-full grid-cols-2 gap-3 sm:h-[440px] sm:gap-4 lg:h-[500px]">
+            <div className="relative z-0 grid h-[300px] min-h-0 w-full grid-cols-2 gap-3 sm:h-[440px] sm:gap-4 lg:h-[500px]">
               <a
                 href={cms.hero_1_link}
-                className="relative overflow-hidden shopify-border group h-full shadow-sm block w-full"
+                className="relative block h-full min-h-0 w-full overflow-hidden shopify-border shadow-sm group"
               >
                 <img
                   className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
@@ -340,10 +340,10 @@ function Index() {
                   </p>
                 </div>
               </a>
-              <div className="grid grid-rows-2 gap-4 h-full w-full">
+              <div className="grid h-full min-h-0 w-full grid-rows-2 gap-4 overflow-hidden">
                 <a
                   href={cms.hero_2_link}
-                  className="relative overflow-hidden shopify-border group shadow-sm block w-full h-full"
+                  className="relative block h-full min-h-0 w-full overflow-hidden shopify-border shadow-sm group"
                 >
                   <img
                     className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
@@ -360,7 +360,7 @@ function Index() {
                   href={whatsappChannelUrl}
                   target={whatsappChannelUrl.startsWith("https://") ? "_blank" : undefined}
                   rel="noreferrer"
-                  className="relative border-2 border-emerald-500 bg-white hover:bg-emerald-50/50 flex flex-col justify-center items-center text-center p-2 sm:p-4 shadow-sm w-full h-full transition-colors group block"
+                  className="relative block flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden border-2 border-emerald-500 bg-white p-2 text-center shadow-sm transition-colors hover:bg-emerald-50/50 sm:p-4 group"
                 >
                   <svg
                     className="w-7 h-7 sm:w-10 sm:h-10 text-emerald-600 mb-1 sm:mb-2 group-hover:scale-110 transition-transform"
