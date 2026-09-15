@@ -95,6 +95,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: SITE_DESCRIPTION,
       },
       { name: "author", content: SITE_NAME },
+      {
+        name: "google-site-verification",
+        content: "dxgYggkJ3JX-3tbpchdylELMU0H4wfsT0k2IX4XTpY",
+      },
       { property: "og:title", content: `${SITE_NAME} — Hard-to-find phones and gadgets` },
       {
         property: "og:description",
