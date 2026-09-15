@@ -81,9 +81,11 @@ async function cashfreeRequest<T>(
   return (await response.json()) as T;
 }
 
-function normalizeReturnOrigin(origin: string | undefined) {
-  const fallback = process.env.PUBLIC_SITE_URL || "https://aghanimsphones.in";
-  const value = (origin || fallback).trim();
+function getConfiguredReturnOrigin() {
+  // Never derive Cashfree return URLs from the browser's current origin. A visitor
+  // can arrive through HTTP or an alias, while Cashfree only permits the approved
+  // secure checkout domain.
+  const value = (process.env.PUBLIC_SITE_URL || "https://aghanimsphones.in").trim();
   const parsed = new URL(value);
   const isLocal =
     parsed.protocol === "http:" && ["127.0.0.1", "localhost"].includes(parsed.hostname);
@@ -112,7 +114,7 @@ export async function createCashfreeOrderInternal(input: {
     throw new Error("Cashfree payments must be at least ₹1");
   }
   const cashfreeOrderId = `agh_${input.storeOrderId.replace(/-/g, "")}`;
-  const origin = normalizeReturnOrigin(input.returnOrigin);
+  const origin = getConfiguredReturnOrigin();
   const order = await cashfreeRequest<CashfreeOrder>(
     "/orders",
     {

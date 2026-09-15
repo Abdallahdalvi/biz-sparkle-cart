@@ -13,6 +13,7 @@ import { createSecureOrder, getCheckoutCapabilities } from "@/lib/orders.functio
 import { getAllProducts, getStorefrontCms } from "@/lib/products";
 import { rememberOrderReceipt } from "@/lib/order-receipt-client";
 import { readTrackingConsent, trackCommerceEvent } from "@/lib/tracking";
+import { SITE_URL } from "@/lib/site";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -76,6 +77,18 @@ function Checkout() {
       })),
     [items],
   );
+
+  useEffect(() => {
+    const canonical = new URL(SITE_URL);
+    const isStorefrontAlias = ["aghanimsphones.in", "www.aghanimsphones.in"].includes(
+      window.location.hostname,
+    );
+    if (isStorefrontAlias && window.location.origin !== canonical.origin) {
+      window.location.replace(
+        `${canonical.origin}${window.location.pathname}${window.location.search}${window.location.hash}`,
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (beginCheckoutTracked.current || items.length === 0) return;
@@ -244,7 +257,10 @@ function Checkout() {
                 payMode: payMode,
                 email: String(fd.get("email") ?? ""),
                 phone: String(fd.get("phone") ?? ""),
-                returnOrigin: window.location.origin,
+                // Cashfree checks the page origin against its HTTPS whitelist.
+                // Use the one canonical production origin, not a possible HTTP
+                // or alias URL supplied by the visitor's browser.
+                returnOrigin: SITE_URL,
                 marketingConsent,
                 metaFbp: marketingConsent ? readBrowserCookie("_fbp") : undefined,
                 metaFbc: marketingConsent ? readBrowserCookie("_fbc") : undefined,
