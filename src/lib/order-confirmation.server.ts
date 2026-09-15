@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { PublicTrackingResult } from "@/lib/shiprocket.server";
+import { getGoogleCustomerReviewsDeliveryDate } from "@/lib/google-customer-reviews";
 
 const RECEIPT_PREFIX = "agh_receipt_v1";
 
@@ -57,7 +58,7 @@ export async function getOrderConfirmationInternal(input: {
   const { data: order, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, user_id, order_number, email, phone, shipping_address, status, subtotal_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_shipment_id, notes, cashfree_payment_id, order_items(name, qty, unit_price_paise, variant_label, image_url)",
+      "id, user_id, order_number, email, phone, shipping_address, status, subtotal_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_shipment_id, notes, cashfree_payment_id, order_items(name, qty, unit_price_paise, variant_label, image_url, product_id)",
     )
     .eq("id", input.orderId)
     .maybeSingle();
@@ -85,6 +86,19 @@ export async function getOrderConfirmationInternal(input: {
     // The receipt must remain available even if Shiprocket is temporarily unavailable.
   }
 
+  const orderItems = order.order_items || [];
+  const productIds = [...new Set(orderItems.map((item) => item.product_id).filter(Boolean))];
+  let deliveryEstimates: string[] = [];
+  if (productIds.length) {
+    const { data: products } = await supabaseAdmin
+      .from("products")
+      .select("id, metadata")
+      .in("id", productIds);
+    deliveryEstimates = (products || [])
+      .map((product) => product.metadata?.delivery_estimate)
+      .filter((estimate): estimate is string => typeof estimate === "string" && Boolean(estimate.trim()));
+  }
+
   return {
     id: order.id,
     orderNumber: order.order_number,
@@ -101,7 +115,12 @@ export async function getOrderConfirmationInternal(input: {
     createdAt: order.created_at,
     paymentMethod: order.notes === "cod" ? ("cod" as const) : ("prepaid" as const),
     onlinePaymentReceived: Boolean(order.cashfree_payment_id),
-    items: (order.order_items || []).map((item) => ({
+    googleCustomerReviewDeliveryDate: getGoogleCustomerReviewsDeliveryDate({
+      createdAt: order.created_at,
+      trackingEstimate: tracking.estimatedDelivery,
+      productDeliveryEstimates: deliveryEstimates,
+    }),
+    items: orderItems.map((item) => ({
       name: item.name,
       qty: Number(item.qty) || 0,
       unitPricePaise: Number(item.unit_price_paise) || 0,

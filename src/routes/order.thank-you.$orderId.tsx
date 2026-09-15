@@ -21,6 +21,26 @@ interface Address {
   country?: string;
 }
 
+const GOOGLE_CUSTOMER_REVIEWS_MERCHANT_ID = 5852904000;
+
+declare global {
+  interface Window {
+    gapi?: {
+      load: (module: string, callback: () => void) => void;
+      surveyoptin?: {
+        render: (configuration: {
+          merchant_id: number;
+          order_id: string;
+          email: string;
+          delivery_country: string;
+          estimated_delivery_date: string;
+        }) => void;
+      };
+    };
+    renderGoogleCustomerReviewsOptIn?: () => void;
+  }
+}
+
 type Confirmation = Awaited<
   ReturnType<ReturnType<typeof useServerFn<typeof getOrderConfirmation>>>
 >;
@@ -37,6 +57,55 @@ export const Route = createFileRoute("/order/thank-you/$orderId")({
 
 function displayStatus(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function GoogleCustomerReviewsOptIn({
+  orderId,
+  email,
+  deliveryDate,
+}: {
+  orderId: string;
+  email: string;
+  deliveryDate: string;
+}) {
+  useEffect(() => {
+    const renderedForAttribute = "data-gcr-rendered-for";
+    const render = () => {
+      if (document.documentElement.getAttribute(renderedForAttribute) === orderId) return;
+      window.gapi?.load("surveyoptin", () => {
+        if (!window.gapi?.surveyoptin) return;
+        window.gapi.surveyoptin.render({
+          merchant_id: GOOGLE_CUSTOMER_REVIEWS_MERCHANT_ID,
+          order_id: orderId,
+          email,
+          delivery_country: "IN",
+          estimated_delivery_date: deliveryDate,
+        });
+        document.documentElement.setAttribute(renderedForAttribute, orderId);
+      });
+    };
+
+    window.renderGoogleCustomerReviewsOptIn = render;
+    const existing = document.getElementById("google-customer-reviews-platform");
+    if (existing) render();
+    else {
+      const script = document.createElement("script");
+      script.id = "google-customer-reviews-platform";
+      script.src =
+        "https://apis.google.com/js/platform.js?onload=renderGoogleCustomerReviewsOptIn";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+
+    return () => {
+      if (window.renderGoogleCustomerReviewsOptIn === render) {
+        delete window.renderGoogleCustomerReviewsOptIn;
+      }
+    };
+  }, [deliveryDate, email, orderId]);
+
+  return null;
 }
 
 function OrderThankYou() {
@@ -122,9 +191,17 @@ function OrderThankYou() {
   const merchandiseSubtotal = confirmation.subtotalPaise;
   const pricingAdjustment = confirmation.totalPaise - (merchandiseSubtotal + confirmation.taxPaise);
   const estimatePending = /available after|awaiting/i.test(confirmation.tracking.estimatedDelivery);
+  const completedCheckout = !["pending", "cancelled", "refunded"].includes(confirmation.status);
 
   return (
     <SiteShell>
+      {completedCheckout && (
+        <GoogleCustomerReviewsOptIn
+          orderId={confirmation.orderNumber}
+          email={confirmation.email}
+          deliveryDate={confirmation.googleCustomerReviewDeliveryDate}
+        />
+      )}
       <main className="bg-surface-container-low px-margin-mobile py-10 md:px-margin-desktop md:py-16">
         <div className="mx-auto max-w-[1180px] space-y-6">
           <section className="overflow-hidden border border-outline-variant/50 bg-white shadow-sm">
