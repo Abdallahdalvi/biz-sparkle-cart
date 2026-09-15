@@ -12,10 +12,6 @@ declare global {
         merchant_id: number;
         position: "LEFT_BOTTOM" | "RIGHT_BOTTOM";
         region: string;
-        sideMargin: number;
-        bottomMargin: number;
-        mobileSideMargin: number;
-        mobileBottomMargin: number;
       }) => void;
     };
   }
@@ -38,12 +34,8 @@ export function GoogleMerchantWidget() {
       }
       window.merchantwidget.start({
         merchant_id: MERCHANT_ID,
-        position: "LEFT_BOTTOM",
+        position: "RIGHT_BOTTOM",
         region: "IN",
-        sideMargin: 24,
-        bottomMargin: 24,
-        mobileSideMargin: 16,
-        mobileBottomMargin: 56,
       });
       document.documentElement.setAttribute(STARTED_ATTRIBUTE, "true");
     };
@@ -57,7 +49,7 @@ export function GoogleMerchantWidget() {
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
     script.src = "https://www.gstatic.com/shopping/merchant/merchantwidget.js";
-    script.defer = true;
+    script.async = true;
     script.addEventListener("load", start, { once: true });
     document.head.appendChild(script);
   }, [isAdmin]);

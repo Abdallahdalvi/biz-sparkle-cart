@@ -1,5 +1,53 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+
+type VariantInput = { label: string };
+
+async function syncProductVariants(
+  supabaseAdmin: SupabaseClient,
+  productId: string,
+  variants: VariantInput[] | undefined,
+  stock: number,
+) {
+  const desired = (variants || []).filter((variant) => variant.label.trim());
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from("product_variants")
+    .select("id")
+    .eq("product_id", productId);
+  if (existingError) throw new Error(`Could not load product variants: ${existingError.message}`);
+
+  const sharedCount = Math.min(existing.length, desired.length);
+  await Promise.all(
+    desired
+      .slice(0, sharedCount)
+      .map((variant, index) =>
+        supabaseAdmin
+          .from("product_variants")
+          .update({ label: variant.label.trim(), stock })
+          .eq("id", existing[index].id),
+      ),
+  );
+
+  const removedIds = existing.slice(sharedCount).map((variant) => variant.id);
+  if (removedIds.length) {
+    const { error } = await supabaseAdmin.from("product_variants").delete().in("id", removedIds);
+    if (error) throw new Error(`Could not remove unused product variants: ${error.message}`);
+  }
+
+  const newVariants = desired.slice(sharedCount);
+  if (newVariants.length) {
+    const { error } = await supabaseAdmin.from("product_variants").insert(
+      newVariants.map((variant) => ({
+        product_id: productId,
+        label: variant.label.trim(),
+        price_delta_paise: 0,
+        stock,
+      })),
+    );
+    if (error) throw new Error(`Could not add product variants: ${error.message}`);
+  }
+}
 
 export const createProduct = createServerFn({ method: "POST" })
   .validator((input) =>
@@ -61,16 +109,8 @@ export const createProduct = createServerFn({ method: "POST" })
       );
     }
 
-    if (prod && data.metadata?.variants?.length > 0) {
-      await supabaseAdmin.from("product_variants").insert(
-        data.metadata.variants.map((v: { label: string }) => ({
-          product_id: prod.id,
-          label: v.label,
-          price_delta_paise: 0,
-          stock: data.stock,
-        })),
-      );
-    }
+    if (prod)
+      await syncProductVariants(supabaseAdmin, prod.id, data.metadata?.variants, data.stock);
 
     return { ok: true, product: prod };
   });
@@ -120,13 +160,21 @@ export const updateProduct = createServerFn({ method: "POST" })
       metadata: data.metadata,
     };
 
+    let productId = data.id;
     if (data.id.startsWith("static-")) {
-      const { error } = await supabaseAdmin.from("products").insert(payload);
+      const { data: insertedProduct, error } = await supabaseAdmin
+        .from("products")
+        .insert(payload)
+        .select("id")
+        .single();
       if (error) throw new Error(`Database Error: ${error.message}`);
+      productId = insertedProduct.id;
     } else {
       const { error } = await supabaseAdmin.from("products").update(payload).eq("id", data.id);
       if (error) throw new Error(`Database Error: ${error.message}`);
     }
+
+    await syncProductVariants(supabaseAdmin, productId, data.metadata?.variants, data.stock);
 
     return { ok: true };
   });

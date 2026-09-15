@@ -388,9 +388,15 @@ export async function getAllProducts(): Promise<Product[]> {
       description: row.description || "",
       specs: row.metadata?.specs || [],
       variants: row.product_variants?.length
-        ? row.product_variants.map((variant: { id: string; label: string }) => ({
+        ? row.product_variants.map((variant: { id: string; label: string }, index: number) => ({
             id: variant.id,
-            label: variant.label,
+            // Admin stores the edit form's current labels in metadata. Prefer
+            // them while the server also keeps product_variants in sync.
+            label:
+              typeof row.metadata?.variants?.[index]?.label === "string" &&
+              row.metadata.variants[index].label.trim()
+                ? row.metadata.variants[index].label.trim()
+                : variant.label,
           }))
         : undefined,
       faqs: row.metadata?.faqs?.length ? row.metadata.faqs : DEFAULT_STOREFRONT_CMS.faqs,
