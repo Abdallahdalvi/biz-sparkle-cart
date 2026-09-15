@@ -12,6 +12,19 @@ function xml(value: unknown) {
     .replaceAll("'", "&apos;");
 }
 
+function absoluteImageUrl(image: string | undefined) {
+  const fallback = absoluteSiteUrl("/logo.png");
+  const value = image?.trim();
+
+  if (!value) return fallback;
+
+  try {
+    return new URL(value).toString();
+  } catch {
+    return absoluteSiteUrl(value.startsWith("/") ? value : `/${value}`);
+  }
+}
+
 export const Route = createFileRoute("/meta-catalog.xml")({
   server: {
     handlers: {
@@ -27,7 +40,7 @@ export const Route = createFileRoute("/meta-catalog.xml")({
             "      <g:condition>new</g:condition>",
             `      <g:price>${(product.pricePaise / 100).toFixed(2)} INR</g:price>`,
             `      <g:link>${xml(absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`))}</g:link>`,
-            `      <g:image_link>${xml(product.images[0] || absoluteSiteUrl("/logo.png"))}</g:image_link>`,
+            `      <g:image_link>${xml(absoluteImageUrl(product.images[0]))}</g:image_link>`,
             `      <g:brand>${xml(product.brand || inferProductBrand(product.name))}</g:brand>`,
             "    </item>",
           ].join("\n"),
