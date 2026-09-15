@@ -48,6 +48,17 @@ function isDirectVideo(url: string) {
   return /\.(?:mp4|webm|ogg)(?:[?#].*)?$/i.test(url);
 }
 
+function absoluteMediaUrl(url: string | undefined) {
+  const value = url?.trim();
+  if (!value) return absoluteSiteUrl("/logo.png");
+
+  try {
+    return new URL(value).toString();
+  } catch {
+    return absoluteSiteUrl(value.startsWith("/") ? value : `/${value}`);
+  }
+}
+
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
     const product = await getProductBySlug(params.slug);
@@ -60,6 +71,8 @@ export const Route = createFileRoute("/product/$slug")({
     const p = loaderData?.product;
     if (!p) return { meta: [{ title: "Product — Aghanims Phones and Gadgets" }] };
     const productUrl = absoluteSiteUrl(`/product/${encodeURIComponent(p.slug)}`);
+    const imageUrls = p.images.map(absoluteMediaUrl);
+    const primaryImageUrl = imageUrls[0] || absoluteSiteUrl("/logo.png");
     return {
       meta: [
         { title: `${p.name} — Aghanims Phones and Gadgets` },
@@ -69,7 +82,7 @@ export const Route = createFileRoute("/product/$slug")({
         },
         { property: "og:title", content: `${p.name} — Aghanims Phones and Gadgets` },
         { property: "og:description", content: p.tagline },
-        { property: "og:image", content: p.images[0] },
+        { property: "og:image", content: primaryImageUrl },
         { property: "og:url", content: productUrl },
         { property: "product:price:amount", content: (p.pricePaise / 100).toFixed(2) },
         { property: "product:price:currency", content: "INR" },
@@ -78,7 +91,7 @@ export const Route = createFileRoute("/product/$slug")({
           content: p.stock > 0 ? "in stock" : "out of stock",
         },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:image", content: p.images[0] },
+        { name: "twitter:image", content: primaryImageUrl },
       ],
       links: [{ rel: "canonical", href: productUrl }],
       scripts: [
@@ -89,7 +102,7 @@ export const Route = createFileRoute("/product/$slug")({
             "@type": "Product",
             name: p.name,
             description: p.description,
-            image: p.images,
+            image: imageUrls,
             sku: p.slug,
             url: productUrl,
             brand: { "@type": "Brand", name: p.brand },
