@@ -288,10 +288,7 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
-  const homepageProducts = orderProducts(
-    all.filter((product) => product.stock > 0),
-    cms.product_order,
-  ).slice(0, HOME_PRODUCT_LIMIT);
+  const homepageProducts = orderProducts(all, cms.product_order).slice(0, HOME_PRODUCT_LIMIT);
 
   return (
     <SiteShell>

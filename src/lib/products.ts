@@ -28,6 +28,7 @@ export interface Product {
   wholesaleGstRate?: number;
   packagingCostPaise?: number;
   formFactor?: string;
+  deliveryEstimate?: string;
 }
 
 export interface StorefrontCms {
@@ -402,6 +403,10 @@ export async function getAllProducts(): Promise<Product[]> {
           ? Number(row.metadata.packaging_cost_paise)
           : 5000,
       formFactor: row.metadata?.form_factor || row.metadata?.formFactor || undefined,
+      deliveryEstimate:
+        typeof row.metadata?.delivery_estimate === "string" && row.metadata.delivery_estimate.trim()
+          ? row.metadata.delivery_estimate.trim()
+          : undefined,
     }));
 
     return dbProducts;

@@ -415,6 +415,20 @@ function ProductPage() {
                   <span>Full Cash on Delivery available with no online advance.</span>
                 )}
               </div>
+              {product.deliveryEstimate && (
+                <div className="mt-3 flex items-start gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-950">
+                  <span className="material-symbols-outlined mt-0.5 text-base text-blue-700">
+                    local_shipping
+                  </span>
+                  <span>
+                    <strong>Estimated delivery: {product.deliveryEstimate}</strong>
+                    <span className="block pt-0.5 text-blue-900/80">
+                      This model has a longer delivery timeline. We will share tracking after
+                      dispatch.
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
 
             <p className="text-on-surface-variant leading-relaxed">{product.description}</p>

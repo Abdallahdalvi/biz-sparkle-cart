@@ -164,6 +164,12 @@ function Checkout() {
 
   const paymentAmountPaise = payMode === "cod" ? codAdvancePaise : effectiveTotal;
   const codAdvanceUnavailable = codAdvancePaise > 0 && !capabilities.onlinePaymentsConfigured;
+  const deliveryEstimateItems = items
+    .map((item) => ({
+      name: item.name,
+      estimate: productsBySlug.get(item.slug)?.deliveryEstimate,
+    }))
+    .filter((item): item is { name: string; estimate: string } => Boolean(item.estimate));
 
   return (
     <SiteShell>
@@ -434,6 +440,14 @@ function Checkout() {
                   {i.name} × {i.qty}
                 </span>
                 <span className="font-bold">{formatINR(i.pricePaise * i.qty)}</span>
+              </div>
+            ))}
+            {deliveryEstimateItems.map((item) => (
+              <div
+                key={`${item.name}-${item.estimate}`}
+                className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-950"
+              >
+                <strong>{item.name}:</strong> estimated delivery {item.estimate}
               </div>
             ))}
             <div className="flex justify-between text-sm border-t pt-3">

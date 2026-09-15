@@ -19,6 +19,7 @@ interface ProductMetadata {
   gst_rate?: number;
   wholesale_gst_rate?: number;
   packaging_cost_paise?: number;
+  delivery_estimate?: string;
   specs?: Array<{ label: string; value: string }>;
   variants?: Array<{ id: string; label: string }>;
   images?: string[];
@@ -885,6 +886,7 @@ function NewProductForm({
           gst_rate: gstRate,
           wholesale_gst_rate: wholesaleGstRate,
           packaging_cost_paise: Math.round(packagingRupees * 100),
+          delivery_estimate: String(fd.get("delivery_estimate") ?? "").trim(),
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
           images: images.filter((i) => i.trim() !== ""),
@@ -1112,7 +1114,7 @@ function NewProductForm({
             className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
           />
         </div>
-        <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
               COD Advance Paid Online (₹)
@@ -1141,6 +1143,20 @@ function NewProductForm({
               placeholder="50"
               className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
             />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
+              Estimated Delivery Timeline
+            </label>
+            <input
+              name="delivery_estimate"
+              maxLength={80}
+              placeholder="e.g. 3–4 weeks"
+              className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
+            />
+            <p className="mt-1 text-[10px] text-on-surface-variant">
+              Optional. Shown on the product and checkout pages before the customer orders.
+            </p>
           </div>
         </div>
       </div>
@@ -1373,6 +1389,7 @@ function EditProductForm({
           gst_rate: gstRate,
           wholesale_gst_rate: wholesaleGstRate,
           packaging_cost_paise: Math.round(packagingRupees * 100),
+          delivery_estimate: String(fd.get("delivery_estimate") ?? "").trim(),
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
           images: images.filter((i) => i.trim() !== ""),
@@ -1618,7 +1635,7 @@ function EditProductForm({
             className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
           />
         </div>
-        <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
               COD Advance Paid Online (₹)
@@ -1651,6 +1668,21 @@ function EditProductForm({
               placeholder="50"
               className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
             />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
+              Estimated Delivery Timeline
+            </label>
+            <input
+              name="delivery_estimate"
+              defaultValue={String(prod.metadata?.delivery_estimate || "")}
+              maxLength={80}
+              placeholder="e.g. 3–4 weeks"
+              className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
+            />
+            <p className="mt-1 text-[10px] text-on-surface-variant">
+              Optional. Shown on the product and checkout pages before the customer orders.
+            </p>
           </div>
         </div>
       </div>
