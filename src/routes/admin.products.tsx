@@ -371,6 +371,20 @@ function AdminProducts() {
       .then(({ data }) => setCats((data as Category[]) ?? []));
   }, []);
 
+  useEffect(() => {
+    if (!editingProduct) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setEditingProduct(null);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [editingProduct]);
+
   async function toggle(r: Row) {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -506,15 +520,46 @@ function AdminProducts() {
       )}
 
       {editingProduct && (
-        <EditProductForm
-          prod={editingProduct}
-          cats={cats}
-          onDone={() => {
-            setEditingProduct(null);
-            refresh();
+        <div
+          className="fixed inset-0 z-[100] bg-black/55 p-0 sm:p-4 md:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Edit ${editingProduct.name}`}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setEditingProduct(null);
           }}
-          onCancel={() => setEditingProduct(null)}
-        />
+        >
+          <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:shopify-border">
+            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-outline-variant/40 bg-white px-4 py-3 md:px-6">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                  Editing product
+                </p>
+                <h3 className="truncate text-base font-bold text-primary">{editingProduct.name}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingProduct(null)}
+                className="flex min-h-10 shrink-0 items-center gap-1 border border-outline-variant/50 px-3 text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-low"
+                aria-label="Close product editor"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+                Close
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 md:p-6">
+              <EditProductForm
+                prod={editingProduct}
+                cats={cats}
+                onDone={() => {
+                  setEditingProduct(null);
+                  refresh();
+                }}
+                onCancel={() => setEditingProduct(null)}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {!rows ? (

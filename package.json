@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test:meta": "node --experimental-strip-types --test tests/meta-conversions.test.ts tests/product-brand.test.ts tests/tracking-events.test.ts",
     "test:shiprocket": "node --experimental-strip-types --test tests/shiprocket-calculations.test.ts",
+    "test:orders": "node --experimental-strip-types --test tests/order-admin-policy.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

@@ -17,9 +17,17 @@ import type { ShiprocketCourierOption, ShiprocketCourierQuotes } from "@/lib/shi
 import { getSellerNotes, saveSellerNote as saveSellerNoteServer } from "@/lib/operations.functions";
 import {
   cancelAdminOrder,
+  deleteAdminOrder,
+  getArchivedAdminOrders,
   refundAdminOrder,
+  setAdminOrderArchived,
   updateAdminOrderStatus,
 } from "@/lib/order-admin.functions";
+import {
+  canPermanentlyDeleteOrder,
+  hasVerifiedOrderPayment,
+  isUnpaidPaymentAttempt,
+} from "@/lib/order-admin-policy";
 
 interface ShippingAddress {
   first_name?: string;
@@ -102,6 +110,10 @@ function hasRealAwb(order: Order) {
   return Boolean(order.shiprocket_shipment_id && code && !/^SRK-ES-/i.test(code));
 }
 
+function orderItemLabel(item: OrderItem) {
+  return `${item.name}${item.variant_label ? ` — ${item.variant_label}` : ""} × ${item.qty}`;
+}
+
 const STATUSES = ["pending", "paid", "processing", "packed", "shipped", "delivered"] as const;
 
 export const Route = createFileRoute("/admin/orders")({
@@ -110,7 +122,8 @@ export const Route = createFileRoute("/admin/orders")({
 
 function AdminOrders() {
   const [orders, setOrders] = useState<Order[] | null>(null);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>("actionable");
+  const [archivedOrderIds, setArchivedOrderIds] = useState<string[]>([]);
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -142,6 +155,9 @@ function AdminOrders() {
   const cancelOrderFn = useServerFn(cancelAdminOrder);
   const refundOrderFn = useServerFn(refundAdminOrder);
   const updateOrderStatusFn = useServerFn(updateAdminOrderStatus);
+  const getArchivedOrdersFn = useServerFn(getArchivedAdminOrders);
+  const setOrderArchivedFn = useServerFn(setAdminOrderArchived);
+  const deleteOrderFn = useServerFn(deleteAdminOrder);
   const getSellerNotesFn = useServerFn(getSellerNotes);
   const saveSellerNoteFn = useServerFn(saveSellerNoteServer);
 
@@ -149,7 +165,7 @@ function AdminOrders() {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "id, order_number, email, phone, shipping_address, status, subtotal_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, notes, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, refund_amount_paise, cancellation_reason, order_items(name, qty, unit_price_paise, variant_label)",
+        "id, order_number, email, phone, shipping_address, status, subtotal_paise, tax_paise, total_paise, cod_advance_paise, advance_paid_paise, cod_collectable_paise, created_at, tracking_url, shiprocket_order_id, shiprocket_shipment_id, shiprocket_courier_id, shiprocket_courier_name, notes, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, refund_amount_paise, cancellation_reason, razorpay_payment_id, order_items(name, qty, unit_price_paise, variant_label)",
       )
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -158,7 +174,14 @@ function AdminOrders() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      if (token) setSellerNotes(await getSellerNotesFn({ data: { token } }));
+      if (token) {
+        const [notes, archivedIds] = await Promise.all([
+          getSellerNotesFn({ data: { token } }),
+          getArchivedOrdersFn({ data: { token } }),
+        ]);
+        setSellerNotes(notes);
+        setArchivedOrderIds(archivedIds);
+      }
     } catch (notesError) {
       toast.error(notesError instanceof Error ? notesError.message : "Unable to load seller notes");
     }
@@ -227,6 +250,11 @@ function AdminOrders() {
   }
 
   async function loadCourierOptions(id: string) {
+    const order = orders?.find((candidate) => candidate.id === id);
+    if (order && (isUnpaidPaymentAttempt(order) || archivedOrderIds.includes(id))) {
+      toast.error("This order is not available for fulfilment");
+      return;
+    }
     setLoadingCouriers(true);
     setCourierOptions([]);
     setCourierQuote(null);
@@ -266,6 +294,7 @@ function AdminOrders() {
       return;
     }
     setExpandedId(order.id);
+    if (isUnpaidPaymentAttempt(order) || archivedOrderIds.includes(order.id)) return;
     if (!hasRealAwb(order)) void loadCourierOptions(order.id);
     else void loadActualWalletDebit(order.id);
   }
@@ -293,6 +322,11 @@ function AdminOrders() {
   }
 
   async function generateAWB(id: string) {
+    const order = orders?.find((candidate) => candidate.id === id);
+    if (order && (isUnpaidPaymentAttempt(order) || archivedOrderIds.includes(id))) {
+      toast.error("This order is not available for fulfilment");
+      return;
+    }
     if (!selectedCourierId) {
       toast.error("Choose a live Shiprocket courier before generating the AWB");
       return;
@@ -476,6 +510,52 @@ function AdminOrders() {
     }
   }
 
+  async function setOrderArchived(order: Order, archived: boolean) {
+    if (
+      archived &&
+      !window.confirm(`Archive ${order.order_number}? It will leave the active queue.`)
+    ) {
+      return;
+    }
+    setOrderAction(`${order.id}:${archived ? "archive" : "unarchive"}`);
+    try {
+      const token = await getAdminToken();
+      await setOrderArchivedFn({ data: { token, orderId: order.id, archived } });
+      setArchivedOrderIds((current) =>
+        archived ? [...new Set([...current, order.id])] : current.filter((id) => id !== order.id),
+      );
+      setSelectedIds((current) => current.filter((id) => id !== order.id));
+      if (expandedId === order.id) setExpandedId(null);
+      toast.success(archived ? "Order archived" : "Order restored to the active queue");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to update archive");
+    } finally {
+      setOrderAction(null);
+    }
+  }
+
+  async function permanentlyDeleteOrder(order: Order) {
+    if (!canPermanentlyDeleteOrder(order)) {
+      toast.error("Paid or fulfilled orders must be archived, not deleted");
+      return;
+    }
+    const entered = window.prompt(
+      `Permanently delete this unpaid checkout attempt? Type ${order.order_number} to confirm.`,
+    );
+    if (entered !== order.order_number) return;
+    setOrderAction(`${order.id}:delete`);
+    try {
+      const token = await getAdminToken();
+      await deleteOrderFn({ data: { token, orderId: order.id } });
+      toast.success("Unpaid checkout attempt permanently deleted");
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to delete order");
+    } finally {
+      setOrderAction(null);
+    }
+  }
+
   async function handleBulkStatus(newStatus: string) {
     if (selectedIds.length === 0) return toast.error("Select at least one order");
     try {
@@ -611,7 +691,23 @@ function AdminOrders() {
       <p className="text-on-surface-variant animate-pulse">Loading orders and fulfilment logs…</p>
     );
 
-  const filteredOrders = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  const archivedSet = new Set(archivedOrderIds);
+  const activeOrders = orders.filter((order) => !archivedSet.has(order.id));
+  const unpaidAttempts = activeOrders.filter(isUnpaidPaymentAttempt);
+  const actionableOrders = activeOrders.filter((order) => !isUnpaidPaymentAttempt(order));
+  const filteredOrders =
+    filter === "archived"
+      ? orders.filter((order) => archivedSet.has(order.id))
+      : filter === "unpaid"
+        ? unpaidAttempts
+        : filter === "actionable"
+          ? actionableOrders
+          : filter === "all"
+            ? activeOrders
+            : activeOrders.filter((order) => order.status === filter);
+  const selectableOrders = filteredOrders.filter(
+    (order) => !isUnpaidPaymentAttempt(order) && !archivedSet.has(order.id),
+  );
   const visibleCourierOptions = [...courierOptions]
     .filter((courier) => courierMode === "all" || courier.mode === courierMode)
     .sort((a, b) => {
@@ -656,8 +752,30 @@ function AdminOrders() {
       {/* Filter Bar */}
       <div className="bg-surface-container-low shopify-border p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
-          <span>Filter Status:</span>
+          <span>View:</span>
           <div className="flex flex-wrap gap-1">
+            <button
+              onClick={() => setFilter("actionable")}
+              className={
+                "px-3 py-1 " +
+                (filter === "actionable"
+                  ? "bg-primary text-on-primary"
+                  : "bg-white border border-outline-variant/40 hover:bg-surface-container")
+              }
+            >
+              Orders ({actionableOrders.length})
+            </button>
+            <button
+              onClick={() => setFilter("unpaid")}
+              className={
+                "px-3 py-1 " +
+                (filter === "unpaid"
+                  ? "bg-amber-700 text-white"
+                  : "bg-white border border-outline-variant/40 hover:bg-surface-container")
+              }
+            >
+              Unpaid attempts ({unpaidAttempts.length})
+            </button>
             <button
               onClick={() => setFilter("all")}
               className={
@@ -667,7 +785,7 @@ function AdminOrders() {
                   : "bg-white border border-outline-variant/40 hover:bg-surface-container")
               }
             >
-              All
+              All active
             </button>
             {STATUSES.map((s) => (
               <button
@@ -683,16 +801,27 @@ function AdminOrders() {
                 {s}
               </button>
             ))}
+            <button
+              onClick={() => setFilter("archived")}
+              className={
+                "px-3 py-1 " +
+                (filter === "archived"
+                  ? "bg-primary text-on-primary"
+                  : "bg-white border border-outline-variant/40 hover:bg-surface-container")
+              }
+            >
+              Archived ({archivedOrderIds.length})
+            </button>
           </div>
         </div>
         <div className="text-xs text-on-surface-variant font-medium">
-          Showing {filteredOrders.length} of {orders.length} orders
+          Showing {filteredOrders.length} of {orders.length} records
         </div>
       </div>
 
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="bg-white shopify-border p-12 text-center text-on-surface-variant">
-          No orders yet.
+          {orders.length === 0 ? "No orders yet." : "No records in this view."}
         </div>
       ) : (
         <>
@@ -705,9 +834,12 @@ function AdminOrders() {
               const adjustment = Number(o.total_paise) - (subtotal + Number(o.tax_paise || 0));
               const terminal = ["cancelled", "refunded"].includes(o.status);
               const afterDispatch = ["shipped", "delivered"].includes(o.status);
-              const canCancel = !terminal && !afterDispatch;
+              const unpaid = isUnpaidPaymentAttempt(o);
+              const archived = archivedSet.has(o.id);
+              const canCancel = !archived && !terminal && !afterDispatch;
               const refundPending = o.cashfree_refund_status === "PENDING";
               const canRefund = Boolean(
+                !archived &&
                 o.cashfree_order_id &&
                 o.cashfree_payment_id &&
                 o.cashfree_refund_status !== "SUCCESS" &&
@@ -725,6 +857,7 @@ function AdminOrders() {
                       <input
                         type="checkbox"
                         checked={isSelected}
+                        disabled={unpaid || archived}
                         onChange={(e) =>
                           setSelectedIds(
                             e.target.checked
@@ -732,7 +865,7 @@ function AdminOrders() {
                               : selectedIds.filter((id) => id !== o.id),
                           )
                         }
-                        className="mt-1"
+                        className="mt-1 disabled:cursor-not-allowed disabled:opacity-30"
                       />
                       <span className="min-w-0">
                         <span className="block break-words font-bold text-primary">
@@ -746,8 +879,25 @@ function AdminOrders() {
                     <span
                       className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${terminal ? "bg-rose-50 text-rose-800" : "bg-primary/10 text-primary"}`}
                     >
-                      {o.status}
+                      {unpaid ? "Payment not completed" : archived ? "Archived" : o.status}
                     </span>
+                  </div>
+
+                  <div className="rounded border border-outline-variant/40 bg-white p-3 text-xs">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      Models ordered
+                    </p>
+                    {(o.order_items ?? []).length ? (
+                      <div className="mt-1 space-y-1 font-bold text-primary">
+                        {(o.order_items ?? []).map((item, index) => (
+                          <p key={`${item.name}-${index}`}>{orderItemLabel(item)}</p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1 text-on-surface-variant">
+                        Legacy order — item unavailable
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-xs">
@@ -764,7 +914,13 @@ function AdminOrders() {
                       </p>
                       <p className="font-bold text-primary">{formatINR(o.total_paise)}</p>
                       <p className="text-on-surface-variant">
-                        {o.notes === "cod" ? "COD order" : "Prepaid order"}
+                        {unpaid
+                          ? o.notes === "cod"
+                            ? "COD advance unpaid"
+                            : "Online payment incomplete"
+                          : o.notes === "cod"
+                            ? "COD order"
+                            : "Prepaid order"}
                       </p>
                     </div>
                     <div className="rounded bg-blue-50 p-3">
@@ -772,11 +928,15 @@ function AdminOrders() {
                         Shipment
                       </p>
                       <p className="font-bold text-blue-800">
-                        {hasRealAwb(o)
-                          ? trackingCode(o)
-                          : o.tracking_url
-                            ? "Test AWB"
-                            : "Pending AWB"}
+                        {unpaid
+                          ? "Not ready — unpaid"
+                          : archived
+                            ? "Archived"
+                            : hasRealAwb(o)
+                              ? trackingCode(o)
+                              : o.tracking_url
+                                ? "Test AWB"
+                                : "Pending AWB"}
                       </p>
                     </div>
                     <div className="rounded bg-amber-50 p-3">
@@ -789,7 +949,7 @@ function AdminOrders() {
                     </div>
                   </div>
 
-                  {!terminal && (
+                  {!terminal && !unpaid && !archived && (
                     <select
                       value={o.status}
                       onChange={(e) => updateStatus(o.id, e.target.value)}
@@ -836,10 +996,38 @@ function AdminOrders() {
                               : "Refund via Cashfree"}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      disabled={Boolean(orderAction)}
+                      onClick={() => setOrderArchived(o, !archived)}
+                      className="w-full border border-outline-variant/50 bg-white px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary disabled:opacity-50"
+                    >
+                      {orderAction === `${o.id}:${archived ? "unarchive" : "archive"}`
+                        ? "Saving..."
+                        : archived
+                          ? "Restore Order"
+                          : "Archive Order"}
+                    </button>
+                    {canPermanentlyDeleteOrder(o) && (
+                      <button
+                        type="button"
+                        disabled={Boolean(orderAction)}
+                        onClick={() => permanentlyDeleteOrder(o)}
+                        className="w-full border border-rose-400 bg-white px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-rose-800 disabled:opacity-50"
+                      >
+                        {orderAction === `${o.id}:delete` ? "Deleting..." : "Delete Permanently"}
+                      </button>
+                    )}
                   </div>
 
                   {isExpanded && (
                     <div className="space-y-4 border-t border-outline-variant/30 pt-4">
+                      {unpaid && (
+                        <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs font-medium text-amber-900">
+                          Payment was not completed. Courier booking and fulfilment controls are
+                          locked.
+                        </div>
+                      )}
                       <div className="rounded border border-outline-variant/40 bg-surface-container-lowest p-4 text-xs space-y-2">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -903,6 +1091,7 @@ function AdminOrders() {
                       )}
 
                       {!hasRealAwb(o) &&
+                        !archived &&
                         !["pending", "cancelled", "refunded"].includes(o.status) && (
                           <div className="rounded border border-outline-variant/40 bg-white p-4 text-xs space-y-3">
                             <p className="font-bold uppercase tracking-widest text-primary">
@@ -1040,14 +1229,16 @@ function AdminOrders() {
                     <input
                       type="checkbox"
                       checked={
-                        filteredOrders.length > 0 && selectedIds.length === filteredOrders.length
+                        selectableOrders.length > 0 &&
+                        selectedIds.length === selectableOrders.length
                       }
                       onChange={(e) =>
-                        setSelectedIds(e.target.checked ? filteredOrders.map((o) => o.id) : [])
+                        setSelectedIds(e.target.checked ? selectableOrders.map((o) => o.id) : [])
                       }
                       className="cursor-pointer"
                     />
                   </th>
+                  <th className="p-4">Models Ordered</th>
                   <th className="p-4">Order Info</th>
                   <th className="p-4">Customer & Phone</th>
                   <th className="p-4">Payment Tracking</th>
@@ -1065,9 +1256,12 @@ function AdminOrders() {
                   const adjustment = Number(o.total_paise) - (subtotal + Number(o.tax_paise || 0));
                   const terminal = ["cancelled", "refunded"].includes(o.status);
                   const afterDispatch = ["shipped", "delivered"].includes(o.status);
-                  const canCancel = !terminal && !afterDispatch;
+                  const unpaid = isUnpaidPaymentAttempt(o);
+                  const archived = archivedSet.has(o.id);
+                  const canCancel = !archived && !terminal && !afterDispatch;
                   const refundPending = o.cashfree_refund_status === "PENDING";
                   const canRefund = Boolean(
+                    !archived &&
                     o.cashfree_order_id &&
                     o.cashfree_payment_id &&
                     o.cashfree_refund_status !== "SUCCESS" &&
@@ -1084,6 +1278,7 @@ function AdminOrders() {
                           <input
                             type="checkbox"
                             checked={isSelected}
+                            disabled={unpaid || archived}
                             onChange={(e) =>
                               setSelectedIds(
                                 e.target.checked
@@ -1091,8 +1286,31 @@ function AdminOrders() {
                                   : selectedIds.filter((id) => id !== o.id),
                               )
                             }
-                            className="cursor-pointer"
+                            className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
                           />
+                        </td>
+                        <td className="max-w-[240px] p-4 align-top">
+                          {(o.order_items ?? []).length ? (
+                            <div className="space-y-1">
+                              {(o.order_items ?? []).slice(0, 2).map((item, index) => (
+                                <p
+                                  key={`${item.name}-${index}`}
+                                  className="font-bold leading-snug text-primary"
+                                >
+                                  {orderItemLabel(item)}
+                                </p>
+                              ))}
+                              {(o.order_items?.length ?? 0) > 2 && (
+                                <p className="text-[10px] font-bold text-on-surface-variant">
+                                  +{(o.order_items?.length ?? 0) - 2} more item(s)
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-on-surface-variant">
+                              Item unavailable
+                            </span>
+                          )}
                         </td>
                         <td className="p-4 cursor-pointer" onClick={() => toggleOrderPanel(o)}>
                           <div className="flex items-center gap-2">
@@ -1122,13 +1340,17 @@ function AdminOrders() {
                         </td>
                         <td className="p-4">
                           <p className="font-bold text-primary">{formatINR(o.total_paise)}</p>
-                          {o.cashfree_payment_id || o.razorpay_payment_id ? (
+                          {hasVerifiedOrderPayment(o) ? (
                             <p className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
                               {o.cashfree_payment_id || o.razorpay_payment_id}
                             </p>
-                          ) : o.notes === "cod" ? (
+                          ) : unpaid && o.notes === "cod" ? (
                             <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                              Cash on Delivery
+                              COD advance not paid
+                            </p>
+                          ) : o.notes === "cod" ? (
+                            <p className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                              Pay on delivery
                             </p>
                           ) : (
                             <p className="text-[10px] font-bold text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded inline-block mt-0.5">
@@ -1154,7 +1376,15 @@ function AdminOrders() {
                           )}
                         </td>
                         <td className="p-4">
-                          {hasRealAwb(o) ? (
+                          {unpaid ? (
+                            <span className="inline-block rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                              Not ready — payment incomplete
+                            </span>
+                          ) : archived ? (
+                            <span className="inline-block rounded bg-surface-container px-2 py-0.5 text-xs font-medium text-on-surface-variant">
+                              Archived
+                            </span>
+                          ) : hasRealAwb(o) ? (
                             <div className="space-y-1">
                               <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded block w-max">
                                 {trackingCode(o)}
@@ -1179,7 +1409,15 @@ function AdminOrders() {
                           )}
                         </td>
                         <td className="p-4">
-                          {terminal ? (
+                          {unpaid ? (
+                            <span className="inline-block bg-amber-50 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-amber-800">
+                              Payment not completed
+                            </span>
+                          ) : archived ? (
+                            <span className="inline-block bg-surface-container px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                              Archived
+                            </span>
+                          ) : terminal ? (
                             <span
                               className={`inline-block px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest ${o.status === "refunded" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
                             >
@@ -1234,7 +1472,32 @@ function AdminOrders() {
                                     : "Refund via Cashfree"}
                             </button>
                           )}
+                          <button
+                            type="button"
+                            disabled={Boolean(orderAction)}
+                            onClick={() => setOrderArchived(o, !archived)}
+                            className="block w-full border border-outline-variant/50 bg-white px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-surface-container-low disabled:opacity-50"
+                          >
+                            {orderAction === `${o.id}:${archived ? "unarchive" : "archive"}`
+                              ? "Saving…"
+                              : archived
+                                ? "Restore Order"
+                                : "Archive Order"}
+                          </button>
+                          {canPermanentlyDeleteOrder(o) && (
+                            <button
+                              type="button"
+                              disabled={Boolean(orderAction)}
+                              onClick={() => permanentlyDeleteOrder(o)}
+                              className="block w-full border border-rose-400 bg-white px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-rose-800 hover:bg-rose-50 disabled:opacity-50"
+                            >
+                              {orderAction === `${o.id}:delete`
+                                ? "Deleting…"
+                                : "Delete Permanently"}
+                            </button>
+                          )}
                           {!hasRealAwb(o) &&
+                            !archived &&
                             !["pending", "cancelled", "refunded"].includes(o.status) && (
                               <button
                                 disabled={loadingCouriers}
@@ -1255,7 +1518,13 @@ function AdminOrders() {
                       {/* Expanded OMS Details Panel */}
                       {isExpanded && (
                         <tr className="bg-surface-container-lowest border-b border-outline-variant/40">
-                          <td colSpan={7} className="p-6 md:p-8">
+                          <td colSpan={8} className="p-6 md:p-8">
+                            {unpaid && (
+                              <div className="mb-6 rounded border border-amber-300 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+                                Payment was not completed. This record is a checkout attempt, so
+                                status changes and Shiprocket fulfilment are locked.
+                              </div>
+                            )}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                               {/* Shipping Address & Details */}
                               <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
@@ -1337,7 +1606,10 @@ function AdminOrders() {
                               </div>
 
                               {/* Shiprocket AWB Preparation */}
-                              <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
+                              <div
+                                className={`bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4 ${unpaid || archived ? "pointer-events-none opacity-40" : ""}`}
+                                aria-disabled={unpaid || archived}
+                              >
                                 <h4 className="font-bold text-sm text-primary uppercase tracking-tight border-b border-outline-variant/30 pb-2 flex items-center gap-2">
                                   <span className="material-symbols-outlined text-base text-blue-600">
                                     inventory_2
