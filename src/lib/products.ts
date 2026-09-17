@@ -139,6 +139,21 @@ export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
 
 export const LATEST_GOOGLE_TEXT_REVIEWS: StorefrontCms["reviews"] = [
   {
+    author: "Farooq Merchant",
+    time: "September 2026",
+    stars: 5,
+    snippet: "Authentic Products. Professional Service. Complete Satisfaction.",
+    avatar: "F",
+  },
+  {
+    author: "nick Jain",
+    time: "September 2026",
+    stars: 5,
+    snippet:
+      "Genuine Great Guy Abdallah Dalvi, bought nokia slider from him physically pickuped from jogeshwari west.",
+    avatar: "N",
+  },
+  {
     author: "Nawaz Qureshi",
     time: "September 2026",
     stars: 5,
@@ -291,7 +306,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   reviews_heading: {
     store_name: "Aghanims Phones and Gadgets",
     rating: 5.0,
-    total_reviews: 13,
+    total_reviews: 14,
   },
   reviews: LATEST_GOOGLE_TEXT_REVIEWS,
   cod_charge_amount: 99,
@@ -469,35 +484,64 @@ function isLegacyGoogleReviewSet(reviews: StorefrontCms["reviews"] | undefined) 
     return reviews.every((review) => legacyAuthors.has(review.author));
   }
 
-  // The first live CMS save pre-dated the current public Google review set.
-  // Refresh only that exact eight-card snapshot, leaving later admin edits intact.
-  const previousSnapshot = [
+  // Replace only the two known public Google snapshots. This preserves any later
+  // admin edits while letting a deployed review refresh reach the storefront.
+  const previousSnapshots = [
     [
-      "gagandeep kochar",
-      "Genuine guy and genuine buy. Bought a Tab from him and he was kind in dealing.",
+      [
+        "gagandeep kochar",
+        "Genuine guy and genuine buy. Bought a Tab from him and he was kind in dealing.",
+      ],
+      ["Basavaraj Patil", "Good service and product, trust worthy and this is not a scam."],
+      [
+        "Alankar Sawant",
+        "Had a great experience with Aghanims phones and gadgets bought a phone which was delivered in 40 mins to my location. Hassle free delivery and genuine product was delivery.",
+      ],
+      [
+        "Dippak ____",
+        "Very Fast delivery.. I got my product Nokia 2720 mobile within 2.30 hrs.. Good Service.. Very polite and supporting Guy..!!\nNice experience.",
+      ],
+      [
+        "MITESH RATHOD",
+        "Jai hind\nJai chatrapati shivaji maharaj ki\nI just bought phone from him amazing phone which one is I am looking for my mom satisfied service genuine guys....",
+      ],
+      ["Sumit Jadhav", "Authentic seller\nI purchase Nokia"],
+      ["Karan Mundarkar", "Nice trustworthy product"],
+      ["Sahdevsinh Jadav", "Authentic and Trust Worthy!"],
     ],
-    ["Basavaraj Patil", "Good service and product, trust worthy and this is not a scam."],
     [
-      "Alankar Sawant",
-      "Had a great experience with Aghanims phones and gadgets bought a phone which was delivered in 40 mins to my location. Hassle free delivery and genuine product was delivery.",
+      ["Nawaz Qureshi", "Great guy, great phone."],
+      [
+        "gagandeep kochar",
+        "Genuine guy and genuine buy. Bought a Tab from him and he was kind in dealing.",
+      ],
+      ["Basavaraj Patil", "Good service and product, trust worthy and this is not a scam."],
+      [
+        "Alankar Sawant",
+        "Had a great experience with Aghanims phones and gadgets bought a phone which was delivered in 40 mins to my location. Hassle free delivery and genuine product was delivery.",
+      ],
+      [
+        "Dippak ____",
+        "Very Fast delivery.. I got my product Nokia 2720 mobile within 2.30 hrs.. Good Service.. Very polite and supporting Guy..!!\nNice experience.",
+      ],
+      [
+        "MITESH RATHOD",
+        "Jai hind\nJai chatrapati shivaji maharaj ki\nI just bought phone from him amazing phone which one is I am looking for my mom satisfied service genuine guys....",
+      ],
+      ["Sumit Jadhav", "Authentic seller\nI purchase Nokia"],
+      ["Karan Mundarkar", "Nice trustworthy product"],
+      ["Sahdevsinh Jadav", "Authentic and Trust Worthy!"],
     ],
-    [
-      "Dippak ____",
-      "Very Fast delivery.. I got my product Nokia 2720 mobile within 2.30 hrs.. Good Service.. Very polite and supporting Guy..!!\nNice experience.",
-    ],
-    [
-      "MITESH RATHOD",
-      "Jai hind\nJai chatrapati shivaji maharaj ki\nI just bought phone from him amazing phone which one is I am looking for my mom satisfied service genuine guys....",
-    ],
-    ["Sumit Jadhav", "Authentic seller\nI purchase Nokia"],
-    ["Karan Mundarkar", "Nice trustworthy product"],
-    ["Sahdevsinh Jadav", "Authentic and Trust Worthy!"],
   ];
 
-  if (reviews.length !== previousSnapshot.length) return false;
-  return reviews.every(
-    (review, index) =>
-      review.author === previousSnapshot[index][0] && review.snippet === previousSnapshot[index][1],
+  return previousSnapshots.some(
+    (previousSnapshot) =>
+      reviews.length === previousSnapshot.length &&
+      reviews.every(
+        (review, index) =>
+          review.author === previousSnapshot[index][0] &&
+          review.snippet === previousSnapshot[index][1],
+      ),
   );
 }
 
