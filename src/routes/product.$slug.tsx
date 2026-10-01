@@ -106,12 +106,19 @@ export const Route = createFileRoute("/product/$slug")({
             sku: p.slug,
             url: productUrl,
             brand: { "@type": "Brand", name: p.brand },
+            itemCondition: "https://schema.org/NewCondition",
             offers: {
               "@type": "Offer",
+              url: productUrl,
               priceCurrency: "INR",
               price: (p.pricePaise / 100).toFixed(2),
               availability:
                 p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              itemCondition: "https://schema.org/NewCondition",
+              seller: {
+                "@type": "Organization",
+                name: "Aghanims Phones and Gadgets",
+              },
             },
           }),
         },
