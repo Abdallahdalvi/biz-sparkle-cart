@@ -27,12 +27,12 @@ export const Route = createFileRoute("/catalog")({
       {
         name: "description",
         content:
-          "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India.",
+          "Browse QWERTY, keypad, flip and rugged phones online in India. Compare Qin, Nokia, BlackBerry, CAT and more with secure checkout and tracked delivery.",
       },
-      { property: "og:title", content: "Catalog — Aghanims Phones and Gadgets" },
+      { property: "og:title", content: "Keypad, QWERTY & Flip Phone Catalog | Aghanims" },
       {
         property: "og:description",
-        content: "Browse boutique phones, audio, accessories and more.",
+        content: "Browse QWERTY, keypad, flip and rugged phones online in India.",
       },
       { property: "og:image", content: SITE_SOCIAL_IMAGE_URL },
       { property: "og:url", content: absoluteSiteUrl("/catalog") },
@@ -45,8 +45,7 @@ export const Route = createFileRoute("/catalog")({
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           name: `${SITE_NAME} Catalog`,
-          description:
-            "Browse boutique phones, audio, accessories and more. Precision-engineered hardware, shipped across India.",
+          description: "Browse QWERTY, keypad, flip and rugged phones online in India.",
           url: absoluteSiteUrl("/catalog"),
           mainEntity: {
             "@type": "ItemList",

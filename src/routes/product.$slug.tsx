@@ -106,6 +106,15 @@ export const Route = createFileRoute("/product/$slug")({
             sku: p.slug,
             url: productUrl,
             brand: { "@type": "Brand", name: p.brand },
+            category:
+              p.category === "phones"
+                ? {
+                    "@type": "CategoryCode",
+                    inCodeSet:
+                      "https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt",
+                    codeValue: "267",
+                  }
+                : p.category,
             itemCondition: "https://schema.org/NewCondition",
             offers: {
               "@type": "Offer",

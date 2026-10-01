@@ -192,9 +192,12 @@ export const Route = createFileRoute("/")({
     ];
     return {
       meta: [
-        { title: `${SITE_NAME} — Hard-to-find phones and gadgets` },
+        { title: `Keypad, QWERTY & Flip Phones in India | ${SITE_NAME}` },
         { name: "description", content: SITE_DESCRIPTION },
-        { property: "og:title", content: `${SITE_NAME} — Hard-to-find phones and gadgets` },
+        {
+          property: "og:title",
+          content: `Keypad, QWERTY & Flip Phones in India | ${SITE_NAME}`,
+        },
         { property: "og:description", content: SITE_DESCRIPTION },
         { property: "og:image", content: SITE_SOCIAL_IMAGE_URL },
         { property: "og:url", content: SITE_URL },
@@ -228,6 +231,14 @@ export const Route = createFileRoute("/")({
                 url: SITE_URL,
                 logo: SITE_LOGO_URL,
                 hasMap: GOOGLE_MAPS_PLACE_URL,
+                areaServed: { "@type": "Country", name: "India" },
+                knowsAbout: [
+                  "QWERTY phones",
+                  "keypad Android phones",
+                  "flip phones",
+                  "rugged phones",
+                  "mobile phones in India",
+                ],
                 ...(cms?.biz_phone
                   ? {
                       contactPoint: [
@@ -243,6 +254,21 @@ export const Route = createFileRoute("/")({
                   : {}),
                 sameAs,
               },
+              ...(cms?.faqs?.length
+                ? [
+                    {
+                      "@type": "FAQPage",
+                      mainEntity: cms.faqs.map((faq) => ({
+                        "@type": "Question",
+                        name: faq.question,
+                        acceptedAnswer: {
+                          "@type": "Answer",
+                          text: faq.answer,
+                        },
+                      })),
+                    },
+                  ]
+                : []),
             ],
           }),
         },
