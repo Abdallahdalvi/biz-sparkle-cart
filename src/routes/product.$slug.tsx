@@ -138,8 +138,8 @@ export const Route = createFileRoute("/product/$slug")({
     <SiteShell>
       <div className="max-w-xl mx-auto py-32 text-center">
         <h1 className="text-3xl font-bold mb-2">Product not found</h1>
-        <Link to="/catalog" className="text-primary underline">
-          Back to catalog
+        <Link to="/products" className="text-primary underline">
+          Back to products
         </Link>
       </div>
     </SiteShell>
@@ -275,7 +275,7 @@ function ProductPage() {
             Home
           </Link>{" "}
           /{" "}
-          <Link to="/catalog" className="hover:text-primary">
+          <Link to="/products" className="hover:text-primary">
             Catalog
           </Link>{" "}
           / <span className="text-primary">{product.name}</span>

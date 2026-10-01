@@ -24,7 +24,7 @@ function CartPage() {
           <div className="bg-white shopify-border p-8 md:p-16 text-center">
             <p className="text-on-surface-variant mb-6">Your cart is empty.</p>
             <Link
-              to="/catalog"
+              to="/products"
               className="inline-block bg-primary text-on-primary px-8 py-3 font-bold text-sm uppercase tracking-widest"
             >
               Browse Catalog
@@ -102,7 +102,7 @@ function CartPage() {
                 Proceed to Checkout
               </Link>
               <Link
-                to="/catalog"
+                to="/products"
                 className="block text-center text-[11px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-primary"
               >
                 Continue Shopping

@@ -219,7 +219,7 @@ export const Route = createFileRoute("/")({
                 potentialAction: [
                   {
                     "@type": "SearchAction",
-                    target: `${SITE_URL}/catalog?q={search_term_string}`,
+                    target: `${SITE_URL}/products?q={search_term_string}`,
                     "query-input": "required name=search_term_string",
                   },
                 ],
@@ -463,7 +463,7 @@ function Index() {
               </p>
             </div>
             <Link
-              to="/catalog"
+              to="/products"
               className="hidden min-h-11 flex-shrink-0 items-center gap-2 border border-primary bg-white px-5 py-3 text-xs font-bold uppercase tracking-wide text-primary shadow-sm transition-colors hover:bg-primary hover:text-on-primary sm:inline-flex"
             >
               View all
@@ -481,7 +481,7 @@ function Index() {
 
           <div className="mt-8 flex justify-center sm:hidden">
             <Link
-              to="/catalog"
+              to="/products"
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-on-primary shadow-sm transition-opacity hover:opacity-90"
             >
               View all products

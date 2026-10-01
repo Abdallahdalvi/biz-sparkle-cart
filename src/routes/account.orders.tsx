@@ -123,7 +123,7 @@ function Orders() {
       <div className="bg-white shopify-border p-12 text-center max-w-2xl mx-auto my-8 shadow-sm">
         <p className="text-on-surface-variant mb-6">You don't have any orders yet.</p>
         <Link
-          to="/catalog"
+          to="/products"
           className="inline-block bg-primary text-on-primary px-8 py-3.5 font-bold text-xs uppercase tracking-widest shadow hover:opacity-90 transition-all"
         >
           Browse the Catalog

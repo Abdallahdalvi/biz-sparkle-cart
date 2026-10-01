@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/use-auth";
 
 const NAV = [
   { href: "/", route: "/", label: "Store" },
-  { href: "/#products", route: null, label: "Products" },
+  { href: "/products", route: "/products", label: "Products" },
   { href: "/track", route: "/track", label: "Track Order" },
   { href: "/legal/about", route: "/legal/about", label: "About" },
   { href: "/legal/contact", route: "/legal/contact", label: "Support" },

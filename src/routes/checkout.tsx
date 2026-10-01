@@ -147,8 +147,8 @@ function Checkout() {
       <SiteShell>
         <div className="max-w-xl mx-auto py-32 text-center">
           <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-          <Link to="/catalog" className="text-primary underline">
-            Browse catalog
+          <Link to="/products" className="text-primary underline">
+            Browse products
           </Link>
         </div>
       </SiteShell>
