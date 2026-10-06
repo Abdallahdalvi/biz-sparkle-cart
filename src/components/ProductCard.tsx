@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
       <Link
         to="/product/$slug"
         params={{ slug: product.slug }}
-        className="relative block aspect-square overflow-hidden bg-white"
+        className="relative block aspect-square overflow-hidden bg-white p-4 sm:p-5"
         aria-label={`View ${product.name}`}
       >
         <img
