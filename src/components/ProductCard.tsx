@@ -23,15 +23,17 @@ export function ProductCard({ product }: { product: Product }) {
       <Link
         to="/product/$slug"
         params={{ slug: product.slug }}
-        className="relative block aspect-square overflow-hidden bg-white p-4 sm:p-5"
+        className="relative block aspect-square overflow-hidden bg-white"
         aria-label={`View ${product.name}`}
       >
-        <img
-          src={product.images[0]}
-          alt={product.name}
-          loading="lazy"
-          className="h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.025]"
-        />
+        <div className="absolute inset-4 sm:inset-5">
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            loading="lazy"
+            className="h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.025]"
+          />
+        </div>
         <div className="absolute left-3 top-3 hidden max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5 sm:flex">
           {product.badge && (
             <span className="bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-on-primary shadow-sm sm:text-xs">
