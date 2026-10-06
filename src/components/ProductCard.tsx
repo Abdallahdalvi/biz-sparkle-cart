@@ -23,14 +23,14 @@ export function ProductCard({ product }: { product: Product }) {
       <Link
         to="/product/$slug"
         params={{ slug: product.slug }}
-        className="relative block aspect-square overflow-hidden bg-gradient-to-b from-surface-container-lowest to-surface-container-low p-2.5 sm:aspect-[4/5] sm:p-5"
+        className="relative block aspect-[4/5] overflow-hidden bg-[#f4f5f7]"
         aria-label={`View ${product.name}`}
       >
         <img
           src={product.images[0]}
           alt={product.name}
           loading="lazy"
-          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.045]"
+          className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
         />
         <div className="absolute left-3 top-3 hidden max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5 sm:flex">
           {product.badge && (
