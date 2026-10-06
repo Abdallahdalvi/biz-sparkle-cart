@@ -447,7 +447,7 @@ function Index() {
         className="scroll-mt-20 border-b border-outline-variant/30 bg-surface-container-low py-12 md:py-20"
       >
         <div className="mx-auto max-w-[1280px] px-margin-mobile md:px-margin-desktop">
-          <div className="mb-7 flex items-end justify-between gap-5 md:mb-10">
+          <div className="mb-7 md:mb-10">
             <div>
               <div className="mb-2 flex items-center gap-2">
                 <span className="h-px w-8 bg-[#2b4c9b]" aria-hidden="true" />
@@ -462,15 +462,6 @@ function Index() {
                 Shop customer favourites with COD options and free delivery.
               </p>
             </div>
-            <Link
-              to="/products"
-              className="hidden min-h-11 flex-shrink-0 items-center gap-2 border border-primary bg-white px-5 py-3 text-xs font-bold uppercase tracking-wide text-primary shadow-sm transition-colors hover:bg-primary hover:text-on-primary sm:inline-flex"
-            >
-              View all
-              <span className="material-symbols-outlined text-base" aria-hidden="true">
-                arrow_forward
-              </span>
-            </Link>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
@@ -479,10 +470,10 @@ function Index() {
             ))}
           </div>
 
-          <div className="mt-8 flex justify-center sm:hidden">
+          <div className="mt-8 flex justify-center">
             <Link
               to="/products"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-on-primary shadow-sm transition-opacity hover:opacity-90"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-on-primary shadow-sm transition-opacity hover:opacity-90 sm:w-auto sm:min-h-11 sm:bg-white sm:px-5 sm:py-3 sm:text-xs sm:text-primary sm:ring-1 sm:ring-primary sm:hover:bg-primary sm:hover:text-on-primary"
             >
               View all products
               <span className="material-symbols-outlined text-base" aria-hidden="true">
