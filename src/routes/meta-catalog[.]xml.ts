@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { getAllProducts, inferProductBrand, type Product } from "@/lib/products";
 import { absoluteSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
-import { productCondition } from "@/lib/product-condition";
+import { merchantProductCondition } from "@/lib/product-condition";
 
 function xml(value: unknown) {
   return String(value ?? "")
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/meta-catalog.xml")({
             `      <g:title>${xml(product.name)}</g:title>`,
             `      <g:description>${xml(product.description || product.tagline)}</g:description>`,
             `      <g:availability>${product.stock > 0 ? "in stock" : "out of stock"}</g:availability>`,
-            `      <g:condition>${productCondition(product.condition)}</g:condition>`,
+            `      <g:condition>${merchantProductCondition(product.condition)}</g:condition>`,
             `      <g:price>${(product.pricePaise / 100).toFixed(2)} INR</g:price>`,
             `      <g:link>${xml(absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`))}</g:link>`,
             `      <g:image_link>${xml(absoluteImageUrl(product.images[0]))}</g:image_link>`,

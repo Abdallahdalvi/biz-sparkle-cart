@@ -19,7 +19,7 @@ import { submitContactMessage } from "@/lib/operations.functions";
 import { absoluteSiteUrl } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-links";
 import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
-import { schemaItemCondition } from "@/lib/product-condition";
+import { productConditionLabel, schemaItemCondition } from "@/lib/product-condition";
 
 const LEGACY_GENERIC_FAQ_QUESTIONS = new Set([
   "Is it a Google Play Store edition phone?",
@@ -413,13 +413,8 @@ function ProductPage() {
               </p>
               {product.condition && product.condition !== "new" && (
                 <p className="mb-5 rounded border border-outline-variant/40 bg-surface-container-low px-4 py-3 text-sm text-primary">
-                  <strong>
-                    {product.condition === "used" ? "Used device" : "Refurbished device"}
-                  </strong>
+                  <strong>{productConditionLabel(product.condition)}</strong>
                   {product.conditionGrade && ` · Grade ${product.conditionGrade}`}
-                  <span className="mt-1 block text-xs text-on-surface-variant">
-                    See the actual device photos and condition details below.
-                  </span>
                 </p>
               )}
 

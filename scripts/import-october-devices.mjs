@@ -5,9 +5,13 @@ import { resolve } from "node:path";
 // Run with node --env-file=.env scripts/import-october-devices.mjs <photo-directory>
 // Optional final argument: JSON file mapping slugs to { priceRupees, stock, condition, grade }.
 // Prices must be supplied by the seller. Unpriced listings are saved as inactive drafts.
+// Use --copy-only to update existing descriptions/specs/FAQs without changing inventory or photos.
+const copyOnly = process.argv.includes("--copy-only");
 const photoDirectory = process.argv[2];
-if (!photoDirectory) throw new Error("Pass the directory containing converted JPEG photos.");
-const pricing = process.argv[3] ? JSON.parse(await readFile(process.argv[3], "utf8")) : {};
+if (!copyOnly && !photoDirectory)
+  throw new Error("Pass the directory containing converted JPEG photos.");
+const pricing =
+  !copyOnly && process.argv[3] ? JSON.parse(await readFile(process.argv[3], "utf8")) : {};
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY)
   throw new Error("Supabase server configuration is required.");
 const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
@@ -17,8 +21,7 @@ const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_R
 
 const faq = (question, answer) => ({ question, answer });
 const specs = (pairs) => pairs.map(([label, value]) => ({ label, value }));
-const working =
-  "Fully functional, with no known functional issues, as confirmed by the seller. The gallery shows the actual devices offered.";
+const working = "100% functional with no issues.";
 const devices = [
   {
     slug: "oneplus-10r-5g-12-256gb",
@@ -28,7 +31,7 @@ const devices = [
     grade: "A",
     formFactor: "Touchscreen",
     tagline: "12/256 GB · 120 Hz AMOLED",
-    description: `Original OnePlus 10R 5G with 12 GB RAM and 256 GB storage, offered as a used Grade A device. ${working} The photographed unit shows OxygenOS 15 and a 4500 mAh battery, identifying the 150W edition. Charger and USB cable are pictured; no retail box is included in this listing. Cosmetic condition is shown in the supplied photos.`,
+    description: `100% original OnePlus 10R 5G with 12 GB RAM and 256 GB storage in used Grade A condition. ${working} Enjoy a 6.7-inch 120 Hz Fluid OLED display, the MediaTek Dimensity 8100-MAX processor and a 50 MP main camera with optical image stabilisation. This is the 150W SUPERVOOC edition with a 4500 mAh battery and OxygenOS 15. Includes the phone, charger and USB cable. Retail box is not included.`,
     photos: [
       "PXL_20261011_082057118",
       "PXL_20261011_082220800",
@@ -46,33 +49,30 @@ const devices = [
       ["Condition", "Used · Grade A"],
       ["Display", "6.7-inch Fluid OLED · 2412 × 1080 · 120 Hz"],
       ["Processor", "MediaTek Dimensity 8100-MAX"],
-      ["Software", "OxygenOS 15 shown on the actual device"],
+      ["Software", "OxygenOS 15"],
       ["Rear cameras", "50 MP OIS + 8 MP ultrawide + 2 MP macro"],
       ["Front camera", "16 MP"],
       ["Battery / charging", "4500 mAh · 150W SUPERVOOC edition"],
       ["Connectivity", "5G · Dual nano-SIM · Wi-Fi · Bluetooth · USB-C"],
-      ["Included", "Device, charger and USB cable as pictured"],
+      ["Included", "Phone, charger and USB cable"],
     ]),
     faqs: [
       faq(
         "What condition is this OnePlus 10R in?",
-        `This is a used Grade A OnePlus 10R. Grade A describes its cosmetic condition; it is not an A+ listing. ${working} Review the front, back and edge photos for the unit's appearance.`,
+        `This OnePlus 10R is in used Grade A condition. ${working} Grade A refers to its cosmetic condition.`,
       ),
       faq(
         "Does this unit have 12 GB RAM and 256 GB storage?",
-        "Yes. The actual device's About device photo confirms 12 GB RAM and 256 GB storage. Some storage is occupied by the operating system.",
+        "Yes. It has 12 GB physical RAM and 256 GB internal storage.",
       ),
       faq(
         "Is this the 80W or 150W OnePlus 10R?",
-        "The supplied About device photo shows a 4500 mAh battery, which corresponds to the 150W SUPERVOOC edition. Fast charging requires a compatible charger and cable.",
+        "This is the 150W SUPERVOOC edition with a 4500 mAh battery. It supports 150W fast charging with a compatible SUPERVOOC charger and cable.",
       ),
-      faq(
-        "Which software is installed?",
-        "The photographed device shows OxygenOS 15. The version installed when dispatched can change if the device receives an update.",
-      ),
+      faq("Which software is installed?", "It runs OxygenOS 15."),
       faq(
         "What is included with this OnePlus 10R?",
-        "The device, charger and USB cable shown in the gallery. A retail box is not included in this listing.",
+        "The phone, charger and USB cable are included. A retail box is not included.",
       ),
       faq(
         "Does the OnePlus 10R support 5G and a memory card?",
@@ -88,7 +88,7 @@ const devices = [
     formFactor: "QWERTY",
     colors: ["White"],
     tagline: "Android · Physical QWERTY",
-    description: `Original Samsung Galaxy Chat GT-B5330 combining a touchscreen with a physical QWERTY keyboard. ${working} Supplied photos show the white handset, working screen, rear and edges, with a charger. It is a legacy Android device; current app and online-service compatibility must be checked for the intended app.`,
+    description: `100% original Samsung Galaxy Chat GT-B5330 in white, combining a 3-inch touchscreen with a physical QWERTY keyboard. ${working} It features Android with Samsung TouchWiz, a 2 MP rear camera, 4 GB internal storage, microSD expansion, Wi-Fi and Bluetooth. Includes the phone and charger. A compact choice for calling, texting and physical-keyboard typing.`,
     photos: [
       "IMG_1728",
       "IMG_1727",
@@ -108,29 +108,29 @@ const devices = [
       ["Rear camera", "2 MP"],
       ["Storage", "4 GB internal · microSD support"],
       ["Connectivity", "Wi-Fi · Bluetooth · micro-USB"],
-      ["Colour", "White, as photographed"],
-      ["Functionality", "Fully functional · no known issues"],
+      ["Colour", "White"],
+      ["Functionality", "100% functional · No issues"],
     ]),
     faqs: [
       faq(
         "Does Galaxy Chat have a touchscreen and real keyboard?",
-        "Yes. The GT-B5330 combines a 3-inch touchscreen with a physical QWERTY keyboard. The gallery shows both the keyboard and working screen.",
+        "Yes. It has a 3-inch touchscreen and a physical QWERTY keyboard.",
       ),
       faq(
         "Can I use current WhatsApp, banking or social apps on Galaxy Chat?",
-        "This is a legacy Android phone. Many current apps no longer support its Android version; do not assume that an app works just because its icon appears in a photo. Ask us to demonstrate the specific app you need before ordering.",
+        "It runs legacy Android and supports compatible legacy apps. Current WhatsApp and banking apps are not supported on its older Android platform.",
       ),
       faq(
         "Is this Galaxy Chat original and functional?",
-        `The seller confirms this is an original Samsung Galaxy Chat. ${working}`,
+        "Yes. This is a 100% original Samsung Galaxy Chat, fully functional with no issues.",
       ),
       faq(
         "Can the storage be expanded?",
-        "Yes. Galaxy Chat supports a microSD memory card. A memory card is not listed as included.",
+        "Yes. It supports a microSD memory card. A memory card is not included.",
       ),
       faq(
-        "Which colour and accessories are shown?",
-        "The supplied photos show a white handset and a charger. Confirm any additional accessories with the store before ordering.",
+        "Which colour and accessories are included?",
+        "The phone is white. The phone and charger are included.",
       ),
     ],
     references: ["https://www.samsung.com/id/support/model.GT-B5330ZIAXSE/"],
@@ -144,7 +144,7 @@ const devices = [
     formFactor: "Touchscreen",
     colors: ["Silver"],
     tagline: "8/128 GB · With box · Grade B",
-    description: `Original realme Narzo 80 Pro 5G with 8 GB RAM and 128 GB storage, offered as a used Grade B device with its box. ${working} Grade B refers to cosmetic condition; inspect the supplied front, rear and edge photos for visible wear. The gallery shows the box, charger and USB cable, plus the unit's About device screen.`,
+    description: `100% original realme Narzo 80 Pro 5G with 8 GB RAM and 128 GB storage in used Grade B condition. ${working} It combines a 120 Hz OLED display, MediaTek Dimensity 7400 processor, 50 MP Sony OIS camera and a 6000 mAh battery with 80W Ultra Charge. Runs realme UI 7.0. Includes the phone, original box, charger and USB cable. Grade B describes cosmetic condition; the device is fully functional.`,
     photos: [
       "PXL_20261011_075318057",
       "PXL_20261011_075407238",
@@ -160,25 +160,25 @@ const devices = [
       ["Condition", "Used · Grade B · with box"],
       ["Display", "6.7-inch OLED · 2392 × 1080 · 120 Hz"],
       ["Processor", "MediaTek Dimensity 7400"],
-      ["Software", "realme UI 7.0 shown on the actual device"],
+      ["Software", "realme UI 7.0"],
       ["Rear cameras", "50 MP Sony IMX882 OIS + 2 MP"],
       ["Front camera", "16 MP"],
       ["Battery / charging", "6000 mAh · 80W Ultra Charge"],
       ["Connectivity", "5G · Dual nano-SIM · Wi-Fi · Bluetooth · USB-C"],
-      ["Included", "Device, box, charger and USB cable as pictured"],
+      ["Included", "Phone, original box, charger and USB cable"],
     ]),
     faqs: [
       faq(
         "What does Grade B mean for this Narzo 80 Pro?",
-        `This is a used Grade B unit. The grade describes cosmetic condition rather than a functional fault. ${working} Please inspect the edge and body photos for visible wear.`,
+        `This Narzo 80 Pro is in used Grade B condition. Grade B describes cosmetic condition. ${working}`,
       ),
       faq(
         "Is the original box included?",
-        "Yes. This listing includes the box, device, charger and USB cable shown in the supplied gallery.",
+        "Yes. The original box, phone, charger and USB cable are included.",
       ),
       faq(
         "Is this 8 GB physical RAM or extended RAM?",
-        "It has 8 GB physical RAM and 128 GB storage. The About device photo also shows an additional virtual RAM allocation; virtual RAM is not extra physical RAM.",
+        "It has 8 GB physical RAM and 128 GB storage. Extended RAM uses internal storage and is separate from the 8 GB physical RAM.",
       ),
       faq(
         "What battery and charging does Narzo 80 Pro support?",
@@ -188,10 +188,7 @@ const devices = [
         "Does it have an OIS camera and 5G?",
         "Yes. The model has a 50 MP Sony IMX882 main camera with optical image stabilisation and supports 5G on compatible networks.",
       ),
-      faq(
-        "Which software is shown in the photos?",
-        "The supplied About device photos show realme UI 7.0. Installed software may change after an update.",
-      ),
+      faq("Which software is installed?", "It runs realme UI 7.0."),
     ],
     references: ["https://www.realme.com/in/realme-narzo-80-pro-5g/specs"],
   },
@@ -202,7 +199,7 @@ const devices = [
     formFactor: "Flip",
     colors: ["Red", "Black", "White"],
     tagline: "Compact flip · Dual SIM",
-    description: `Original Samsung GT-E1272 compact flip phone with physical keypad and dual-SIM support. ${working} The supplied gallery shows red, black and white handsets from the front, rear and sides. This is a calling and messaging feature phone, not an Android smartphone.`,
+    description: `100% original Samsung GT-E1272 compact flip phone with a physical keypad and dual-SIM support. ${working} It features a 1.77-inch colour display, removable 800 mAh battery and FM radio. Available in red, black and white. Its pocket-friendly clamshell design is built for straightforward calling and texting.`,
     photos: [
       "IMG_0085",
       "IMG_0086",
@@ -228,21 +225,18 @@ const devices = [
       ["Display", "1.77-inch TFT"],
       ["Battery", "800 mAh removable"],
       ["Features", "Calling · SMS · FM radio"],
-      ["Colours pictured", "Red · Black · White"],
-      ["Functionality", "Fully functional · no known issues"],
+      ["Colours", "Red · Black · White"],
+      ["Functionality", "100% functional · No issues"],
     ]),
     faqs: [
       faq(
         "Is the Samsung GT-E1272 an Android phone?",
         "No. It is a keypad feature phone for calling, SMS and basic built-in functions. It does not run Android apps or have the Google Play Store.",
       ),
-      faq(
-        "Does GT-E1272 support two SIM cards?",
-        "Yes. This model supports dual SIM cards. Confirm compatibility with your specific SIM operator before ordering.",
-      ),
+      faq("Does GT-E1272 support two SIM cards?", "Yes. It supports two SIM cards."),
       faq(
         "Which colours are available?",
-        "The supplied photos show red, black and white devices. Choose the colour variant shown for the listing and confirm current availability with the store.",
+        "It is available in red, black and white. Select your preferred colour when ordering.",
       ),
       faq(
         "Is the battery removable?",
@@ -250,7 +244,7 @@ const devices = [
       ),
       faq(
         "Is this an original, working Samsung device?",
-        `The seller confirms it is an original Samsung GT-E1272. ${working}`,
+        "Yes. This is a 100% original Samsung GT-E1272, fully functional with no issues.",
       ),
     ],
     references: ["https://www.samsung.com/ph/support/model/GT-E1272GRAXTC/"],
@@ -262,7 +256,7 @@ const devices = [
     formFactor: "Flip",
     colors: ["Gold", "Orange"],
     tagline: "Metal body · Dual display flip",
-    description: `V3i-style flip phone with a metal body, physical keypad and an outer display, offered in the gold and orange finishes pictured. ${working} The actual supplied photos show the exterior, illuminated keypad, working main screen, side controls and packaging. This listing identifies the V3i-style device shown in the photos; it does not use specifications from a different Motorola handset.`,
+    description: `V3i-style flip phone with a metal body, illuminated physical keypad and dual displays. ${working} The main colour screen is complemented by an external display for convenient viewing while closed. Available in gold and orange, its slim clamshell design combines a distinctive metallic finish with tactile keypad controls.`,
     photos: [
       "IMG-20261005-WA0105",
       "IMG-20261005-WA0109",
@@ -283,26 +277,23 @@ const devices = [
       ["Body", "Metal body"],
       ["Displays", "Main colour display and external display"],
       ["Keypad", "Physical keypad with illumination"],
-      ["Finishes pictured", "Gold · Orange"],
-      ["Functionality", "Fully functional · no known issues"],
+      ["Finishes", "Gold · Orange"],
+      ["Functionality", "100% functional · No issues"],
     ]),
     faqs: [
       faq(
         "What kind of phone is the V3i-style Metal Flip?",
-        "It is the metal-body keypad flip phone shown in this gallery, with a main colour screen, an outer display and an illuminated physical keypad.",
+        "It is a metal-body keypad flip phone with a main colour screen, an external display and an illuminated physical keypad.",
       ),
+      faq("Is the body metal?", "Yes. It has a metal body."),
       faq(
-        "Is the body metal?",
-        "Yes. The seller confirms a metal body. The side and rear photos show the construction and finish.",
+        "Which colours are available?",
+        "It is available in gold and orange. Select your preferred colour when ordering.",
       ),
-      faq(
-        "Which colours are shown?",
-        "The supplied device photos show gold and orange finishes. Select your preferred variant and confirm its current availability before ordering.",
-      ),
-      faq("Is the device fully functional?", working),
+      faq("Is the device fully functional?", `Yes. ${working}`),
       faq(
         "Can I see the exact device before buying?",
-        "Yes. These are the seller's actual photos. Contact the store for a live demonstration and confirmation of the specific unit, included accessories and SIM compatibility.",
+        "Yes. A live video demonstration is available before purchase.",
       ),
     ],
     references: [],
@@ -326,6 +317,40 @@ if (readError) throw new Error(readError.message);
 
 for (const product of devices) {
   const current = existing.find((p) => p.slug === product.slug);
+  if (copyOnly) {
+    if (!current) throw new Error(`Product not found: ${product.slug}`);
+    const questionAliases = {
+      "Which colour and accessories are shown?": "Which colour and accessories are included?",
+      "Which software is shown in the photos?": "Which software is installed?",
+      "Which colours are shown?": "Which colours are available?",
+    };
+    const specAliases = { "Colours pictured": "Colours", "Finishes pictured": "Finishes" };
+    const metadata = {
+      ...current.metadata,
+      specs: (current.metadata?.specs || []).map((spec) => {
+        const label = specAliases[spec.label] || spec.label;
+        // Replace only the source-attribution wording, preserving other admin edits.
+        if (
+          !/(?:photograph|pictured|shown on the actual|no known issues)/i.test(
+            spec.label + " " + spec.value,
+          )
+        )
+          return spec;
+        return product.specs.find((next) => next.label === label) || spec;
+      }),
+      faqs: (current.metadata?.faqs || []).map((item) => {
+        const question = questionAliases[item.question] || item.question;
+        return product.faqs.find((next) => next.question === question) || item;
+      }),
+    };
+    const { error } = await db
+      .from("products")
+      .update({ description: product.description, metadata })
+      .eq("id", current.id);
+    if (error) throw new Error(`Copy update failed for ${product.slug}: ${error.message}`);
+    console.log(`Updated descriptions, specs and FAQs: ${product.name}`);
+    continue;
+  }
   const supplied = pricing[product.slug] || {};
   const images = [];
   for (const [index, filename] of product.photos.entries()) {
@@ -386,16 +411,14 @@ for (const product of devices) {
   if (error) throw new Error(`Product save failed: ${error.message}`);
   // Initial import only: later admin photo/variant edits must remain intact.
   if (!current && product.colors?.length) {
-    const { error: variantError } = await db
-      .from("product_variants")
-      .insert(
-        product.colors.map((label) => ({
-          product_id: saved.id,
-          label,
-          price_delta_paise: 0,
-          stock,
-        })),
-      );
+    const { error: variantError } = await db.from("product_variants").insert(
+      product.colors.map((label) => ({
+        product_id: saved.id,
+        label,
+        price_delta_paise: 0,
+        stock,
+      })),
+    );
     if (variantError) throw new Error(`Variant save failed: ${variantError.message}`);
   }
   console.log(

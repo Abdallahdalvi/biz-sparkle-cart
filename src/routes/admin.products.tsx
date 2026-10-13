@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
 import { getStorefrontCms, inferProductBrand, orderProducts, PRODUCTS } from "@/lib/products";
-import { CONDITION_GRADES, productCondition } from "@/lib/product-condition";
+import { CONDITION_GRADES, PRODUCT_CONDITIONS, productCondition } from "@/lib/product-condition";
 import { useServerFn } from "@tanstack/react-start";
 import {
   createProduct,
@@ -911,9 +911,11 @@ function ProductConditionFields({ metadata }: { metadata?: ProductMetadata }) {
           onChange={(event) => setCondition(productCondition(event.target.value))}
           className="w-full border border-outline-variant/40 px-3 py-2 text-sm font-normal"
         >
-          <option value="new">New</option>
-          <option value="used">Used</option>
-          <option value="refurbished">Refurbished</option>
+          {PRODUCT_CONDITIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       </label>
       <label className="space-y-1 text-xs font-bold text-primary">
@@ -921,7 +923,7 @@ function ProductConditionFields({ metadata }: { metadata?: ProductMetadata }) {
         <select
           name="condition_grade"
           defaultValue={metadata?.condition_grade || ""}
-          disabled={condition === "new"}
+          disabled={condition === "new" || condition === "sealed"}
           className="w-full border border-outline-variant/40 px-3 py-2 text-sm font-normal disabled:bg-gray-100"
         >
           <option value="">No grade assigned</option>
