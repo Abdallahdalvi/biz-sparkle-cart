@@ -19,6 +19,7 @@ import { submitContactMessage } from "@/lib/operations.functions";
 import { absoluteSiteUrl } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-links";
 import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
+import { schemaItemCondition } from "@/lib/product-condition";
 
 const LEGACY_GENERIC_FAQ_QUESTIONS = new Set([
   "Is it a Google Play Store edition phone?",
@@ -115,7 +116,7 @@ export const Route = createFileRoute("/product/$slug")({
                     codeValue: "267",
                   }
                 : p.category,
-            itemCondition: "https://schema.org/NewCondition",
+            itemCondition: schemaItemCondition(p.condition),
             offers: {
               "@type": "Offer",
               url: productUrl,
@@ -123,7 +124,7 @@ export const Route = createFileRoute("/product/$slug")({
               price: (p.pricePaise / 100).toFixed(2),
               availability:
                 p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-              itemCondition: "https://schema.org/NewCondition",
+              itemCondition: schemaItemCondition(p.condition),
               seller: {
                 "@type": "Organization",
                 name: "Aghanims Phones and Gadgets",
@@ -410,6 +411,17 @@ function ProductPage() {
               <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-6">
                 {product.tagline}
               </p>
+              {product.condition && product.condition !== "new" && (
+                <p className="mb-5 rounded border border-outline-variant/40 bg-surface-container-low px-4 py-3 text-sm text-primary">
+                  <strong>
+                    {product.condition === "used" ? "Used device" : "Refurbished device"}
+                  </strong>
+                  {product.conditionGrade && ` · Grade ${product.conditionGrade}`}
+                  <span className="mt-1 block text-xs text-on-surface-variant">
+                    See the actual device photos and condition details below.
+                  </span>
+                </p>
+              )}
 
               <div className="flex items-center gap-3">
                 {product.compareAtPaise && product.compareAtPaise > product.pricePaise && (

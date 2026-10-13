@@ -1,11 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 type VariantInput = { label: string };
 
 async function syncProductVariants(
-  supabaseAdmin: SupabaseClient,
+  supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin,
   productId: string,
   variants: VariantInput[] | undefined,
   stock: number,
@@ -71,6 +70,9 @@ export const createProduct = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireSupabaseAuth } = await import("@/lib/auth.server");
     await requireSupabaseAuth(data.token, "admin");
+    if (data.is_active && data.price_paise <= 0) {
+      throw new Error("Set a selling price above ₹0 before publishing this product");
+    }
     if (data.cod_advance_paise > data.price_paise) {
       throw new Error("COD advance cannot exceed the product selling price");
     }
@@ -138,6 +140,9 @@ export const updateProduct = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireSupabaseAuth } = await import("@/lib/auth.server");
     await requireSupabaseAuth(data.token, "admin");
+    if (data.is_active && data.price_paise <= 0) {
+      throw new Error("Set a selling price above ₹0 before publishing this product");
+    }
     if (data.cod_advance_paise > data.price_paise) {
       throw new Error("COD advance cannot exceed the product selling price");
     }
@@ -207,7 +212,20 @@ export const updateProductStatus = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    if (data.is_active && !data.id.startsWith("static-")) {
+      const { data: product, error: priceError } = await supabaseAdmin
+        .from("products")
+        .select("price_paise")
+        .eq("id", data.id)
+        .single();
+      if (priceError) throw new Error(`Could not check selling price: ${priceError.message}`);
+      if (!product || product.price_paise <= 0)
+        throw new Error("Set a selling price above ₹0 before publishing this product");
+    }
+
     if (data.id.startsWith("static-") && data.staticRow) {
+      if (data.is_active && data.staticRow.price_paise <= 0)
+        throw new Error("Set a selling price above ₹0 before publishing this product");
       const { error } = await supabaseAdmin.from("products").insert({
         slug: data.staticRow.slug,
         name: data.staticRow.name,

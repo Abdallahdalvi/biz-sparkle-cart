@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
 import { getStorefrontCms, inferProductBrand, orderProducts, PRODUCTS } from "@/lib/products";
+import { CONDITION_GRADES, productCondition } from "@/lib/product-condition";
 import { useServerFn } from "@tanstack/react-start";
 import {
   createProduct,
@@ -20,6 +21,8 @@ interface ProductMetadata {
   wholesale_gst_rate?: number;
   packaging_cost_paise?: number;
   delivery_estimate?: string;
+  condition?: string;
+  condition_grade?: string;
   specs?: Array<{ label: string; value: string }>;
   variants?: Array<{ id: string; label: string }>;
   images?: string[];
@@ -78,7 +81,7 @@ async function uploadProductMedia(file: File, kind: "images" | "videos") {
 }
 
 function moveEntry<T>(items: T[], from: number, to: number) {
-  if (to < 0 || to >= items.length) return items;
+  if (from < 0 || from >= items.length || to < 0 || to >= items.length) return items;
   const copy = [...items];
   const [entry] = copy.splice(from, 1);
   copy.splice(to, 0, entry);
@@ -97,6 +100,7 @@ function ProductMediaEditor({
   setVideos: Dispatch<SetStateAction<ProductVideo[]>>;
 }) {
   const [uploading, setUploading] = useState<"images" | "videos" | null>(null);
+  const [draggedImage, setDraggedImage] = useState<number | null>(null);
 
   async function uploadImages(files: FileList | null) {
     if (!files?.length) return;
@@ -139,7 +143,9 @@ function ProductMediaEditor({
           3. Product Media
         </h4>
         <p className="mt-1 text-[11px] text-on-surface-variant">
-          Upload several images at once, reorder them, and add YouTube or direct product videos.
+          The first photo is the cover shown in the store, product page and catalog feed. Drag
+          photos to reorder, or use the position controls on mobile. Save the product to apply
+          changes.
         </p>
       </div>
 
@@ -178,13 +184,26 @@ function ProductMediaEditor({
         ) : (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {images.map((image, index) => (
-              <div key={index} className="flex min-w-0 gap-3 border border-outline-variant/40 p-3">
-                <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-surface-container-low shopify-border">
+              <div
+                key={index}
+                onDragOver={(event) => {
+                  if (draggedImage !== null) event.preventDefault();
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  if (draggedImage !== null)
+                    setImages((current) => moveEntry(current, draggedImage, index));
+                  setDraggedImage(null);
+                }}
+                className={`flex min-w-0 gap-3 rounded border p-3 ${index === 0 ? "border-primary bg-primary/5" : "border-outline-variant/40"} ${draggedImage === index ? "opacity-50" : ""}`}
+              >
+                <div className="h-28 w-28 flex-shrink-0 overflow-hidden bg-white shopify-border">
                   {image ? (
                     <img
                       src={image}
                       alt={`Product preview ${index + 1}`}
                       className="h-full w-full object-contain"
+                      draggable={false}
                     />
                   ) : (
                     <span className="flex h-full items-center justify-center text-[9px] text-on-surface-variant">
@@ -193,16 +212,67 @@ function ProductMediaEditor({
                   )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-2">
-                  <input
-                    value={image}
-                    onChange={(event) =>
-                      setImages((current) =>
-                        current.map((value, i) => (i === index ? event.target.value : value)),
-                      )
-                    }
-                    placeholder="https://… image URL"
-                    className="w-full border border-outline-variant/40 px-3 py-2 text-xs font-mono"
-                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      draggable
+                      aria-label={`Drag photo ${index + 1} to reorder`}
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData("text/plain", String(index));
+                        event.dataTransfer.effectAllowed = "move";
+                        setDraggedImage(index);
+                      }}
+                      onDragEnd={() => setDraggedImage(null)}
+                      className="cursor-grab rounded border border-outline-variant/40 px-2 py-1 text-xs active:cursor-grabbing"
+                    >
+                      ⠿
+                    </button>
+                    <span className="text-xs font-bold">
+                      {index === 0 ? "★ Cover / hero photo" : `Photo ${index + 1}`}
+                    </span>
+                    {index > 0 && image && (
+                      <button
+                        type="button"
+                        onClick={() => setImages((current) => moveEntry(current, index, 0))}
+                        className="rounded bg-primary px-2 py-1 text-[11px] font-bold text-white"
+                      >
+                        Make cover
+                      </button>
+                    )}
+                  </div>
+                  <label className="flex items-center gap-2 text-xs">
+                    Position
+                    <select
+                      value={index}
+                      aria-label={`Position of photo ${index + 1}`}
+                      onChange={(event) =>
+                        setImages((current) =>
+                          moveEntry(current, index, Number(event.target.value)),
+                        )
+                      }
+                      className="rounded border border-outline-variant/40 px-2 py-1"
+                    >
+                      {images.map((_, position) => (
+                        <option key={position} value={position}>
+                          {position + 1}
+                          {position === 0 ? " — Cover" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <details className="text-[11px] text-on-surface-variant">
+                    <summary className="cursor-pointer">Edit image URL</summary>
+                    <input
+                      value={image}
+                      onChange={(event) =>
+                        setImages((current) =>
+                          current.map((value, i) => (i === index ? event.target.value : value)),
+                        )
+                      }
+                      placeholder="https://… image URL"
+                      className="w-full border border-outline-variant/40 px-3 py-2 text-xs font-mono"
+                    />
+                  </details>
                   <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
                     <button
                       type="button"
@@ -602,7 +672,9 @@ function AdminProducts() {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
                       Price
                     </p>
-                    <p className="font-bold text-primary">{formatINR(r.price_paise)}</p>
+                    <p className="font-bold text-primary">
+                      {r.price_paise > 0 ? formatINR(r.price_paise) : "Price needed"}
+                    </p>
                     {r.compare_at_paise && r.compare_at_paise > r.price_paise && (
                       <p className="text-[11px] text-on-surface-variant line-through">
                         {formatINR(r.compare_at_paise)}
@@ -663,7 +735,7 @@ function AdminProducts() {
                         : "border border-outline text-on-surface-variant")
                     }
                   >
-                    {r.is_active ? "Active" : "Hidden"}
+                    {r.is_active ? "Active" : r.price_paise === 0 ? "Draft" : "Hidden"}
                   </button>
                   <button
                     onClick={() => {
@@ -732,7 +804,9 @@ function AdminProducts() {
                       )}
                     </td>
                     <td className="p-4">
-                      <p className="font-bold text-primary">{formatINR(r.price_paise)}</p>
+                      <p className="font-bold text-primary">
+                        {r.price_paise > 0 ? formatINR(r.price_paise) : "Price needed"}
+                      </p>
                       {r.compare_at_paise && r.compare_at_paise > r.price_paise && (
                         <p className="text-xs text-on-surface-variant line-through">
                           {formatINR(r.compare_at_paise)}
@@ -825,6 +899,48 @@ function AdminProducts() {
   );
 }
 
+function ProductConditionFields({ metadata }: { metadata?: ProductMetadata }) {
+  const [condition, setCondition] = useState(productCondition(metadata?.condition));
+  return (
+    <div className="grid gap-4 bg-white p-4 shopify-border md:grid-cols-2 md:p-6">
+      <label className="space-y-1 text-xs font-bold text-primary">
+        <span className="block">Device condition</span>
+        <select
+          name="condition"
+          value={condition}
+          onChange={(event) => setCondition(productCondition(event.target.value))}
+          className="w-full border border-outline-variant/40 px-3 py-2 text-sm font-normal"
+        >
+          <option value="new">New</option>
+          <option value="used">Used</option>
+          <option value="refurbished">Refurbished</option>
+        </select>
+      </label>
+      <label className="space-y-1 text-xs font-bold text-primary">
+        <span className="block">Cosmetic condition grade</span>
+        <select
+          name="condition_grade"
+          defaultValue={metadata?.condition_grade || ""}
+          disabled={condition === "new"}
+          className="w-full border border-outline-variant/40 px-3 py-2 text-sm font-normal disabled:bg-gray-100"
+        >
+          <option value="">No grade assigned</option>
+          {CONDITION_GRADES.map((grade) => (
+            <option key={grade} value={grade}>
+              Grade {grade}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="text-xs text-on-surface-variant md:col-span-2">
+        Grades describe cosmetic condition. Add the unit's actual wear, functionality and included
+        accessories to its description and FAQs. Used and refurbished conditions are also sent to
+        Google Merchant.
+      </p>
+    </div>
+  );
+}
+
 function NewProductForm({
   cats,
   onDone,
@@ -836,35 +952,11 @@ function NewProductForm({
 }) {
   const createProdFn = useServerFn(createProduct);
   const [busy, setBusy] = useState(false);
-  const [specs, setSpecs] = useState<{ label: string; value: string }[]>([
-    { label: "Display", value: '3.54" 640×960 IPS' },
-    { label: "Processor", value: "Unisoc T606 Octa-core" },
-    { label: "Memory", value: "4 GB RAM • 64 GB Storage" },
-    { label: "Battery", value: "3000 mAh • 18W Fast Charge" },
-    { label: "Keyboard", value: "Full QWERTY with backlight" },
-    { label: "OS", value: "Android 12 Stock" },
-    { label: "Connectivity", value: "4G LTE • Wi-Fi 5 • BT 5.0" },
-  ]);
-  const [variants, setVariants] = useState<{ id: string; label: string }[]>([
-    { id: "black", label: "Obsidian Black" },
-    { id: "silver", label: "Brushed Silver" },
-  ]);
-  const [images, setImages] = useState<string[]>([
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuAN4IWZ0o1xacmmTaAaeV4gJ2JM37nCA4Vu9FMZfWJ6CWZ9FReqzNA1zUw6b0z8fcVQRPejT-QofOpAaJlfeyZecXQpvnPZozhZdiZEDOj_qYqjYW64yxxY868yjxmBThtOdw-4pzxzc42bvkJogioVcwVPkGQS6ry7BHc3bO3PdOrAO0BS-A9PtmtRSFRGsIExVtxY8Knwi18rphz2LtaWGl0UbhG2lpi0gT9sXZRW0-4tpyNY7rWZZMvKc--gTZ9bjlCWX_yVWtpO",
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCm_n1zeaqwYJAsYDw_UO82ywo_kvjRIEVnrSe0IXmiCc0w0f4amIl5GPi1qwb0x_zgKFT2Di4PiqffML-GPcSWoClZySpGw7qQ5KichDioDJ3LGIIdRDCp23b_h_HuycTaBl8fCwkN65HACqY2RyAUbuVYXAMUet7R9QZmQP_Hm2XrrGU9PNnw72oQQSSb34P6kf49pocIY_D43rLRUqke2u3g9uKBoBgCxKU3v86La9sWNrLWM38CWCn2F1LBUJKie2Quec_FQzp_",
-  ]);
+  const [specs, setSpecs] = useState<{ label: string; value: string }[]>([]);
+  const [variants, setVariants] = useState<{ id: string; label: string }[]>([]);
+  const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<ProductVideo[]>([]);
-  const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([
-    {
-      question: "Is this device fully unlocked?",
-      answer:
-        "Yes, it is factory unlocked and fully compatible with all major 4G LTE networks across India and globally.",
-    },
-    {
-      question: "Does it support Google Play Store?",
-      answer: "Yes, full Google Play Services and Play Store are pre-installed and certified.",
-    },
-  ]);
+  const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([]);
   return (
     <form
       onSubmit={async (e) => {
@@ -880,6 +972,8 @@ function NewProductForm({
         const packagingRupees = Number(fd.get("packaging_cost") || 50);
 
         const metadata = {
+          condition: productCondition(fd.get("condition")),
+          condition_grade: String(fd.get("condition_grade") ?? "").trim(),
           brand: String(fd.get("brand") ?? "").trim(),
           badge: String(fd.get("badge") ?? ""),
           cost_price_paise: Math.round(costRupees * 100),
@@ -1030,6 +1124,7 @@ function NewProductForm({
         </div>
       </div>
 
+      <ProductConditionFields />
       {/* Pricing & Stock & Advanced Financials */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-3">
@@ -1383,6 +1478,8 @@ function EditProductForm({
 
         const metadata = {
           ...productMetadata,
+          condition: productCondition(fd.get("condition")),
+          condition_grade: String(fd.get("condition_grade") ?? "").trim(),
           brand: String(fd.get("brand") ?? "").trim(),
           badge: String(fd.get("badge") ?? ""),
           cost_price_paise: Math.round(costRupees * 100),
@@ -1540,6 +1637,7 @@ function EditProductForm({
         </div>
       </div>
 
+      <ProductConditionFields metadata={prod.metadata} />
       {/* Pricing & Stock & Advanced Financials */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-3">

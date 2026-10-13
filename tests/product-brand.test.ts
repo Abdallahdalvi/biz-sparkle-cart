@@ -11,6 +11,8 @@ test("catalog brands are inferred from existing product names", () => {
   assert.equal(inferProductBrand("Duoqin F22 Pro"), "Qin");
   assert.equal(inferProductBrand("Qin F25 Pro"), "Qin");
   assert.equal(inferProductBrand("V77 Flip"), "V77");
+  assert.equal(inferProductBrand("OnePlus 10R 5G"), "OnePlus");
+  assert.equal(inferProductBrand("realme Narzo 80 Pro 5G"), "realme");
 });
 
 test("unknown brands use the store's own Aghanims brand", () => {

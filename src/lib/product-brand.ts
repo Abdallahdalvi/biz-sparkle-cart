@@ -7,6 +7,8 @@ const KNOWN_PRODUCT_BRANDS: Array<[RegExp, string]> = [
   [/^qin\b/, "Qin"],
   [/^jio\b/, "Jio"],
   [/^samsung\b/, "Samsung"],
+  [/^oneplus\b/, "OnePlus"],
+  [/^realme\b/, "realme"],
   [/^motorola\b/, "Motorola"],
   [/^vertu\b/, "Vertu"],
   [/^v77\b/, "V77"],

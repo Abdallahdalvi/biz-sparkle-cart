@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { inferProductBrand } from "@/lib/product-brand";
+import { productCondition, type ProductCondition } from "@/lib/product-condition";
 export { inferProductBrand } from "@/lib/product-brand";
 
 export type Category = "phones" | "audio" | "accessories" | "wearables" | "gaming";
@@ -29,6 +30,8 @@ export interface Product {
   packagingCostPaise?: number;
   formFactor?: string;
   deliveryEstimate?: string;
+  condition?: ProductCondition;
+  conditionGrade?: string;
 }
 
 export interface StorefrontCms {
@@ -391,6 +394,11 @@ export async function getAllProducts(): Promise<Product[]> {
       slug: row.slug,
       name: row.name,
       brand: row.metadata?.brand || inferProductBrand(row.name),
+      condition: productCondition(row.metadata?.condition),
+      conditionGrade:
+        typeof row.metadata?.condition_grade === "string"
+          ? row.metadata.condition_grade.trim()
+          : undefined,
       tagline: row.tagline || "",
       category: (row.categories?.slug || "phones") as Category,
       pricePaise: row.price_paise,
