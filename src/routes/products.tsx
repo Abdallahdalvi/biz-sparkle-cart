@@ -50,12 +50,14 @@ export const Route = createFileRoute("/products")({
           mainEntity: {
             "@type": "ItemList",
             name: "Phones and Gadgets",
-            itemListElement: (loaderData?.all || []).map((product, index) => ({
-              "@type": "ListItem",
-              position: index + 1,
-              name: product.name,
-              url: absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`),
-            })),
+            itemListElement: [...(loaderData?.all || [])]
+              .sort((a, b) => a.pricePaise - b.pricePaise)
+              .map((product, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: product.name,
+                url: absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`),
+              })),
           },
         }),
       },
@@ -72,7 +74,7 @@ function Catalog() {
   const [formFactor, setFormFactor] = useState<string>("all");
   const [availability, setAvailability] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("featured");
+  const [sortBy, setSortBy] = useState<string>("price_asc");
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const trackedSearches = useRef(new Set<string>());
@@ -326,9 +328,9 @@ function Catalog() {
                 }}
                 className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
               >
-                <option value="featured">Featured</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
+                <option value="featured">Featured</option>
               </select>
             </div>
           </div>
@@ -348,7 +350,7 @@ function Catalog() {
                 setFormFactor("all");
                 setAvailability("all");
                 setPriceRange("all");
-                setSortBy("featured");
+                setSortBy("price_asc");
                 setSearchTerm("");
                 setPage(1);
               }}
