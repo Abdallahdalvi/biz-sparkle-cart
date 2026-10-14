@@ -141,7 +141,7 @@ export function TrackingManager({ settings }: { settings: TrackingSettings }) {
   }, []);
 
   useEffect(() => {
-    if (!configured || location.pathname.startsWith("/admin")) return;
+    if (!configured || !consent || location.pathname.startsWith("/admin")) return;
     const path = `${location.pathname}${location.searchStr || ""}`;
     if (lastPage.current === path) return;
     lastPage.current = path;
