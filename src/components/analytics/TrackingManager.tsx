@@ -19,6 +19,8 @@ function addScript(id: string, src: string) {
   document.head.appendChild(script);
 }
 
+const configuredGoogleTags = new Set<string>();
+
 function ensureGoogleTag(settings: TrackingSettings) {
   const primaryId = settings.googleAnalyticsEnabled
     ? settings.googleAnalyticsId
@@ -30,22 +32,35 @@ function ensureGoogleTag(settings: TrackingSettings) {
   window.dataLayer = window.dataLayer || [];
   window.gtag =
     window.gtag ||
-    function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args);
+    function gtag(..._args: unknown[]) {
+      // gtag.js consumes Arguments commands, not ordinary arrays.
+      window.dataLayer?.push(arguments);
     };
-  window.gtag("consent", "default", {
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-    analytics_storage: "denied",
-    wait_for_update: 500,
-  });
-  window.gtag("js", new Date());
-  if (settings.googleAnalyticsEnabled && settings.googleAnalyticsId) {
-    window.gtag("config", settings.googleAnalyticsId, { send_page_view: false });
+  if (!document.getElementById("aghanims-google-tag")) {
+    window.gtag("consent", "default", {
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+      analytics_storage: "denied",
+      wait_for_update: 500,
+    });
+    window.gtag("js", new Date());
   }
-  if (settings.googleAdsEnabled && settings.googleAdsId) {
+  if (
+    settings.googleAnalyticsEnabled &&
+    settings.googleAnalyticsId &&
+    !configuredGoogleTags.has(settings.googleAnalyticsId)
+  ) {
+    window.gtag("config", settings.googleAnalyticsId, { send_page_view: false });
+    configuredGoogleTags.add(settings.googleAnalyticsId);
+  }
+  if (
+    settings.googleAdsEnabled &&
+    settings.googleAdsId &&
+    !configuredGoogleTags.has(settings.googleAdsId)
+  ) {
     window.gtag("config", settings.googleAdsId, { send_page_view: false });
+    configuredGoogleTags.add(settings.googleAdsId);
   }
   addScript("aghanims-google-tag", `https://www.googletagmanager.com/gtag/js?id=${primaryId}`);
 }
