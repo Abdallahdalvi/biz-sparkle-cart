@@ -318,6 +318,22 @@ function Index() {
 
   return (
     <SiteShell>
+      <section aria-label="Festival sale" className="bg-white px-4 py-4 sm:px-8 sm:py-6">
+        <Link
+          to="/products"
+          aria-label="Shop the festival sale — view all products"
+          className="mx-auto block w-full max-w-[1320px] overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        >
+          <img
+            src="/festival-sale-banner.jpg"
+            alt="Aghanims Phones and Gadgets festival offer: 20% to 70% off on all products. Shop the sale now."
+            width={1024}
+            height={434}
+            fetchPriority="high"
+            className="block h-auto w-full object-contain"
+          />
+        </Link>
+      </section>
       {/* Hero */}
       <section className="relative bg-white overflow-hidden border-b border-outline-variant/20">
         <div className="relative z-10 mx-auto grid w-full max-w-[1320px] grid-cols-1 items-center gap-5 px-5 pb-12 pt-5 sm:px-12 sm:pb-20 sm:pt-10 lg:grid-cols-2 lg:gap-16 lg:px-16 lg:pb-32 lg:pt-16">
