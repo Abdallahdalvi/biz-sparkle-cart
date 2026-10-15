@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
 
 export function LegalPage({
   title,
@@ -48,8 +49,7 @@ export const BIZ = {
     "We collect only the information needed to operate the store, support customers, and fulfil orders. We share order data with service providers involved in payment (when enabled), hosting, shipping, and customer communication. We do not sell personal data.",
   legalShippingText:
     "We ship through Shiprocket and the courier selected for each serviceable order. Courier availability, price, and estimated delivery depend on the pickup and delivery PIN codes, parcel details, and payment mode.",
-  legalReturnsText:
-    "No change-of-mind returns are accepted. Damage-on-arrival, wrong-item, missing-accessory, or functional-defect claims must be reported within 48 hours of delivery with clear photo/video proof and original packaging. After 48 hours, replacement, return, or refund requests are not accepted except where required by applicable law. Products damaged, misused, opened, repaired, modified, or made incomplete by the customer are not eligible for replacement or refund.",
+  legalReturnsText: RETURNS_POLICY_SUMMARY,
   legalCancellationText:
     "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
   footerTagline: "Aghanims Phones and Gadgets.",

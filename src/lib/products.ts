@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { inferProductBrand } from "@/lib/product-brand";
 import { productCondition, type ProductCondition } from "@/lib/product-condition";
 import { REPLACEMENT_DELIVERY_FAQ } from "@/lib/replacement-policy";
+import { ACCESSORY_WARRANTY_FAQ, RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
 export { inferProductBrand } from "@/lib/product-brand";
 
 export type Category = "phones" | "audio" | "accessories" | "wearables" | "gaming";
@@ -114,6 +115,7 @@ export interface StorefrontCms {
 }
 
 export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
+  ACCESSORY_WARRANTY_FAQ,
   REPLACEMENT_DELIVERY_FAQ,
   {
     question: "How can I verify that Aghanims Phones and Gadgets is a genuine seller?",
@@ -138,7 +140,7 @@ export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
   {
     question: "What if the product arrives damaged, incorrect, or defective?",
     answer:
-      "Contact us within 48 hours of delivery with clear photo or video proof and the original packaging. Eligible delivery-damage, wrong-item, missing-accessory, or functional-defect claims are reviewed for replacement. Change-of-mind returns and claims made after 48 hours are not accepted except where required by law.",
+      "Contact us within 48 hours of delivery with clear photo or video proof and the original packaging. Eligible delivery-damage, wrong-item, missing-accessory, or functional-defect claims are reviewed for replacement. The battery and any included charger have separate one-month warranty cover from original delivery for functional faults during normal use. Other claims after 48 hours are not accepted except where required by law. Change-of-mind returns are not accepted.",
   },
 ];
 
@@ -344,8 +346,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     "We respect your privacy. This Policy explains what we collect, how we use it, and your rights. We share data only with service providers needed to process and deliver your order, and we do not sell your data.",
   legal_shipping_text:
     "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. No manual shipping fee is added to the customer order; the selected Shiprocket courier rate is recorded internally as the fulfilment cost.",
-  legal_returns_text:
-    "No change-of-mind returns are accepted. Damage-on-arrival, wrong-item, missing-accessory, or functional-defect claims must be reported within 48 hours of delivery with clear photo/video proof and original packaging. After 48 hours, replacement, return, or refund requests are not accepted except where required by applicable law. Products damaged, misused, opened, repaired, modified, or made incomplete by the customer are not eligible for replacement or refund.",
+  legal_returns_text: RETURNS_POLICY_SUMMARY,
   legal_cancellation_text:
     "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
   footer_tagline: "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.",
@@ -629,9 +630,9 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     drivers_subtitle: dbCms.drivers_subtitle || DEFAULT_STOREFRONT_CMS.drivers_subtitle,
     faqs: [
       ...(dbCms.faqs?.length ? dbCms.faqs : DEFAULT_STOREFRONT_CMS.faqs).filter(
-        (faq) => faq.question !== REPLACEMENT_DELIVERY_FAQ.question,
+        (faq) => !STORE_TRUST_FAQS.some((trustFaq) => trustFaq.question === faq.question),
       ),
-      REPLACEMENT_DELIVERY_FAQ,
+      ...STORE_TRUST_FAQS,
     ],
     catalog_title: dbCms.catalog_title || DEFAULT_STOREFRONT_CMS.catalog_title,
     catalog_subtitle: dbCms.catalog_subtitle || DEFAULT_STOREFRONT_CMS.catalog_subtitle,

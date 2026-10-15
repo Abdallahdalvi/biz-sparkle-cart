@@ -473,6 +473,19 @@ function ProductPage() {
             </div>
 
             <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
+            {product.category === "phones" && (
+              <div className="border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+                <strong>One-month battery & charger warranty</strong>
+                <p className="mt-1 text-xs leading-relaxed">
+                  Covers functional faults in the device battery and included charger from original
+                  delivery. This is separate from 48-hour delivery-issue support and does not cover
+                  the entire phone. Replacement delivery fees apply, except where required by law.
+                </p>
+                <Link to="/legal/returns" className="mt-2 inline-block text-xs font-bold underline">
+                  Read warranty and replacement rules
+                </Link>
+              </div>
+            )}
 
             <div className="bg-surface-container-lowest border border-outline-variant/40 p-5 rounded shadow-sm space-y-2">
               <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">

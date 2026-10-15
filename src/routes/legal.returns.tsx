@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
+import { ACCESSORY_WARRANTY_POLICY } from "@/lib/warranty-policy";
 
 export const Route = createFileRoute("/legal/returns")({
   head: () => ({
@@ -27,7 +28,8 @@ export const Route = createFileRoute("/legal/returns")({
       <p>
         Damage-on-arrival, wrong-item, missing-accessory, or functional-defect claims must be
         reported within <strong>48 hours of delivery</strong>. Requests raised after 48 hours are
-        not eligible for replacement, return, or refund except where required by applicable law.
+        not eligible for replacement, return, or refund except for eligible battery/charger claims
+        under the one-month warranty below or where required by applicable law.
       </p>
       <h2>Non-returnable items</h2>
       <ul>
@@ -39,6 +41,10 @@ export const Route = createFileRoute("/legal/returns")({
         </li>
         <li>Software, gift cards, personalised items, and final-sale/limited-drop items.</li>
       </ul>
+      <p>
+        These return exclusions do not remove cover for an eligible battery or charger fault arising
+        during normal use within its one-month warranty.
+      </p>
       <h2>How to raise a 48-hour claim</h2>
       <ol className="list-decimal pl-6 text-on-surface-variant space-y-1">
         <li>
@@ -76,7 +82,8 @@ export const Route = createFileRoute("/legal/returns")({
       <p>
         Replacement is available only for approved 48-hour delivery damage, wrong-item,
         missing-accessory, or functional-defect claims. After 48 hours from delivery, no replacement
-        is provided except where required by applicable law.
+        is provided except for eligible battery/charger warranty claims or where required by
+        applicable law.
       </p>
       <h2>Who pays replacement delivery fees?</h2>
       <p>
@@ -97,6 +104,12 @@ export const Route = createFileRoute("/legal/returns")({
           Replacement approval does not automatically approve a refund or waive delivery fees.
         </li>
       </ol>
+      <h2>One-month battery & charger warranty</h2>
+      <p>{ACCESSORY_WARRANTY_POLICY}</p>
+      <p>
+        The one-month cover is for the battery and included charger only. A charger not supplied
+        with the device is not covered by this store warranty.
+      </p>
       <h2>Manufacturer warranty</h2>
       <p>
         Any manufacturer warranty, if applicable to a specific product, is separate from this
