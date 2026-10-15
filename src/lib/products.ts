@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { inferProductBrand } from "@/lib/product-brand";
 import { productCondition, type ProductCondition } from "@/lib/product-condition";
+import { REPLACEMENT_DELIVERY_FAQ } from "@/lib/replacement-policy";
 export { inferProductBrand } from "@/lib/product-brand";
 
 export type Category = "phones" | "audio" | "accessories" | "wearables" | "gaming";
@@ -113,6 +114,7 @@ export interface StorefrontCms {
 }
 
 export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
+  REPLACEMENT_DELIVERY_FAQ,
   {
     question: "How can I verify that Aghanims Phones and Gadgets is a genuine seller?",
     answer:
@@ -625,7 +627,12 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     keypad_banner_2_link: dbCms.keypad_banner_2_link || DEFAULT_STOREFRONT_CMS.keypad_banner_2_link,
     drivers_title: dbCms.drivers_title || DEFAULT_STOREFRONT_CMS.drivers_title,
     drivers_subtitle: dbCms.drivers_subtitle || DEFAULT_STOREFRONT_CMS.drivers_subtitle,
-    faqs: dbCms.faqs?.length ? dbCms.faqs : DEFAULT_STOREFRONT_CMS.faqs,
+    faqs: [
+      ...(dbCms.faqs?.length ? dbCms.faqs : DEFAULT_STOREFRONT_CMS.faqs).filter(
+        (faq) => faq.question !== REPLACEMENT_DELIVERY_FAQ.question,
+      ),
+      REPLACEMENT_DELIVERY_FAQ,
+    ],
     catalog_title: dbCms.catalog_title || DEFAULT_STOREFRONT_CMS.catalog_title,
     catalog_subtitle: dbCms.catalog_subtitle || DEFAULT_STOREFRONT_CMS.catalog_subtitle,
     about_title: dbCms.about_title || DEFAULT_STOREFRONT_CMS.about_title,

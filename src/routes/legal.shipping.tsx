@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
+import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
 
 export const Route = createFileRoute("/legal/shipping")({
   head: () => ({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/legal/shipping")({
     ],
   }),
   component: () => (
-    <LegalPage title="Shipping & Delivery Policy" updated="August 2026">
+    <LegalPage title="Shipping & Delivery Policy" updated="15 October 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalShippingText}
       </p>
@@ -45,6 +46,8 @@ export const Route = createFileRoute("/legal/shipping")({
         cost is calculated from Shiprocket when we assign the courier and is recorded as an internal
         fulfilment expense.
       </p>
+      <h2>Replacement delivery fees</h2>
+      <p>{REPLACEMENT_DELIVERY_POLICY}</p>
       <h2>Tracking</h2>
       <p>
         Once shipped you'll receive an email and SMS with the AWB number and a live tracking link,

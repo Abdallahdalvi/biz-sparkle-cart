@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
+import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
 
 export const Route = createFileRoute("/legal/returns")({
   head: () => ({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/legal/returns")({
     ],
   }),
   component: () => (
-    <LegalPage title="Return & Refund Policy" updated="August 2026">
+    <LegalPage title="Return & Refund Policy" updated="15 October 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalReturnsText}
       </p>
@@ -77,6 +78,25 @@ export const Route = createFileRoute("/legal/returns")({
         missing-accessory, or functional-defect claims. After 48 hours from delivery, no replacement
         is provided except where required by applicable law.
       </p>
+      <h2>Who pays replacement delivery fees?</h2>
+      <p>
+        This replacement delivery-fee policy applies to orders placed on or after 15 October 2026.
+        Terms agreed for earlier orders are not changed.
+      </p>
+      <p className="border border-amber-300 bg-amber-50 p-4 font-medium">
+        {REPLACEMENT_DELIVERY_POLICY}
+      </p>
+      <ol className="list-decimal pl-6 text-on-surface-variant space-y-1">
+        <li>Report the issue and obtain approval before sending anything back.</li>
+        <li>Our team will confirm the return instructions and replacement delivery fee.</li>
+        <li>
+          After inspection and approval, agree to and pay the quoted replacement delivery fee before
+          dispatch, unless a legal exception applies.
+        </li>
+        <li>
+          Replacement approval does not automatically approve a refund or waive delivery fees.
+        </li>
+      </ol>
       <h2>Manufacturer warranty</h2>
       <p>
         Any manufacturer warranty, if applicable to a specific product, is separate from this

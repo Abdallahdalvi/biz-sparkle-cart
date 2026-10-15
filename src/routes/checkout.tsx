@@ -14,6 +14,7 @@ import { getAllProducts, getStorefrontCms } from "@/lib/products";
 import { rememberOrderReceipt } from "@/lib/order-receipt-client";
 import { readTrackingConsent, trackCommerceEvent } from "@/lib/tracking";
 import { SITE_URL } from "@/lib/site";
+import { REPLACEMENT_DELIVERY_NOTICE } from "@/lib/replacement-policy";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -493,6 +494,12 @@ function Checkout() {
               <span className="font-bold">{formatINR(effectiveTotal)}</span>
             </div>
 
+            <p className="border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-950">
+              {REPLACEMENT_DELIVERY_NOTICE}{" "}
+              <Link to="/legal/returns" className="font-bold underline">
+                Read replacement rules
+              </Link>
+            </p>
             <button
               disabled={busy || codAdvanceUnavailable}
               className="w-full bg-primary text-on-primary py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 disabled:opacity-50 shadow-sm"
