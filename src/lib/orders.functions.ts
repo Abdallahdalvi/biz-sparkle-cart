@@ -130,12 +130,24 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         .single();
       if (prodErr || !prod) throw new Error(`Product not found: ${item.slug}`);
       if (!prod.is_active) throw new Error(`${prod.name} is no longer available.`);
-      if (Number(prod.stock) < item.qty)
+      const requestedProductQty = [...normalizedItems.values()]
+        .filter((entry) => entry.slug === item.slug)
+        .reduce((sum, entry) => sum + entry.qty, 0);
+      if (Number(prod.stock) < requestedProductQty)
         throw new Error(`Only ${prod.stock} unit(s) of ${prod.name} are available.`);
 
       let unitPricePaise = prod.price_paise;
       let variantLabel: string | null = null;
       let variantIdUuid: string | null = null;
+
+      if (!item.variantId) {
+        const { count, error } = await supabaseAdmin
+          .from("product_variants")
+          .select("id", { count: "exact", head: true })
+          .eq("product_id", prod.id);
+        if (error) throw new Error("Unable to verify colour availability. Please try again.");
+        if (count) throw new Error(`Choose a colour for ${prod.name} before checkout.`);
+      }
 
       if (item.variantId) {
         const { data: vData, error: vErr } = await supabaseAdmin

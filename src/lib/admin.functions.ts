@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { inventoryTotal, type StockVariant } from "@/lib/inventory";
 
-type VariantInput = { label: string };
+type VariantInput = StockVariant;
 
 async function syncProductVariants(
   supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin,
@@ -12,39 +13,31 @@ async function syncProductVariants(
   const desired = (variants || []).filter((variant) => variant.label.trim());
   const { data: existing, error: existingError } = await supabaseAdmin
     .from("product_variants")
-    .select("id")
+    .select("id, label")
     .eq("product_id", productId);
   if (existingError) throw new Error(`Could not load product variants: ${existingError.message}`);
 
-  const sharedCount = Math.min(existing.length, desired.length);
-  await Promise.all(
-    desired
-      .slice(0, sharedCount)
-      .map((variant, index) =>
-        supabaseAdmin
+  inventoryTotal(desired, stock);
+  const retained = new Set<string>();
+  for (const variant of desired) {
+    const match =
+      existing.find((entry) => entry.id === variant.id) ||
+      existing.find((entry) => !retained.has(entry.id) && entry.label === variant.label.trim());
+    const values = { label: variant.label.trim(), stock: variant.stock! };
+    const result = match
+      ? await supabaseAdmin.from("product_variants").update(values).eq("id", match.id)
+      : await supabaseAdmin
           .from("product_variants")
-          .update({ label: variant.label.trim(), stock })
-          .eq("id", existing[index].id),
-      ),
-  );
-
-  const removedIds = existing.slice(sharedCount).map((variant) => variant.id);
+          .insert({ ...values, product_id: productId, price_delta_paise: 0 });
+    if (result.error) throw new Error(`Could not save colour stock: ${result.error.message}`);
+    if (match) retained.add(match.id);
+  }
+  const removedIds = existing
+    .filter((variant) => !retained.has(variant.id))
+    .map((variant) => variant.id);
   if (removedIds.length) {
     const { error } = await supabaseAdmin.from("product_variants").delete().in("id", removedIds);
     if (error) throw new Error(`Could not remove unused product variants: ${error.message}`);
-  }
-
-  const newVariants = desired.slice(sharedCount);
-  if (newVariants.length) {
-    const { error } = await supabaseAdmin.from("product_variants").insert(
-      newVariants.map((variant) => ({
-        product_id: productId,
-        label: variant.label.trim(),
-        price_delta_paise: 0,
-        stock,
-      })),
-    );
-    if (error) throw new Error(`Could not add product variants: ${error.message}`);
   }
 }
 
@@ -91,7 +84,7 @@ export const createProduct = createServerFn({ method: "POST" })
         price_paise: data.price_paise,
         cod_advance_paise: data.cod_advance_paise,
         compare_at_paise: data.compare_at_paise,
-        stock: data.stock,
+        stock: inventoryTotal(data.metadata?.variants || [], data.stock),
         category_id: data.category_id,
         is_active: data.is_active,
         metadata: data.metadata,
@@ -159,7 +152,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       price_paise: data.price_paise,
       cod_advance_paise: data.cod_advance_paise,
       compare_at_paise: data.compare_at_paise,
-      stock: data.stock,
+      stock: inventoryTotal(data.metadata?.variants || [], data.stock),
       category_id: data.category_id,
       is_active: data.is_active,
       metadata: data.metadata,

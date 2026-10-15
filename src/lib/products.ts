@@ -20,7 +20,7 @@ export interface Product {
   videos?: { title: string; url: string }[];
   description: string;
   specs: { label: string; value: string }[];
-  variants?: { id: string; label: string }[];
+  variants?: { id: string; label: string; stock?: number }[];
   faqs?: { question: string; answer: string }[];
   stock: number;
   heroSlot?: number;
@@ -418,15 +418,10 @@ export async function getAllProducts(): Promise<Product[]> {
       description: row.description || "",
       specs: row.metadata?.specs || [],
       variants: row.product_variants?.length
-        ? row.product_variants.map((variant: { id: string; label: string }, index: number) => ({
+        ? row.product_variants.map((variant: { id: string; label: string; stock: number }) => ({
             id: variant.id,
-            // Admin stores the edit form's current labels in metadata. Prefer
-            // them while the server also keeps product_variants in sync.
-            label:
-              typeof row.metadata?.variants?.[index]?.label === "string" &&
-              row.metadata.variants[index].label.trim()
-                ? row.metadata.variants[index].label.trim()
-                : variant.label,
+            label: variant.label,
+            stock: variant.stock,
           }))
         : undefined,
       faqs: row.metadata?.faqs?.length ? row.metadata.faqs : DEFAULT_STOREFRONT_CMS.faqs,

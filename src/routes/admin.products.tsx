@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { getStorefrontCms, inferProductBrand, orderProducts, PRODUCTS } from "@/lib/products";
 import { CONDITION_GRADES, PRODUCT_CONDITIONS, productCondition } from "@/lib/product-condition";
 import { useServerFn } from "@tanstack/react-start";
+import { type StockVariant } from "@/lib/inventory";
 import {
   createProduct,
   updateProduct,
@@ -24,7 +25,7 @@ interface ProductMetadata {
   condition?: string;
   condition_grade?: string;
   specs?: Array<{ label: string; value: string }>;
-  variants?: Array<{ id: string; label: string }>;
+  variants?: StockVariant[];
   images?: string[];
   videos?: Array<{ title: string; url: string }>;
   faqs?: Array<{ question: string; answer: string }>;
@@ -398,13 +399,16 @@ function AdminProducts() {
       supabase
         .from("products")
         .select(
-          "id, slug, name, tagline, description, price_paise, cod_advance_paise, compare_at_paise, stock, is_active, category_id, metadata",
+          "id, slug, name, tagline, description, price_paise, cod_advance_paise, compare_at_paise, stock, is_active, category_id, metadata, product_variants(id, label, stock)",
         )
         .order("created_at", { ascending: false }),
       getStorefrontCms(),
     ]);
     if (error) toast.error(error.message);
-    const dbRows = (data as Row[]) ?? [];
+    const dbRows: Row[] = (data ?? []).map((row) => ({
+      ...row,
+      metadata: { ...(row.metadata as ProductMetadata), variants: row.product_variants || [] },
+    }));
     const dbSlugs = new Set(dbRows.map((r) => r.slug));
     const staticRows: Row[] = PRODUCTS.filter((p) => !dbSlugs.has(p.slug)).map((p) => ({
       id: `static-${p.slug}`,
@@ -700,7 +704,9 @@ function AdminProducts() {
                       Variants
                     </p>
                     <p className="truncate font-medium">
-                      {r.metadata?.variants?.map((variant) => variant.label).join(", ") || "None"}
+                      {r.metadata?.variants
+                        ?.map((variant) => `${variant.label}: ${variant.stock ?? "not set"}`)
+                        .join(" · ") || "None"}
                     </p>
                   </div>
                 </div>
@@ -828,7 +834,9 @@ function AdminProducts() {
                       </div>
                       <div>
                         <strong>Variants:</strong>{" "}
-                        {r.metadata?.variants?.map((variant) => variant.label).join(", ") || "None"}
+                        {r.metadata?.variants
+                          ?.map((variant) => `${variant.label}: ${variant.stock ?? "not set"}`)
+                          .join(" · ") || "None"}
                       </div>
                     </td>
                     <td className="p-4">
@@ -955,7 +963,7 @@ function NewProductForm({
   const createProdFn = useServerFn(createProduct);
   const [busy, setBusy] = useState(false);
   const [specs, setSpecs] = useState<{ label: string; value: string }[]>([]);
-  const [variants, setVariants] = useState<{ id: string; label: string }[]>([]);
+  const [variants, setVariants] = useState<StockVariant[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<ProductVideo[]>([]);
   const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([]);
@@ -1165,10 +1173,13 @@ function NewProductForm({
         </div>
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-            Initial Stock Quantity
+            Stock (products without colours only)
           </label>
           <input
             name="stock"
+            disabled={variants.some((variant) => variant.label.trim())}
+            min={0}
+            step={1}
             type="number"
             defaultValue={10}
             placeholder="e.g. 14"
@@ -1318,14 +1329,16 @@ function NewProductForm({
       </div>
 
       {/* Product Variants Builder */}
-      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+      <div data-colour-stock className="bg-white p-4 md:p-6 shopify-border space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
-            5. Product Variants
+            5. Colours & Stock
           </h4>
           <button
             type="button"
-            onClick={() => setVariants([...variants, { id: `var-${Date.now()}`, label: "" }])}
+            onClick={() =>
+              setVariants([...variants, { id: `var-${Date.now()}`, label: "", stock: 0 }])
+            }
             className="text-xs text-primary font-bold hover:underline"
           >
             + Add Variant
@@ -1335,7 +1348,7 @@ function NewProductForm({
           {variants.map((v, idx) => (
             <div
               key={v.id}
-              className="flex items-center gap-2 bg-surface-container-lowest p-2 border border-outline-variant/40 rounded"
+              className="flex w-full flex-wrap items-center gap-2 bg-surface-container-lowest p-3 border border-outline-variant/40 rounded sm:w-auto"
             >
               <input
                 value={v.label}
@@ -1344,9 +1357,35 @@ function NewProductForm({
                   copy[idx].label = e.target.value;
                   setVariants(copy);
                 }}
-                placeholder="Variant Name (e.g. Obsidian Black)"
-                className="border border-outline-variant/40 px-2 py-1 text-xs focus:border-primary"
+                placeholder="Colour (e.g. Black)"
+                aria-label="Colour name"
+                required
+                className="min-w-0 flex-1 border border-outline-variant/40 px-2 py-2 text-xs focus:border-primary"
               />
+              <label className="text-xs">
+                Pieces
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  required
+                  aria-label={`${v.label || "Colour"} stock`}
+                  value={v.stock ?? ""}
+                  onChange={(e) =>
+                    setVariants(
+                      variants.map((entry, i) =>
+                        i === idx
+                          ? {
+                              ...entry,
+                              stock: e.target.value === "" ? undefined : Number(e.target.value),
+                            }
+                          : entry,
+                      ),
+                    )
+                  }
+                  className="ml-2 w-20 border border-outline-variant px-2 py-1"
+                />
+              </label>
               <button
                 type="button"
                 onClick={() => setVariants(variants.filter((_, i) => i !== idx))}
@@ -1357,6 +1396,11 @@ function NewProductForm({
             </div>
           ))}
         </div>
+        <p className="text-xs text-on-surface-variant">
+          Set the actual pieces for each colour. 0 keeps the colour visible but prevents orders.
+          Total: <strong>{variants.reduce((sum, v) => sum + (v.stock || 0), 0)} pieces</strong>. The
+          product total is calculated automatically.
+        </p>
       </div>
 
       {/* Product FAQs Builder */}
@@ -1453,8 +1497,15 @@ function EditProductForm({
   const [specs, setSpecs] = useState<{ label: string; value: string }[]>(
     prod.metadata?.specs || [],
   );
-  const [variants, setVariants] = useState<{ id: string; label: string }[]>(
-    prod.metadata?.variants || [],
+  const [variants, setVariants] = useState<StockVariant[]>(
+    (prod.metadata?.variants || []).map((variant) => ({
+      ...variant,
+      stock:
+        (prod.metadata?.variants || []).reduce((sum, entry) => sum + (entry.stock || 0), 0) ===
+        prod.stock
+          ? variant.stock
+          : undefined,
+    })),
   );
   const [images, setImages] = useState<string[]>(prod.metadata?.images || []);
   const [videos, setVideos] = useState<ProductVideo[]>(prod.metadata?.videos || []);
@@ -1531,6 +1582,35 @@ function EditProductForm({
     >
       <div>
         <h3 className="text-lg font-bold text-primary">Edit Product: {prod.name}</h3>
+        {variants.some((entry) => entry.stock === undefined) && (
+          <p
+            role="alert"
+            className="mt-3 border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"
+          >
+            Review colour stock: the old combined total does not match the colour counts. Enter the
+            actual pieces for every colour before saving; we have not guessed your stock split.
+          </p>
+        )}
+        <div className="my-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={(event) =>
+              event.currentTarget
+                .closest("form")
+                ?.querySelector("[data-colour-stock]")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            className="border border-outline px-4 py-2 text-xs font-bold"
+          >
+            Edit colour stock ↓
+          </button>
+          <button
+            disabled={busy}
+            className="bg-primary px-4 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
+          >
+            {busy ? "Saving…" : "Save changes"}
+          </button>
+        </div>
         <p className="text-xs text-on-surface-variant">
           Update pricing, wholesale cost, GST rates, specs, FAQs, and image galleries.
         </p>
@@ -1680,10 +1760,13 @@ function EditProductForm({
         </div>
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-            Initial Stock Quantity
+            Stock (products without colours only)
           </label>
           <input
             name="stock"
+            disabled={variants.some((variant) => variant.label.trim())}
+            min={0}
+            step={1}
             defaultValue={prod.stock}
             type="number"
             placeholder="e.g. 14"
@@ -1847,14 +1930,16 @@ function EditProductForm({
       </div>
 
       {/* Product Variants Builder */}
-      <div className="bg-white p-4 md:p-6 shopify-border space-y-4">
+      <div data-colour-stock className="bg-white p-4 md:p-6 shopify-border space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h4 className="text-xs font-bold uppercase tracking-widest text-primary">
-            5. Product Variants
+            5. Colours & Stock
           </h4>
           <button
             type="button"
-            onClick={() => setVariants([...variants, { id: `var-${Date.now()}`, label: "" }])}
+            onClick={() =>
+              setVariants([...variants, { id: `var-${Date.now()}`, label: "", stock: 0 }])
+            }
             className="text-xs text-primary font-bold hover:underline"
           >
             + Add Variant
@@ -1864,7 +1949,7 @@ function EditProductForm({
           {variants.map((v, idx) => (
             <div
               key={v.id || idx}
-              className="flex items-center gap-2 bg-surface-container-lowest p-2 border border-outline-variant/40 rounded"
+              className="flex w-full flex-wrap items-center gap-2 bg-surface-container-lowest p-3 border border-outline-variant/40 rounded sm:w-auto"
             >
               <input
                 value={v.label}
@@ -1873,9 +1958,35 @@ function EditProductForm({
                   copy[idx].label = e.target.value;
                   setVariants(copy);
                 }}
-                placeholder="Variant Name (e.g. Obsidian Black)"
-                className="border border-outline-variant/40 px-2 py-1 text-xs focus:border-primary"
+                placeholder="Colour (e.g. Black)"
+                aria-label="Colour name"
+                required
+                className="min-w-0 flex-1 border border-outline-variant/40 px-2 py-2 text-xs focus:border-primary"
               />
+              <label className="text-xs">
+                Pieces
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  required
+                  aria-label={`${v.label || "Colour"} stock`}
+                  value={v.stock ?? ""}
+                  onChange={(e) =>
+                    setVariants(
+                      variants.map((entry, i) =>
+                        i === idx
+                          ? {
+                              ...entry,
+                              stock: e.target.value === "" ? undefined : Number(e.target.value),
+                            }
+                          : entry,
+                      ),
+                    )
+                  }
+                  className="ml-2 w-20 border border-outline-variant px-2 py-1"
+                />
+              </label>
               <button
                 type="button"
                 onClick={() => setVariants(variants.filter((_, i) => i !== idx))}
@@ -1886,6 +1997,11 @@ function EditProductForm({
             </div>
           ))}
         </div>
+        <p className="text-xs text-on-surface-variant">
+          Check the actual pieces for each colour before saving; previous quantities may have been
+          copied from the product total. 0 prevents orders for that colour. Total:{" "}
+          <strong>{variants.reduce((sum, v) => sum + (v.stock || 0), 0)} pieces</strong>.
+        </p>
       </div>
 
       {/* Product FAQs Builder */}

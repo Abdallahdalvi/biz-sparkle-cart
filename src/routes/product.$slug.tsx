@@ -20,6 +20,7 @@ import { absoluteSiteUrl } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-links";
 import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
 import { productConditionLabel, schemaItemCondition } from "@/lib/product-condition";
+import { selectedStock } from "@/lib/inventory";
 
 const LEGACY_GENERIC_FAQ_QUESTIONS = new Set([
   "Is it a Google Play Store edition phone?",
@@ -162,7 +163,11 @@ function ProductPage() {
     related: Product[];
     cms: StorefrontCms;
   };
-  const [variant, setVariant] = useState(product.variants?.[0]?.id);
+  const [variant, setVariant] = useState(
+    product.variants?.find((entry) => Number(entry.stock) > 0)?.id || product.variants?.[0]?.id,
+  );
+  const chosenVariant = product.variants?.find((entry) => entry.id === variant);
+  const availableStock = selectedStock(product, variant);
   const [activeImg, setActiveImg] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const touchStartX = React.useRef<number | null>(null);
@@ -547,6 +552,7 @@ function ProductPage() {
                       }
                     >
                       {v.label}
+                      {v.stock === 0 ? " — Out of stock" : ""}
                     </button>
                   ))}
                 </div>
@@ -555,13 +561,13 @@ function ProductPage() {
 
             <div className="flex items-center gap-4">
               <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold">
-                {product.stock > 0
-                  ? `${product.stock} in stock`
+                {availableStock > 0
+                  ? `${availableStock} in stock${chosenVariant ? ` · ${chosenVariant.label}` : ""}`
                   : "Out of stock (Priority Waitlist Open)"}
               </p>
             </div>
 
-            {product.stock === 0 ? (
+            {availableStock === 0 ? (
               <div className="bg-surface-container-lowest border border-outline-variant/40 p-6 rounded shadow-sm space-y-4">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base text-blue-600">
@@ -659,10 +665,10 @@ function ProductPage() {
                     </span>
                     <button
                       onClick={() => {
-                        if (currentQty < product.stock) {
+                        if (currentQty < availableStock) {
                           setQty(product.slug, currentQty + 1, variant);
                         } else {
-                          toast.error(`Only ${product.stock} units available in stock`);
+                          toast.error(`Only ${availableStock} units available in this colour`);
                         }
                       }}
                       className="px-6 py-3 font-bold text-lg hover:bg-white/10 transition-colors"
@@ -672,7 +678,7 @@ function ProductPage() {
                   </div>
                 ) : (
                   <button
-                    disabled={product.stock === 0}
+                    disabled={availableStock === 0}
                     onClick={() => {
                       const v = product.variants?.find((x) => x.id === variant);
                       add(
@@ -876,10 +882,10 @@ function ProductPage() {
               <span className="text-center font-bold text-xs">{currentQty}</span>
               <button
                 onClick={() => {
-                  if (currentQty < product.stock) {
+                  if (currentQty < availableStock) {
                     setQty(product.slug, currentQty + 1, variant);
                   } else {
-                    toast.error(`Only ${product.stock} units available in stock`);
+                    toast.error(`Only ${availableStock} units available in this colour`);
                   }
                 }}
                 className="px-4 h-full font-bold text-base hover:bg-surface-container transition-colors flex items-center justify-center"
@@ -889,7 +895,7 @@ function ProductPage() {
             </div>
           ) : (
             <button
-              disabled={product.stock === 0}
+              disabled={availableStock === 0}
               onClick={() => {
                 const v = product.variants?.find((x) => x.id === variant);
                 add(
@@ -913,7 +919,13 @@ function ProductPage() {
           )}
           <Link
             to="/cart"
-            onClick={() => {
+            aria-disabled={availableStock === 0}
+            onClick={(event) => {
+              if (availableStock === 0) {
+                event.preventDefault();
+                toast.error("This colour is out of stock. Please choose another colour.");
+                return;
+              }
               if (currentQty === 0) {
                 const v = product.variants?.find((x) => x.id === variant);
                 add(
@@ -932,7 +944,7 @@ function ProductPage() {
             }}
             className="flex-1 bg-primary text-on-primary py-3.5 font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all text-center block shadow-sm"
           >
-            BUY NOW
+            {availableStock === 0 ? "OUT OF STOCK" : "BUY NOW"}
           </Link>
         </div>
       </div>
