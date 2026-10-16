@@ -365,6 +365,7 @@ export async function completeCashfreePaymentInternal(cashfreeOrderId: string, p
   if (itemsError) throw new Error(itemsError.message);
 
   for (const item of items ?? []) {
+    if (!item.product_id) continue; // Gift-card add-ons have no device stock.
     const { error } = await supabaseAdmin.rpc("decrement_stock", {
       p_product_id: item.product_id,
       p_variant_id: item.variant_id,

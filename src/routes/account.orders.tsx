@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { formatINR } from "@/lib/format";
+import { GiftCardSummary } from "@/components/GiftCardSummary";
 
 interface OrderItemRow {
   name: string;
@@ -357,6 +358,7 @@ function Orders() {
             </div>
 
             {/* Shipment & Payment Tracking Info */}
+            <GiftCardSummary address={o.shipping_address} />
             <div className="p-6 bg-surface-container-lowest grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Shipment Tracking Card */}
               <div className="space-y-3">

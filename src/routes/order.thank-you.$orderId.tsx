@@ -4,6 +4,7 @@ import { Facebook, Instagram, MessageCircle, Youtube } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
+import { GiftCardSummary } from "@/components/GiftCardSummary";
 import { getOrderConfirmation } from "@/lib/order-confirmation.functions";
 import { orderReceiptStorageKey } from "@/lib/order-receipt-client";
 import { OFFICIAL_SOCIAL_LINKS, whatsappChatUrl } from "@/lib/social-links";
@@ -91,8 +92,7 @@ function GoogleCustomerReviewsOptIn({
     else {
       const script = document.createElement("script");
       script.id = "google-customer-reviews-platform";
-      script.src =
-        "https://apis.google.com/js/platform.js?onload=renderGoogleCustomerReviewsOptIn";
+      script.src = "https://apis.google.com/js/platform.js?onload=renderGoogleCustomerReviewsOptIn";
       script.async = true;
       script.defer = true;
       document.body.appendChild(script);
@@ -309,6 +309,9 @@ function OrderThankYou() {
                   ))}
                 </div>
 
+                <div className="mt-4">
+                  <GiftCardSummary address={confirmation.shippingAddress} />
+                </div>
                 <div className="ml-auto mt-4 max-w-sm space-y-2 border-t border-outline-variant/50 pt-4 text-sm">
                   <AmountRow label="Merchandise subtotal" value={formatINR(merchandiseSubtotal)} />
                   <AmountRow label="Customer shipping" value="Free" positive />

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { create } from "zustand";
+import { storedCartItems } from "@/lib/cart-storage";
 
 export interface CartItem {
   slug: string;
@@ -61,7 +62,7 @@ function readCart(keyOwner: string): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
     const stored = window.localStorage.getItem(storageKey(keyOwner));
-    if (stored) return sanitizeItems(JSON.parse(stored));
+    if (stored) return sanitizeItems(storedCartItems(JSON.parse(stored)));
 
     if (keyOwner === GUEST_OWNER) {
       const legacy = window.localStorage.getItem(LEGACY_CART_STORAGE_NAME);

@@ -16,6 +16,12 @@ import { readTrackingConsent, trackCommerceEvent } from "@/lib/tracking";
 import { SITE_URL } from "@/lib/site";
 import { REPLACEMENT_DELIVERY_NOTICE } from "@/lib/replacement-policy";
 import { CANCELLATION_CHECKOUT_NOTICE } from "@/lib/cancellation-policy";
+import {
+  calculateGiftOrderAmounts,
+  GIFT_CARD_MESSAGES,
+  GIFT_CARD_PRICE_PAISE,
+} from "@/lib/gift-card";
+import { GiftCardSummary } from "@/components/GiftCardSummary";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -64,6 +70,10 @@ function Checkout() {
     capabilities.onlinePaymentsConfigured ? "prepaid" : "cod",
   );
   const createOrderFn = useServerFn(createSecureOrder);
+  const [giftEnabled, setGiftEnabled] = useState(false);
+  const [giftTo, setGiftTo] = useState("");
+  const [giftFrom, setGiftFrom] = useState("");
+  const [giftMessage, setGiftMessage] = useState("");
   const verifyCashfree = useServerFn(verifyCashfreePayment);
   const returnVerificationStarted = useRef(false);
   const beginCheckoutTracked = useRef(false);
@@ -173,9 +183,14 @@ function Checkout() {
     0,
   );
 
-  const baseEffective = payMode === "prepaid" ? Math.max(0, total - prepaidDiscountPaise) : total;
-
-  const effectiveTotal = baseEffective;
+  const amounts = calculateGiftOrderAmounts({
+    merchandisePaise: total,
+    prepaidDiscountPaise,
+    codAdvancePaise,
+    payMode,
+    hasGiftCard: giftEnabled,
+  });
+  const effectiveTotal = amounts.totalPaise;
 
   const paymentAmountPaise = payMode === "cod" ? codAdvancePaise : effectiveTotal;
   const codAdvanceUnavailable = codAdvancePaise > 0 && !capabilities.onlinePaymentsConfigured;
@@ -256,6 +271,9 @@ function Checkout() {
                   qty: i.qty,
                 })),
                 shippingAddress: shipping_address,
+                giftCard: giftEnabled
+                  ? { to: giftTo, from: giftFrom, message: giftMessage }
+                  : undefined,
                 payMode: payMode,
                 email: String(fd.get("email") ?? ""),
                 phone: String(fd.get("phone") ?? ""),
@@ -373,6 +391,102 @@ function Checkout() {
                 />
               </div>
             </fieldset>
+            <fieldset disabled={busy} className="bg-white shopify-border p-6 space-y-4">
+              <legend className="px-2 text-[11px] font-bold uppercase tracking-widest">
+                Sending a gift?
+              </legend>
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={giftEnabled}
+                  onChange={(event) => setGiftEnabled(event.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  <strong>
+                    Gift wrap this order + greeting card · {formatINR(GIFT_CARD_PRICE_PAISE)}
+                  </strong>
+                  <span className="mt-1 block text-xs text-on-surface-variant">
+                    We’ll gift-wrap your order and include a physical greeting card with your
+                    personal message. ₹299 for both, once per order. Optional.
+                  </span>
+                </span>
+              </label>
+              {giftEnabled && (
+                <div className="space-y-4">
+                  <p className="text-xs text-on-surface-variant">
+                    Use the recipient’s delivery details above. Choose a suggestion below or write
+                    your own wishes.
+                  </p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label className="text-sm">
+                      To (optional)
+                      <input
+                        maxLength={80}
+                        value={giftTo}
+                        onChange={(e) => setGiftTo(e.target.value)}
+                        className="mt-1 w-full border border-outline-variant/40 px-3 py-2"
+                        placeholder="Recipient’s name"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      From (optional)
+                      <input
+                        maxLength={80}
+                        value={giftFrom}
+                        onChange={(e) => setGiftFrom(e.target.value)}
+                        className="mt-1 w-full border border-outline-variant/40 px-3 py-2"
+                        placeholder="Your name"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {GIFT_CARD_MESSAGES.map((suggestion) => (
+                      <button
+                        type="button"
+                        key={suggestion.label}
+                        onClick={() => setGiftMessage(suggestion.message)}
+                        className="border border-outline-variant/40 px-3 py-2 text-xs font-bold"
+                      >
+                        {suggestion.label}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="block text-sm font-bold">
+                    What should we write on the greeting card?
+                    <textarea
+                      required
+                      maxLength={300}
+                      rows={4}
+                      value={giftMessage}
+                      onChange={(e) => setGiftMessage(e.target.value)}
+                      className="mt-2 w-full border border-outline-variant/40 px-3 py-2 text-sm font-normal"
+                      placeholder="Write your personal message…"
+                    />
+                  </label>
+                  <p className="text-right text-xs text-on-surface-variant">
+                    {giftMessage.length}/300 characters
+                  </p>
+                  <GiftCardSummary
+                    address={{
+                      gift_card: {
+                        to: giftTo,
+                        from: giftFrom,
+                        message: giftMessage,
+                        fee_paise: GIFT_CARD_PRICE_PAISE,
+                      },
+                    }}
+                  />
+                  {payMode === "cod" && (
+                    <p className="border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+                      With COD, the recipient pays the remaining balance, including the ₹299
+                      gift-wrapping and greeting-card fee, on delivery. Choose prepaid if you do not
+                      want the recipient to pay.
+                    </p>
+                  )}
+                </div>
+              )}
+            </fieldset>
             <fieldset className="bg-white shopify-border p-6 space-y-4">
               <legend className="px-2 text-[11px] font-bold uppercase tracking-widest">
                 Payment Mode
@@ -443,7 +557,7 @@ function Checkout() {
                   </div>
                   <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
                     {codAdvancePaise > 0
-                      ? `Pay ${formatINR(codAdvancePaise)} securely now; Shiprocket collects the remaining ${formatINR(total - codAdvancePaise)} on delivery`
+                      ? `Pay ${formatINR(codAdvancePaise)} securely now; Shiprocket collects the remaining ${formatINR(amounts.codCollectablePaise)} on delivery`
                       : `Shiprocket collects the full ${formatINR(total)} on delivery`}
                   </p>
                 </div>
@@ -472,10 +586,16 @@ function Checkout() {
               <span className="text-on-surface-variant">Subtotal</span>
               <span className="font-bold">{formatINR(total)}</span>
             </div>
-            {payMode === "prepaid" && prepaidDiscountPaise > 0 && (
+            {giftEnabled && (
+              <div className="flex justify-between gap-3 text-sm">
+                <span>Gift wrapping + greeting card</span>
+                <span className="font-bold">{formatINR(amounts.giftFeePaise)}</span>
+              </div>
+            )}
+            {payMode === "prepaid" && amounts.discountPaise > 0 && (
               <div className="flex justify-between text-sm text-emerald-700 font-medium">
                 <span>Prepaid Instant Discount</span>
-                <span>-{formatINR(prepaidDiscountPaise)}</span>
+                <span>-{formatINR(amounts.discountPaise)}</span>
               </div>
             )}
             {payMode === "cod" && codAdvancePaise > 0 && (
@@ -487,11 +607,11 @@ function Checkout() {
             {payMode === "cod" && (
               <div className="flex justify-between text-sm font-medium text-blue-800">
                 <span>Remaining COD to courier</span>
-                <span>{formatINR(total - codAdvancePaise)}</span>
+                <span>{formatINR(amounts.codCollectablePaise)}</span>
               </div>
             )}
             <div className="flex justify-between text-base border-t pt-3">
-              <span className="font-bold">Product Total</span>
+              <span className="font-bold">Order Total</span>
               <span className="font-bold">{formatINR(effectiveTotal)}</span>
             </div>
 

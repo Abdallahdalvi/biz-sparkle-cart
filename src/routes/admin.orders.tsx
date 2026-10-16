@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
+import { GiftCardSummary } from "@/components/GiftCardSummary";
+import { giftCardHtml } from "@/lib/gift-card";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -662,6 +664,7 @@ function AdminOrders() {
             </tbody>
           </table>
           <div class="totals">
+            ${giftCardHtml(addr)}
             <div class="totals-row"><span>Merchandise subtotal</span><strong>${formatINR(merchandiseSubtotal)}</strong></div>
             ${Number(o.tax_paise || 0) > 0 ? `<div class="totals-row"><span>Tax</span><strong>${formatINR(o.tax_paise)}</strong></div>` : ""}
             ${pricingAdjustment < 0 ? `<div class="totals-row discount"><span>Prepaid discount</span><strong>-${formatINR(Math.abs(pricingAdjustment))}</strong></div>` : ""}
@@ -1028,6 +1031,7 @@ function AdminOrders() {
                           locked.
                         </div>
                       )}
+                      <GiftCardSummary address={o.shipping_address} />
                       <div className="rounded border border-outline-variant/40 bg-surface-container-lowest p-4 text-xs space-y-2">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -1526,6 +1530,9 @@ function AdminOrders() {
                               </div>
                             )}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                              <div className="lg:col-span-3">
+                                <GiftCardSummary address={o.shipping_address} />
+                              </div>
                               {/* Shipping Address & Details */}
                               <div className="bg-white p-6 border border-outline-variant/40 rounded shadow-sm space-y-4">
                                 <div className="flex items-center justify-between border-b border-outline-variant/30 pb-2">

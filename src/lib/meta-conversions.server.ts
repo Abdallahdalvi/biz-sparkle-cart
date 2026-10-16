@@ -93,11 +93,13 @@ export async function sendMetaPurchaseEvent(
       : { data: [], error: null };
     if (productsError) throw new Error(productsError.message);
     const slugById = new Map((products || []).map((product) => [product.id, product.slug]));
-    const contents = (orderItems || []).map((item) => ({
-      id: slugById.get(item.product_id) || item.product_id,
-      quantity: Number(item.qty),
-      item_price: Number(item.unit_price_paise) / 100,
-    }));
+    const contents = (orderItems || [])
+      .filter((item) => item.product_id)
+      .map((item) => ({
+        id: slugById.get(item.product_id) || item.product_id,
+        quantity: Number(item.qty),
+        item_price: Number(item.unit_price_paise) / 100,
+      }));
 
     const userData = buildMetaUserData({
       email: order.email,

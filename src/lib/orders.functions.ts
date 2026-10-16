@@ -1,5 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  calculateGiftOrderAmounts,
+  giftCardInputSchema,
+  GIFT_CARD_ITEM_NAME,
+  GIFT_CARD_PRICE_PAISE,
+} from "@/lib/gift-card";
 
 function onlinePaymentsConfigured() {
   return Boolean(process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY);
@@ -53,6 +59,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
             .optional(),
         }),
         payMode: z.enum(["prepaid", "cod"]),
+        giftCard: giftCardInputSchema.optional(),
         email: z.string().trim().email().max(254),
         phone: z
           .string()
@@ -118,7 +125,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       cod_advance_paise: number;
       qty: number;
       image_url: string;
-      product_id: string;
+      product_id: string | null;
       variant_id: string | null;
     }> = [];
 
@@ -221,12 +228,27 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       );
     }
 
-    const effectiveTotal =
-      data.payMode === "prepaid"
-        ? Math.max(0, subtotalPaise - prepaidDiscountPaise)
-        : subtotalPaise;
-
-    const paymentAmountPaise = data.payMode === "cod" ? codAdvancePaise : effectiveTotal;
+    const amounts = calculateGiftOrderAmounts({
+      merchandisePaise: subtotalPaise,
+      prepaidDiscountPaise,
+      codAdvancePaise,
+      payMode: data.payMode,
+      hasGiftCard: Boolean(data.giftCard),
+    });
+    subtotalPaise = amounts.subtotalPaise;
+    const effectiveTotal = amounts.totalPaise;
+    const paymentAmountPaise = amounts.paymentAmountPaise;
+    if (data.giftCard)
+      orderItemsToInsert.push({
+        name: GIFT_CARD_ITEM_NAME,
+        qty: 1,
+        unit_price_paise: GIFT_CARD_PRICE_PAISE,
+        cod_advance_paise: 0,
+        image_url: "",
+        product_id: null,
+        variant_id: null,
+        variant_label: null,
+      });
 
     // Insert order securely
     const { data: order, error: orderErr } = await supabaseAdmin
@@ -235,7 +257,14 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         user_id: userId,
         email: data.email,
         phone: data.phone,
-        shipping_address: data.shippingAddress,
+        shipping_address: {
+          ...data.shippingAddress,
+          ...(data.giftCard
+            ? {
+                gift_card: { ...data.giftCard, gift_wrap: true, fee_paise: GIFT_CARD_PRICE_PAISE },
+              }
+            : {}),
+        },
         subtotal_paise: subtotalPaise,
         shipping_paise: 0,
         total_paise: effectiveTotal,
@@ -271,6 +300,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     if (paymentAmountPaise === 0) {
       // No online amount is due. Reserve stock now; Shiprocket creation waits for courier choice.
       for (const item of orderItemsToInsert) {
+        if (!item.product_id) continue; // Gift cards are not phone inventory.
         const { error: stockError } = await supabaseAdmin.rpc("decrement_stock", {
           p_product_id: item.product_id,
           p_variant_id: item.variant_id,

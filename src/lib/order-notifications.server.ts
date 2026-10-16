@@ -1,4 +1,5 @@
 import { formatINR } from "@/lib/format";
+import { giftCardHtml, giftCardLines } from "@/lib/gift-card";
 
 interface OrderNotificationItem {
   name: string;
@@ -78,6 +79,7 @@ function buildOrderMessage(order: OrderNotificationRow) {
     "",
     "Items:",
     ...(lines.length ? lines : ["No line items found"]),
+    ...giftCardLines(address),
     "",
     `Admin: ${adminOrderUrl(order.id)}`,
   ].join("\n");
@@ -96,6 +98,7 @@ function buildOrderMessage(order: OrderNotificationRow) {
       <p><strong>Delivery:</strong> ${htmlEscape(deliveryLine || "No address")}</p>
       <h3>Items</h3>
       <ul>${itemHtml}</ul>
+      ${giftCardHtml(address)}
       <p><a href="${htmlEscape(adminOrderUrl(order.id))}">Open order in admin</a></p>
     </div>
   `;
