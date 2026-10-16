@@ -21,8 +21,12 @@ import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-lin
 import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
 import { productConditionLabel, schemaItemCondition } from "@/lib/product-condition";
 import { selectedStock } from "@/lib/inventory";
+import { CANCELLATION_FAQ } from "@/lib/cancellation-policy";
+import { REPLACEMENT_DELIVERY_FAQ } from "@/lib/replacement-policy";
 
 const LEGACY_GENERIC_FAQ_QUESTIONS = new Set([
+  CANCELLATION_FAQ.question,
+  REPLACEMENT_DELIVERY_FAQ.question,
   "Is it a Google Play Store edition phone?",
   "Does it support UPI and other net banking apps?",
   "Is the Duoqin F25 Pro / F22 Pro compatible with Indian SIM cards?",
@@ -845,11 +849,11 @@ function ProductPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {related.map((p) => (
                 <Link key={p.slug} to="/product/$slug" params={{ slug: p.slug }} className="group">
-                  <div className="aspect-square overflow-hidden shopify-border bg-white mb-3 shadow-sm">
+                  <div className="aspect-square overflow-hidden shopify-border bg-white mb-3 p-4 shadow-sm sm:p-5">
                     <img
                       src={p.images[0]}
                       alt={p.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      className="h-full w-full object-contain object-center"
                     />
                   </div>
                   <div className="flex justify-between items-center">

@@ -116,9 +116,11 @@ export interface StorefrontCms {
 }
 
 export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
-  CANCELLATION_FAQ,
-  ACCESSORY_WARRANTY_FAQ,
-  REPLACEMENT_DELIVERY_FAQ,
+  {
+    ...ACCESSORY_WARRANTY_FAQ,
+    answer:
+      "Yes. The device battery and included charger have a one-month warranty from delivery. Full details are available in our Return & Refund Policy.",
+  },
   {
     question: "How can I verify that Aghanims Phones and Gadgets is a genuine seller?",
     answer:
@@ -142,7 +144,7 @@ export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
   {
     question: "What if the product arrives damaged, incorrect, or defective?",
     answer:
-      "Contact us within 48 hours of delivery with clear photo or video proof and the original packaging. Eligible delivery-damage, wrong-item, missing-accessory, or functional-defect claims are reviewed for replacement. The battery and any included charger have separate one-month warranty cover from original delivery for functional faults during normal use. Other claims after 48 hours are not accepted except where required by law. Change-of-mind returns are not accepted.",
+      "Contact our support team within 48 hours of delivery with your order number and photos or video of the issue. We will help you with the next steps. Full details are in our Return & Refund Policy.",
   },
 ];
 
@@ -631,7 +633,10 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     drivers_subtitle: dbCms.drivers_subtitle || DEFAULT_STOREFRONT_CMS.drivers_subtitle,
     faqs: [
       ...(dbCms.faqs?.length ? dbCms.faqs : DEFAULT_STOREFRONT_CMS.faqs).filter(
-        (faq) => !STORE_TRUST_FAQS.some((trustFaq) => trustFaq.question === faq.question),
+        (faq) =>
+          faq.question !== CANCELLATION_FAQ.question &&
+          faq.question !== REPLACEMENT_DELIVERY_FAQ.question &&
+          !STORE_TRUST_FAQS.some((trustFaq) => trustFaq.question === faq.question),
       ),
       ...STORE_TRUST_FAQS,
     ],

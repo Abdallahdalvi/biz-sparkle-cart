@@ -14,8 +14,6 @@ import { getAllProducts, getStorefrontCms } from "@/lib/products";
 import { rememberOrderReceipt } from "@/lib/order-receipt-client";
 import { readTrackingConsent, trackCommerceEvent } from "@/lib/tracking";
 import { SITE_URL } from "@/lib/site";
-import { REPLACEMENT_DELIVERY_NOTICE } from "@/lib/replacement-policy";
-import { CANCELLATION_CHECKOUT_NOTICE } from "@/lib/cancellation-policy";
 import {
   calculateGiftOrderAmounts,
   GIFT_CARD_MESSAGES,
@@ -478,7 +476,7 @@ function Checkout() {
                     }}
                   />
                   {payMode === "cod" && (
-                    <p className="border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+                    <p className="text-xs leading-relaxed text-on-surface-variant">
                       With COD, the recipient pays the remaining balance, including the ₹299
                       gift-wrapping and greeting-card fee, on delivery. Choose prepaid if you do not
                       want the recipient to pay.
@@ -557,7 +555,7 @@ function Checkout() {
                   </div>
                   <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
                     {codAdvancePaise > 0
-                      ? `Pay ${formatINR(codAdvancePaise)} securely now; Shiprocket collects the remaining ${formatINR(amounts.codCollectablePaise)} on delivery`
+                      ? `Pay ${formatINR(codAdvancePaise)} securely now; Shiprocket collects the remaining ${formatINR(Math.max(0, amounts.subtotalPaise - codAdvancePaise))} on delivery`
                       : `Shiprocket collects the full ${formatINR(total)} on delivery`}
                   </p>
                 </div>
@@ -615,18 +613,6 @@ function Checkout() {
               <span className="font-bold">{formatINR(effectiveTotal)}</span>
             </div>
 
-            <p className="border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-950">
-              {REPLACEMENT_DELIVERY_NOTICE}{" "}
-              <Link to="/legal/returns" className="font-bold underline">
-                Read replacement rules
-              </Link>
-            </p>
-            <p className="border border-outline-variant/40 bg-white p-3 text-xs leading-relaxed text-on-surface-variant">
-              {CANCELLATION_CHECKOUT_NOTICE}{" "}
-              <Link to="/legal/cancellation" className="font-bold underline">
-                Read cancellation rules
-              </Link>
-            </p>
             <button
               disabled={busy || codAdvanceUnavailable}
               className="w-full bg-primary text-on-primary py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 disabled:opacity-50 shadow-sm"
@@ -649,6 +635,10 @@ function Checkout() {
               ,{" "}
               <Link to="/legal/returns" className="underline">
                 Returns
+              </Link>
+              ,{" "}
+              <Link to="/legal/cancellation" className="underline">
+                Cancellation
               </Link>
               , and{" "}
               <Link to="/legal/privacy" className="underline">
