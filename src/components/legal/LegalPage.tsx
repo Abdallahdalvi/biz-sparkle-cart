@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
+import { CANCELLATION_POLICY_SUMMARY } from "@/lib/cancellation-policy";
 
 export function LegalPage({
   title,
@@ -50,8 +51,7 @@ export const BIZ = {
   legalShippingText:
     "We ship through Shiprocket and the courier selected for each serviceable order. Courier availability, price, and estimated delivery depend on the pickup and delivery PIN codes, parcel details, and payment mode.",
   legalReturnsText: RETURNS_POLICY_SUMMARY,
-  legalCancellationText:
-    "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
+  legalCancellationText: CANCELLATION_POLICY_SUMMARY,
   footerTagline: "Aghanims Phones and Gadgets.",
   footerCopyright: `© ${new Date().getFullYear()} Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.`,
 };

@@ -485,7 +485,7 @@ function AdminOrders() {
   async function refundOrder(order: Order) {
     if (
       !window.confirm(
-        `Refund ${formatINR(order.notes === "cod" ? order.advance_paid_paise : order.total_paise)} through Cashfree for ${order.order_number}? This also cancels unshipped fulfilment and cannot be undone.`,
+        `Refund ${formatINR(order.notes === "cod" ? order.advance_paid_paise : order.total_paise)} through Cashfree for ${order.order_number}? This refunds the full verified payment: it does not deduct the customer cancellation fee or send the separate ₹50 store-cancellation compensation. This also cancels unshipped fulfilment and cannot be undone.`,
       )
     ) {
       return;

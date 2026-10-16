@@ -3,6 +3,7 @@ import { inferProductBrand } from "@/lib/product-brand";
 import { productCondition, type ProductCondition } from "@/lib/product-condition";
 import { REPLACEMENT_DELIVERY_FAQ } from "@/lib/replacement-policy";
 import { ACCESSORY_WARRANTY_FAQ, RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
+import { CANCELLATION_FAQ, CANCELLATION_POLICY_SUMMARY } from "@/lib/cancellation-policy";
 export { inferProductBrand } from "@/lib/product-brand";
 
 export type Category = "phones" | "audio" | "accessories" | "wearables" | "gaming";
@@ -115,6 +116,7 @@ export interface StorefrontCms {
 }
 
 export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
+  CANCELLATION_FAQ,
   ACCESSORY_WARRANTY_FAQ,
   REPLACEMENT_DELIVERY_FAQ,
   {
@@ -347,8 +349,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   legal_shipping_text:
     "We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees). Orders are processed within 1–2 business days from payment confirmation. Delivery takes 2–4 business days in Metro cities and 3–6 business days in other Tier-1 & Tier-2 cities. No manual shipping fee is added to the customer order; the selected Shiprocket courier rate is recorded internally as the fulfilment cost.",
   legal_returns_text: RETURNS_POLICY_SUMMARY,
-  legal_cancellation_text:
-    "Orders can be cancelled only before dispatch. Once handed to the courier, cancellation is not available. Refused, failed, or returned-to-origin deliveries are reviewed case-by-case and may have courier/payment costs deducted where legally permitted.",
+  legal_cancellation_text: CANCELLATION_POLICY_SUMMARY,
   footer_tagline: "Aghanims Phones and Gadgets. PRECISION ENGINEERED LOGISTICS.",
   footer_copyright: "© 2026 Aghanims Phones and Gadgets. ALL RIGHTS RESERVED.",
   tracking_clarity_enabled: true,

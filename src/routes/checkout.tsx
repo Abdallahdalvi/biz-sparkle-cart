@@ -15,6 +15,7 @@ import { rememberOrderReceipt } from "@/lib/order-receipt-client";
 import { readTrackingConsent, trackCommerceEvent } from "@/lib/tracking";
 import { SITE_URL } from "@/lib/site";
 import { REPLACEMENT_DELIVERY_NOTICE } from "@/lib/replacement-policy";
+import { CANCELLATION_CHECKOUT_NOTICE } from "@/lib/cancellation-policy";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -498,6 +499,12 @@ function Checkout() {
               {REPLACEMENT_DELIVERY_NOTICE}{" "}
               <Link to="/legal/returns" className="font-bold underline">
                 Read replacement rules
+              </Link>
+            </p>
+            <p className="border border-outline-variant/40 bg-white p-3 text-xs leading-relaxed text-on-surface-variant">
+              {CANCELLATION_CHECKOUT_NOTICE}{" "}
+              <Link to="/legal/cancellation" className="font-bold underline">
+                Read cancellation rules
               </Link>
             </p>
             <button

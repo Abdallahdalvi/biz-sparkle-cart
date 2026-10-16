@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
 import { ACCESSORY_WARRANTY_POLICY } from "@/lib/warranty-policy";
+import { CANCELLATION_POLICY_SUMMARY } from "@/lib/cancellation-policy";
 
 export const Route = createFileRoute("/legal/terms")({
   head: () => ({
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/legal/terms")({
     ],
   }),
   component: () => (
-    <LegalPage title="Terms & Conditions" updated="15 October 2026">
+    <LegalPage title="Terms & Conditions" updated="16 October 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalTermsText}
       </p>
@@ -61,6 +62,7 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <p>{REPLACEMENT_DELIVERY_POLICY}</p>
       <p>{ACCESSORY_WARRANTY_POLICY}</p>
+      <p>{CANCELLATION_POLICY_SUMMARY}</p>
       <h2>6. Intellectual Property</h2>
       <p>
         All content on the Site — Aghanims Phones and Gadgets name, logos, product images, copy,

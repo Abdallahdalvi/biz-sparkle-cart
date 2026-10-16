@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
 import { ACCESSORY_WARRANTY_POLICY } from "@/lib/warranty-policy";
+import { CUSTOMER_CANCELLATION_POLICY, STORE_CANCELLATION_POLICY } from "@/lib/cancellation-policy";
 
 export const Route = createFileRoute("/legal/returns")({
   head: () => ({
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/legal/returns")({
     ],
   }),
   component: () => (
-    <LegalPage title="Return & Refund Policy" updated="15 October 2026">
+    <LegalPage title="Return & Refund Policy" updated="16 October 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalReturnsText}
       </p>
@@ -77,6 +78,15 @@ export const Route = createFileRoute("/legal/returns")({
         refunds are credited to the original payment method within{" "}
         <strong>5–7 business days</strong> after approval, subject to payment-provider and bank
         timelines.
+      </p>
+      <h2>Cancellation refunds before shipping</h2>
+      <p>{CUSTOMER_CANCELLATION_POLICY}</p>
+      <p>{STORE_CANCELLATION_POLICY}</p>
+      <p>
+        These cancellation terms apply to orders placed on or after 16 October 2026. See our{" "}
+        <a href="/legal/cancellation">Cancellation Policy</a> for examples and the full process;
+        earlier agreed terms are not changed. The ₹50 customer cancellation deduction does not apply
+        to refunds required in full by law.
       </p>
       <h2>Replacements</h2>
       <p>
