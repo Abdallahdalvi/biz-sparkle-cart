@@ -473,82 +473,6 @@ function ProductPage() {
             </div>
 
             <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
-            {product.category === "phones" && (
-              <div className="border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-                <strong>One-month battery & charger warranty</strong>
-                <p className="mt-1 text-xs leading-relaxed">
-                  Covers functional faults in the device battery and included charger from original
-                  delivery. This is separate from 48-hour delivery-issue support and does not cover
-                  the entire phone. Replacement delivery fees apply, except where required by law.
-                </p>
-                <Link to="/legal/returns" className="mt-2 inline-block text-xs font-bold underline">
-                  Read warranty and replacement rules
-                </Link>
-              </div>
-            )}
-
-            <div className="bg-surface-container-lowest border border-outline-variant/40 p-5 rounded shadow-sm space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-primary">
-                  local_shipping
-                </span>
-                Delivery & courier confirmation
-              </p>
-              <p className="text-xs leading-relaxed text-on-surface-variant">
-                Enter your delivery PIN code during checkout. Serviceability, the available courier,
-                and the delivery estimate are confirmed from Shiprocket when your order is prepared
-                for dispatch.
-              </p>
-            </div>
-
-            <div className="border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
-              <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-6 w-6 flex-shrink-0 text-emerald-700" />
-                <div>
-                  <h2 className="text-sm font-bold text-emerald-950">Shop with confidence</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-emerald-950/75">
-                    Verify our public presence, customer reviews, and official support channels
-                    before you order.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {socialLinks.map(({ label, href, Icon }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Open Aghanims Phones and Gadgets on ${label}`}
-                    className="flex min-h-11 items-center justify-center gap-2 border border-emerald-200 bg-white px-3 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-emerald-100"
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {label}
-                  </a>
-                ))}
-              </div>
-              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <a
-                  href={whatsappChannel}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex min-h-11 items-center justify-center gap-2 bg-[#128C7E] px-4 py-2 text-[11px] font-bold text-white transition-opacity hover:opacity-90"
-                >
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                  FOLLOW WHATSAPP CHANNEL
-                </a>
-                <a
-                  href={GOOGLE_ALL_REVIEWS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex min-h-11 items-center justify-center gap-2 border border-amber-300 bg-white px-4 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-amber-50"
-                >
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-500" aria-hidden="true" />
-                  VIEW {cms.reviews_heading.total_reviews} GOOGLE REVIEWS
-                </a>
-              </div>
-            </div>
-
             {product.variants && product.variants.length > 0 && (
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest mb-2">Variant</p>
@@ -724,6 +648,81 @@ function ProductPage() {
                 </Link>
               </div>
             )}
+
+            {/* Supporting information follows colour selection and purchase controls. */}
+            {product.category === "phones" && (
+              <div className="border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+                <strong>One-month battery & charger warranty</strong>
+                <p className="mt-1 text-xs leading-relaxed">
+                  Covers functional faults in the device battery and included charger from original
+                  delivery. This is separate from 48-hour delivery-issue support and does not cover
+                  the entire phone. Replacement delivery fees apply, except where required by law.
+                </p>
+                <Link to="/legal/returns" className="mt-2 inline-block text-xs font-bold underline">
+                  Read warranty and replacement rules
+                </Link>
+              </div>
+            )}
+            <div className="bg-surface-container-lowest border border-outline-variant/40 p-5 rounded shadow-sm space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-primary">
+                  local_shipping
+                </span>
+                Delivery & courier confirmation
+              </p>
+              <p className="text-xs leading-relaxed text-on-surface-variant">
+                Enter your delivery PIN code during checkout. Serviceability, the available courier,
+                and the delivery estimate are confirmed from Shiprocket when your order is prepared
+                for dispatch.
+              </p>
+            </div>
+            <div className="border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="mt-0.5 h-6 w-6 flex-shrink-0 text-emerald-700" />
+                <div>
+                  <h2 className="text-sm font-bold text-emerald-950">Shop with confidence</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-emerald-950/75">
+                    Verify our public presence, customer reviews, and official support channels
+                    before you order.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {socialLinks.map(({ label, href, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open Aghanims Phones and Gadgets on ${label}`}
+                    className="flex min-h-11 items-center justify-center gap-2 border border-emerald-200 bg-white px-3 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-emerald-100"
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {label}
+                  </a>
+                ))}
+              </div>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <a
+                  href={whatsappChannel}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 items-center justify-center gap-2 bg-[#128C7E] px-4 py-2 text-[11px] font-bold text-white transition-opacity hover:opacity-90"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  FOLLOW WHATSAPP CHANNEL
+                </a>
+                <a
+                  href={GOOGLE_ALL_REVIEWS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 items-center justify-center gap-2 border border-amber-300 bg-white px-4 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-amber-50"
+                >
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-500" aria-hidden="true" />
+                  VIEW {cms.reviews_heading.total_reviews} GOOGLE REVIEWS
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
