@@ -187,6 +187,9 @@ function ProductPage() {
   const whatsappChat = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(
     `${cms.whatsapp_chat_message || "Hi Aghanims Support, I have a product inquiry."}\n\nProduct: ${product.name}\n${absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`)}`,
   )}`;
+  const whatsappVideoRequest = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(
+    `Hi Aghanims, I'd like to see the actual ${product.name}${chosenVariant ? ` (${chosenVariant.label})` : ""} before ordering. Could you share a current video showing its condition and functions, or arrange a WhatsApp video call?\n${absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`)}`,
+  )}`;
   const whatsappChannel = /^https:\/\/(?:www\.)?whatsapp\.com\/channel\//i.test(
     cms.whatsapp_channel_url,
   )
@@ -387,10 +390,10 @@ function ProductPage() {
                   verified
                 </span>
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">
-                  100% Genuine
+                  Google Reviews
                 </p>
                 <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">
-                  Brand certified
+                  Read customer experiences
                 </p>
               </div>
               <div className="bg-surface-container-lowest p-2 sm:p-4 border border-outline-variant/40 rounded shadow-sm">
@@ -451,10 +454,12 @@ function ProductPage() {
                 <span className="material-symbols-outlined text-base">payments</span>
                 {product.codAdvancePaise > 0 ? (
                   <span>
-                    COD available with <strong>{formatINR(product.codAdvancePaise)}</strong> online
-                    advance;{" "}
-                    <strong>{formatINR(product.pricePaise - product.codAdvancePaise)}</strong> is
-                    collected on delivery.
+                    Pay <strong>{formatINR(product.codAdvancePaise)}</strong> now—deducted from your
+                    total. Pay the balance of{" "}
+                    <strong>
+                      {formatINR(Math.max(0, product.pricePaise - product.codAdvancePaise))}
+                    </strong>{" "}
+                    on delivery. This advance is per phone, not an extra fee.
                   </span>
                 ) : (
                   <span>Full Cash on Delivery available with no online advance.</span>
@@ -475,6 +480,69 @@ function ProductPage() {
                 </div>
               )}
             </div>
+
+            <section
+              aria-label="Reviews and phone video requests"
+              className="rounded border border-emerald-200 bg-emerald-50/60 p-4 space-y-4"
+            >
+              <div>
+                <h2 className="text-sm font-bold text-primary">See it before you order</h2>
+                <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+                  Ask for a current video of the actual phone, including its condition and
+                  functions, or request a WhatsApp video call. Our team will confirm availability
+                  and a time.
+                </p>
+                <a
+                  href={whatsappVideoRequest}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded bg-[#128C7E] px-4 py-3 text-xs font-bold text-white hover:opacity-90"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  Request a video / WhatsApp call
+                </a>
+                {!!product.videos?.length && (
+                  <a
+                    href="#product-videos"
+                    className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary underline"
+                  >
+                    <Youtube className="h-4 w-4" aria-hidden="true" /> Watch this model’s video
+                  </a>
+                )}
+              </div>
+              <div className="border-t border-emerald-200 pt-4">
+                <a
+                  href={GOOGLE_ALL_REVIEWS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary underline"
+                >
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-600" aria-hidden="true" />
+                  Read our Google reviews
+                </a>
+                <p className="text-xs text-on-surface-variant">
+                  Store review excerpts; read the full reviews on Google.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {cms.reviews
+                    .filter((review) => review.snippet && review.author)
+                    .slice(0, 2)
+                    .map((review) => (
+                      <figure
+                        key={`${review.author}-${review.time}`}
+                        className="rounded border border-emerald-100 bg-white p-3 text-xs"
+                      >
+                        <blockquote className="leading-relaxed text-on-surface">
+                          “{review.snippet}”
+                        </blockquote>
+                        <figcaption className="mt-2 text-on-surface-variant">
+                          {review.author} · {review.time}
+                        </figcaption>
+                      </figure>
+                    ))}
+                </div>
+              </div>
+            </section>
 
             <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
             {product.variants && product.variants.length > 0 && (
@@ -732,7 +800,10 @@ function ProductPage() {
 
         {/* Product videos intentionally follow the purchase controls and precede specifications. */}
         {product.videos && product.videos.length > 0 && (
-          <section className="mt-12 bg-white p-5 shadow-sm shopify-border md:mt-16 md:p-10">
+          <section
+            id="product-videos"
+            className="mt-12 scroll-mt-6 bg-white p-5 shadow-sm shopify-border md:mt-16 md:p-10"
+          >
             <div className="mb-6 flex items-center gap-3">
               <span className="material-symbols-outlined text-3xl text-primary">smart_display</span>
               <div>

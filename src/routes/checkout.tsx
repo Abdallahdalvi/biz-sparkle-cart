@@ -553,9 +553,9 @@ function Checkout() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
+                  <p className="text-xs leading-relaxed text-on-surface-variant mt-1">
                     {codAdvancePaise > 0
-                      ? `Pay ${formatINR(codAdvancePaise)} securely now; Shiprocket collects the remaining ${formatINR(Math.max(0, amounts.subtotalPaise - codAdvancePaise))} on delivery`
+                      ? `Pay ${formatINR(codAdvancePaise)} now—deducted from your total. Pay the balance of ${formatINR(Math.max(0, amounts.subtotalPaise - codAdvancePaise))} on delivery. This is not an extra fee. Online payment is processed by Cashfree.`
                       : `Shiprocket collects the full ${formatINR(total)} on delivery`}
                   </p>
                 </div>

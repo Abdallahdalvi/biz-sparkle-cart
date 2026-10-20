@@ -324,7 +324,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   reviews_heading: {
     store_name: "Aghanims Phones and Gadgets",
     rating: 5.0,
-    total_reviews: 20,
+    total_reviews: 30,
   },
   reviews: LATEST_GOOGLE_TEXT_REVIEWS,
   cod_charge_amount: 99,
@@ -650,9 +650,7 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     about_image: dbCms.about_image || DEFAULT_STOREFRONT_CMS.about_image,
     videos: dbCms.videos?.length ? dbCms.videos : DEFAULT_STOREFRONT_CMS.videos,
     pointers: dbCms.pointers?.length ? dbCms.pointers : DEFAULT_STOREFRONT_CMS.pointers,
-    reviews_heading: isLegacyGoogleReviewSet(dbCms.reviews)
-      ? DEFAULT_STOREFRONT_CMS.reviews_heading
-      : dbCms.reviews_heading || DEFAULT_STOREFRONT_CMS.reviews_heading,
+    reviews_heading: dbCms.reviews_heading || DEFAULT_STOREFRONT_CMS.reviews_heading,
     reviews: isLegacyGoogleReviewSet(dbCms.reviews)
       ? DEFAULT_STOREFRONT_CMS.reviews
       : replaceLegacyReviewSummaries(dbCms.reviews),
