@@ -20,6 +20,8 @@ import {
   GIFT_CARD_PRICE_PAISE,
 } from "@/lib/gift-card";
 import { GiftCardSummary } from "@/components/GiftCardSummary";
+import { previewCoupon } from "@/lib/coupons.functions";
+import { checkoutDiscount, couponDiscountForMerchandise } from "@/lib/coupons";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: z.object({
@@ -68,6 +70,17 @@ function Checkout() {
     capabilities.onlinePaymentsConfigured ? "prepaid" : "cod",
   );
   const createOrderFn = useServerFn(createSecureOrder);
+  const previewCouponFn = useServerFn(previewCoupon);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponEmail, setCouponEmail] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    amountPaise: number;
+    email: string;
+  } | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const couponRequestVersion = useRef(0);
   const [giftEnabled, setGiftEnabled] = useState(false);
   const [giftTo, setGiftTo] = useState("");
   const [giftFrom, setGiftFrom] = useState("");
@@ -172,6 +185,17 @@ function Checkout() {
   } else if (cms.prepaid_discount_type === "percent") {
     prepaidDiscountPaise = Math.round((total * cms.prepaid_discount_amount) / 100);
   }
+  const activeCoupon =
+    payMode === "prepaid" &&
+    appliedCoupon?.email === couponEmail.trim().toLowerCase() &&
+    appliedCoupon.code === couponInput.trim().toUpperCase()
+      ? appliedCoupon
+      : null;
+  prepaidDiscountPaise = checkoutDiscount(
+    payMode,
+    prepaidDiscountPaise,
+    activeCoupon ? couponDiscountForMerchandise(activeCoupon.amountPaise, total) : undefined,
+  );
 
   const productsBySlug = new Map(products.map((product) => [product.slug, product]));
   const codAdvancePaise = items.reduce(
@@ -273,6 +297,7 @@ function Checkout() {
                   ? { to: giftTo, from: giftFrom, message: giftMessage }
                   : undefined,
                 payMode: payMode,
+                couponCode: activeCoupon?.code,
                 email: String(fd.get("email") ?? ""),
                 phone: String(fd.get("phone") ?? ""),
                 // Cashfree checks the page origin against its HTTPS whitelist.
@@ -353,7 +378,19 @@ function Checkout() {
               <legend className="px-2 text-[11px] font-bold uppercase tracking-widest">
                 Contact
               </legend>
-              <Input name="email" type="email" required placeholder="Email address" />
+              <Input
+                name="email"
+                type="email"
+                required
+                placeholder="Email address"
+                value={couponEmail}
+                onChange={(event) => {
+                  setCouponEmail(event.target.value);
+                  couponRequestVersion.current++;
+                  setAppliedCoupon(null);
+                  setCouponError("");
+                }}
+              />
               <Input
                 name="phone"
                 type="tel"
@@ -506,6 +543,7 @@ function Checkout() {
                       Online payment (UPI / Cards / Net Banking)
                     </p>
                     {capabilities.onlinePaymentsConfigured &&
+                      !activeCoupon &&
                       cms.prepaid_discount_type !== "none" &&
                       cms.prepaid_discount_amount > 0 && (
                         <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
@@ -518,9 +556,11 @@ function Checkout() {
                   <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
                     {!capabilities.onlinePaymentsConfigured
                       ? "Available after business verification"
-                      : cms.prepaid_discount_type === "none" || cms.prepaid_discount_amount === 0
-                        ? "Secure online payment"
-                        : `Instant ${cms.prepaid_discount_type === "flat" ? `₹${cms.prepaid_discount_amount}` : `${cms.prepaid_discount_amount}%`} Discount on Prepaid Orders`}
+                      : activeCoupon
+                        ? "Your coupon replaces the prepaid discount"
+                        : cms.prepaid_discount_type === "none" || cms.prepaid_discount_amount === 0
+                          ? "Secure online payment"
+                          : `Instant ${cms.prepaid_discount_type === "flat" ? `₹${cms.prepaid_discount_amount}` : `${cms.prepaid_discount_amount}%`} Discount on Prepaid Orders`}
                   </p>
                   {capabilities.onlinePaymentsConfigured && (
                     <p className="text-[10px] text-blue-700 font-bold uppercase tracking-widest mt-1">
@@ -537,7 +577,12 @@ function Checkout() {
                   name="pay"
                   checked={payMode === "cod"}
                   disabled={codAdvanceUnavailable}
-                  onChange={() => setPayMode("cod")}
+                  onChange={() => {
+                    setPayMode("cod");
+                    couponRequestVersion.current++;
+                    setAppliedCoupon(null);
+                    setCouponError("");
+                  }}
                   className="mt-1 cursor-pointer"
                 />
                 <div>
@@ -590,9 +635,93 @@ function Checkout() {
                 <span className="font-bold">{formatINR(amounts.giftFeePaise)}</span>
               </div>
             )}
+            {payMode === "prepaid" ? (
+              <div className="space-y-2 border-t border-outline-variant/30 pt-4">
+                <label htmlFor="coupon-code" className="block text-sm font-bold">
+                  Have a coupon?
+                </label>
+                <p className="text-xs text-on-surface-variant">
+                  Single use. Replaces the prepaid discount; offers cannot be combined.
+                </p>
+                {!couponEmail.trim() && (
+                  <p className="text-xs text-on-surface-variant">
+                    Enter your email in the contact section before applying a coupon.
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    id="coupon-code"
+                    value={couponInput}
+                    maxLength={40}
+                    onChange={(event) => {
+                      setCouponInput(event.target.value.toUpperCase());
+                      couponRequestVersion.current++;
+                      setAppliedCoupon(null);
+                      setCouponError("");
+                    }}
+                    placeholder="Enter coupon code"
+                    className="min-w-0 flex-1 rounded border border-outline-variant/50 px-3 py-2 text-sm uppercase"
+                  />
+                  <button
+                    type="button"
+                    disabled={couponBusy || busy || !couponInput.trim() || !couponEmail.trim()}
+                    onClick={async () => {
+                      const requestVersion = ++couponRequestVersion.current;
+                      setCouponBusy(true);
+                      setCouponError("");
+                      try {
+                        const result = await previewCouponFn({
+                          data: { code: couponInput, email: couponEmail.trim(), payMode },
+                        });
+                        if (requestVersion === couponRequestVersion.current)
+                          setAppliedCoupon({ ...result, email: couponEmail.trim().toLowerCase() });
+                      } catch (error) {
+                        if (requestVersion !== couponRequestVersion.current) return;
+                        setAppliedCoupon(null);
+                        setCouponError(
+                          error instanceof Error ? error.message : "Could not apply coupon.",
+                        );
+                      } finally {
+                        setCouponBusy(false);
+                      }
+                    }}
+                    className="rounded bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-50"
+                  >
+                    {couponBusy ? "Checking…" : "Apply"}
+                  </button>
+                </div>
+                {couponError && (
+                  <p role="alert" className="text-xs text-red-700">
+                    {couponError}
+                  </p>
+                )}
+                {activeCoupon && (
+                  <div className="text-xs text-emerald-800" role="status">
+                    <p>{activeCoupon.code} applied. Only this coupon discount will be used.</p>
+                    <button
+                      type="button"
+                      onClick={() => setAppliedCoupon(null)}
+                      className="min-h-11 underline"
+                    >
+                      Remove coupon
+                    </button>
+                  </div>
+                )}
+                <p className="text-[11px] text-on-surface-variant">
+                  Applies to products only, with at least ₹1 payable online. Unused coupon value is
+                  forfeited. Retry an interrupted payment with the same cart and delivery details.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-on-surface-variant">
+                Coupons are available for prepaid orders only.
+              </p>
+            )}
             {payMode === "prepaid" && amounts.discountPaise > 0 && (
               <div className="flex justify-between text-sm text-emerald-700 font-medium">
-                <span>Prepaid Instant Discount</span>
+                <span>
+                  {activeCoupon ? `Coupon (${activeCoupon.code})` : "Prepaid Instant Discount"}
+                </span>
                 <span>-{formatINR(amounts.discountPaise)}</span>
               </div>
             )}
@@ -614,7 +743,7 @@ function Checkout() {
             </div>
 
             <button
-              disabled={busy || codAdvanceUnavailable}
+              disabled={busy || couponBusy || codAdvanceUnavailable}
               className="w-full bg-primary text-on-primary py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 disabled:opacity-50 shadow-sm"
             >
               {codAdvanceUnavailable

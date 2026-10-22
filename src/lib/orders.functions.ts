@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { checkoutDiscount, couponDiscountForMerchandise, validateCoupon } from "@/lib/coupons";
 import {
   calculateGiftOrderAmounts,
   giftCardInputSchema,
@@ -59,6 +60,13 @@ export const createSecureOrder = createServerFn({ method: "POST" })
             .optional(),
         }),
         payMode: z.enum(["prepaid", "cod"]),
+        couponCode: z
+          .string()
+          .trim()
+          .min(4)
+          .max(40)
+          .regex(/^[a-zA-Z0-9-]+$/)
+          .optional(),
         giftCard: giftCardInputSchema.optional(),
         email: z.string().trim().email().max(254),
         phone: z
@@ -113,6 +121,82 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       const qty = (existing?.qty ?? 0) + item.qty;
       if (qty > 10) throw new Error("A maximum of 10 units of one item can be ordered at once.");
       normalizedItems.set(key, { ...item, qty });
+    }
+
+    if (data.couponCode && data.payMode !== "prepaid") {
+      throw new Error("Coupons can only be used for prepaid orders.");
+    }
+    const couponService = data.couponCode ? await import("@/lib/coupons.server") : null;
+    const couponRecord =
+      couponService && data.couponCode ? await couponService.readCoupon(data.couponCode) : null;
+    const couponSignature = couponService
+      ? couponService.checkoutSignature({
+          items: [...normalizedItems.values()].sort((a, b) =>
+            `${a.slug}:${a.variantId || ""}`.localeCompare(`${b.slug}:${b.variantId || ""}`),
+          ),
+          shippingAddress: data.shippingAddress,
+          giftCard: data.giftCard || null,
+          email: data.email.toLowerCase(),
+          phone: data.phone.replace(/\D/g, "").slice(-10),
+        })
+      : null;
+    if (couponRecord) {
+      validateCoupon(couponRecord.coupon, data.email, data.payMode);
+      if (couponRecord.coupon.orderId) {
+        if (!couponRecord.coupon.checkoutReady)
+          throw new Error(
+            "Your coupon checkout is still being prepared. Please retry shortly or contact support.",
+          );
+        // Retry the original payment instead of creating a second discounted order.
+        if (couponRecord.coupon.checkoutSignature !== couponSignature)
+          throw new Error(
+            "This coupon is linked to an existing checkout. Keep the same cart and delivery details to retry, or contact support.",
+          );
+        const { data: existing, error } = await supabaseAdmin
+          .from("orders")
+          .select("id, order_number, status, total_paise, notes")
+          .eq("id", couponRecord.coupon.orderId)
+          .single();
+        if (error || existing.status !== "pending" || existing.notes !== "prepaid")
+          throw new Error(
+            "This single-use coupon has already been used. Check your order history or contact support.",
+          );
+        const { createCashfreeOrderInternal, resumeCouponCashfreeOrder } =
+          await import("@/lib/cashfree.server");
+        const cashfree =
+          (await resumeCouponCashfreeOrder(existing.id, Number(existing.total_paise))) ||
+          (await createCashfreeOrderInternal({
+            storeOrderId: existing.id,
+            storeOrderNumber: existing.order_number,
+            amountPaise: Number(existing.total_paise),
+            customerName:
+              `${data.shippingAddress.first_name} ${data.shippingAddress.last_name}`.trim(),
+            customerEmail: data.email,
+            customerPhone: data.phone,
+            returnOrigin: data.returnOrigin,
+            note: `Online payment for ${existing.order_number}`,
+            marketingConsent: data.marketingConsent,
+            metaAttribution,
+          }));
+        const { error: linkError } = await supabaseAdmin
+          .from("orders")
+          .update({ cashfree_order_id: cashfree.cashfreeOrderId })
+          .eq("id", existing.id);
+        if (linkError) throw new Error("Unable to link payment. Please retry.");
+        const { createOrderReceiptToken } = await import("@/lib/order-confirmation.server");
+        return {
+          ok: true,
+          orderId: existing.id,
+          orderNumber: existing.order_number,
+          receiptToken: createOrderReceiptToken(existing.id),
+          cashfreeRequired: true,
+          cashfreeOrderId: cashfree.cashfreeOrderId,
+          paymentSessionId: cashfree.paymentSessionId,
+          cashfreeMode: cashfree.environment,
+          totalPaise: Number(existing.total_paise),
+          paymentAmountPaise: Number(existing.total_paise),
+        };
+      }
     }
 
     // Securely fetch prices and details for each item
@@ -215,6 +299,13 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     } else if (prepaidDiscountType === "percent") {
       prepaidDiscountPaise = Math.round((subtotalPaise * prepaidDiscountAmount) / 100);
     }
+    prepaidDiscountPaise = checkoutDiscount(
+      data.payMode,
+      prepaidDiscountPaise,
+      couponRecord
+        ? couponDiscountForMerchandise(couponRecord.coupon.amountPaise, subtotalPaise)
+        : undefined,
+    );
 
     const paymentReady = onlinePaymentsConfigured();
     if (data.payMode === "prepaid" && !paymentReady) {
@@ -259,6 +350,9 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         phone: data.phone,
         shipping_address: {
           ...data.shippingAddress,
+          ...(couponRecord
+            ? { coupon: { code: couponRecord.coupon.code, discount_paise: amounts.discountPaise } }
+            : {}),
           ...(data.giftCard
             ? {
                 gift_card: { ...data.giftCard, gift_wrap: true, fee_paise: GIFT_CARD_PRICE_PAISE },
@@ -279,6 +373,15 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       .single();
     if (orderErr || !order) throw new Error(`Order creation failed: ${orderErr?.message}`);
 
+    if (couponService && couponRecord && couponSignature) {
+      try {
+        await couponService.claimCoupon(couponRecord, order.id, couponSignature, data.email);
+      } catch (error) {
+        await supabaseAdmin.from("orders").update({ status: "cancelled" }).eq("id", order.id);
+        throw error;
+      }
+    }
+
     const { createOrderReceiptToken } = await import("@/lib/order-confirmation.server");
     const receiptToken = createOrderReceiptToken(order.id);
 
@@ -295,7 +398,26 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       image_url: i.image_url,
     }));
     const { error: itemsErr } = await supabaseAdmin.from("order_items").insert(itemsWithOrderId);
-    if (itemsErr) throw new Error(`Order items creation failed: ${itemsErr.message}`);
+    if (itemsErr) {
+      await supabaseAdmin.from("orders").update({ status: "cancelled" }).eq("id", order.id);
+      // No payment session exists yet, so this claim can safely be released.
+      if (couponService && couponRecord) {
+        const claimed = await couponService.readCoupon(couponRecord.coupon.code);
+        if (claimed.coupon.orderId === order.id)
+          await couponService.changeCoupon(claimed, {
+            ...claimed.coupon,
+            orderId: null,
+            checkoutSignature: null,
+          });
+      }
+      throw new Error(`Order items creation failed: ${itemsErr.message}`);
+    }
+    if (couponService && couponRecord) {
+      const claimed = await couponService.readCoupon(couponRecord.coupon.code);
+      if (claimed.coupon.orderId !== order.id)
+        throw new Error("Coupon reservation could not be verified.");
+      await couponService.changeCoupon(claimed, { ...claimed.coupon, checkoutReady: true });
+    }
 
     if (paymentAmountPaise === 0) {
       // No online amount is due. Reserve stock now; Shiprocket creation waits for courier choice.
@@ -356,7 +478,10 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         .eq("id", order.id);
       if (linkError) throw linkError;
     } catch (error) {
-      await supabaseAdmin.from("orders").update({ status: "cancelled" }).eq("id", order.id);
+      // A provider timeout may occur after it creates a payable session. Keep coupon
+      // orders reserved so retries resume that order and can never reuse the discount.
+      if (!couponRecord)
+        await supabaseAdmin.from("orders").update({ status: "cancelled" }).eq("id", order.id);
       throw error;
     }
 

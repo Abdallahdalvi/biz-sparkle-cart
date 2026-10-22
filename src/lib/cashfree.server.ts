@@ -169,6 +169,36 @@ async function getCashfreeOrder(cashfreeOrderId: string) {
   return cashfreeRequest<CashfreeOrder>(`/orders/${encodeURIComponent(cashfreeOrderId)}`);
 }
 
+export async function resumeCouponCashfreeOrder(storeOrderId: string, amountPaise: number) {
+  const cashfreeOrderId = `agh_${storeOrderId.replace(/-/g, "")}`;
+  let order;
+  try {
+    order = await getCashfreeOrder(cashfreeOrderId);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Cashfree request failed (404)"))
+      return null;
+    throw error;
+  }
+  if (order.order_id !== cashfreeOrderId || !order.payment_session_id)
+    throw new Error("Payment session does not match this order.");
+  if (
+    Math.round(Number(order.order_amount) * 100) !== amountPaise ||
+    order.order_currency !== "INR"
+  )
+    throw new Error("Payment amount does not match this order.");
+  if (order.order_status !== "ACTIVE")
+    throw new Error(
+      order.order_status === "PAID"
+        ? "This order is already paid. Check your order history or contact support."
+        : "This payment session has expired or closed. Contact support for a replacement coupon.",
+    );
+  return {
+    cashfreeOrderId: order.order_id,
+    paymentSessionId: order.payment_session_id,
+    environment: getCashfreeEnvironment(),
+  };
+}
+
 async function getCashfreePayments(cashfreeOrderId: string) {
   return cashfreeRequest<CashfreePayment[]>(
     `/orders/${encodeURIComponent(cashfreeOrderId)}/payments`,

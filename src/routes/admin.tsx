@@ -29,13 +29,20 @@ export const Route = createFileRoute("/admin")({
 });
 
 const TABS: {
-  to: "/admin" | "/admin/products" | "/admin/orders" | "/admin/compliance" | "/admin/cms";
+  to:
+    | "/admin"
+    | "/admin/products"
+    | "/admin/orders"
+    | "/admin/compliance"
+    | "/admin/cms"
+    | "/admin/coupons";
   label: string;
   exact?: boolean;
 }[] = [
   { to: "/admin", label: "Overview", exact: true },
   { to: "/admin/products", label: "Products" },
   { to: "/admin/orders", label: "Orders" },
+  { to: "/admin/coupons", label: "Coupons" },
   { to: "/admin/compliance", label: "LLP Compliance" },
   { to: "/admin/cms", label: "🏠 Storefront CMS" },
 ];

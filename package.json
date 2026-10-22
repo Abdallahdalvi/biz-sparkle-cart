@@ -11,6 +11,7 @@
     "test:meta": "node --experimental-strip-types --test tests/meta-conversions.test.ts tests/product-brand.test.ts tests/tracking-events.test.ts",
     "test:shiprocket": "node --experimental-strip-types --test tests/shiprocket-calculations.test.ts",
     "test:orders": "node --experimental-strip-types --test tests/order-admin-policy.test.ts",
+    "test:coupons": "node --experimental-strip-types --test tests/coupons.test.ts tests/coupon-payment-retry.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
