@@ -3,13 +3,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
-import {
-  getAllProducts,
-  getStorefrontCms,
-  orderProducts,
-  type Product,
-  type StorefrontCms,
-} from "@/lib/products";
+import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
 import {
   GOOGLE_ALL_REVIEWS_URL,
   GOOGLE_MAPS_PLACE_URL,
@@ -23,6 +17,7 @@ import {
   SITE_URL,
 } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS } from "@/lib/social-links";
+import { rankProducts, type ProductSort } from "@/lib/product-ranking";
 import { getYouTubeChannelVideos, type YouTubeChannelVideo } from "@/lib/youtube.functions";
 
 const HOME_PRODUCT_LIMIT = 12;
@@ -176,7 +171,7 @@ export const Route = createFileRoute("/")({
       getStorefrontCms(),
       getYouTubeChannelVideos(),
     ]);
-    return { all, cms, channelVideos };
+    return { all, cms, channelVideos, rankingSeed: crypto.randomUUID(), rankingTime: Date.now() };
   },
   head: ({ loaderData }) => {
     const cms = loaderData?.cms;
@@ -279,13 +274,16 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { all, cms, channelVideos } = Route.useLoaderData() as {
+  const { all, cms, channelVideos, rankingSeed, rankingTime } = Route.useLoaderData() as {
     all: Product[];
     cms: StorefrontCms;
     channelVideos: YouTubeChannelVideo[];
+    rankingSeed: string;
+    rankingTime: number;
   };
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [productSort, setProductSort] = useState<ProductSort>("recommended");
   const youtubeVideos = (
     channelVideos.length
       ? channelVideos
@@ -314,7 +312,12 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
-  const homepageProducts = orderProducts(all, cms.product_order).slice(0, HOME_PRODUCT_LIMIT);
+  const homepageProducts = rankProducts(
+    all.filter((product) => product.category === "phones"),
+    productSort,
+    rankingSeed,
+    rankingTime,
+  ).slice(0, HOME_PRODUCT_LIMIT);
 
   return (
     <SiteShell>
@@ -468,18 +471,43 @@ function Index() {
               <div className="mb-2 flex items-center gap-2">
                 <span className="h-px w-8 bg-[#2b4c9b]" aria-hidden="true" />
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2b4c9b]">
-                  Popular right now
+                  Discover your next phone
                 </p>
               </div>
               <h2 className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl md:text-4xl">
-                Most in-demand products
+                {productSort === "newest"
+                  ? "Newly added phones"
+                  : productSort === "popular"
+                    ? "Most popular phones"
+                    : "Phones worth exploring"}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-on-surface-variant sm:text-base">
-                Shop customer favourites with COD options and free delivery.
+                {productSort === "newest"
+                  ? "The latest additions to our phone collection, all in one place."
+                  : "Explore our phone collection with COD options and free delivery."}
               </p>
             </div>
           </div>
 
+          <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Browse phones">
+            {(
+              [
+                ["recommended", "Recommended"],
+                ["newest", "Newly Added"],
+                ["popular", "Most Popular"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={productSort === value}
+                onClick={() => setProductSort(value)}
+                className={`min-h-11 border px-4 py-2 text-sm font-bold transition-colors ${productSort === value ? "border-primary bg-primary text-on-primary" : "border-outline-variant bg-white text-primary hover:border-primary"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
             {homepageProducts.map((product) => (
               <ProductCard key={product.slug} product={product} />

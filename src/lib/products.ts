@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { ProductEngagement } from "@/lib/product-ranking";
 import { inferProductBrand } from "@/lib/product-brand";
 import { productCondition, type ProductCondition } from "@/lib/product-condition";
 import { REPLACEMENT_DELIVERY_FAQ } from "@/lib/replacement-policy";
@@ -26,6 +27,8 @@ export interface Product {
   variants?: { id: string; label: string; stock?: number }[];
   faqs?: { question: string; answer: string }[];
   stock: number;
+  createdAt?: string;
+  engagement?: ProductEngagement;
   heroSlot?: number;
   costPricePaise?: number;
   gstRate?: number;
@@ -385,19 +388,34 @@ export const PRODUCTS: Product[] = [];
 
 export async function getAllProducts(): Promise<Product[]> {
   try {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, categories(slug), product_variants(id, label, price_delta_paise, stock)")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+    const [{ data, error }, engagementResult] = await Promise.all([
+      supabase
+        .from("products")
+        .select("*, categories(slug), product_variants(id, label, price_delta_paise, stock)")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false }),
+      Promise.resolve(supabase.rpc("get_product_engagement")).catch(() => ({ data: null })),
+    ]);
 
     if (error || !data || data.length === 0) {
       return [];
     }
 
+    const engagement = new Map<string, ProductEngagement>(
+      (engagementResult.data || []).map((row: ProductEngagement & { slug: string }) => [
+        row.slug,
+        {
+          views: Number(row.views) || 0,
+          clicks: Number(row.clicks) || 0,
+          carts: Number(row.carts) || 0,
+        },
+      ]),
+    );
     const dbProducts: Product[] = data.map((row) => ({
       id: row.id,
       slug: row.slug,
+      createdAt: row.created_at,
+      engagement: engagement.get(row.slug),
       name: row.name,
       brand: row.metadata?.brand || inferProductBrand(row.name),
       condition: productCondition(row.metadata?.condition),

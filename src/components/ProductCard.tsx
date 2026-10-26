@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { Product } from "@/lib/products";
 import { formatINR } from "@/lib/format";
+import { recordProductEngagement } from "@/lib/product-engagement";
 
 export function ProductCard({ product }: { product: Product }) {
   const discountPercent =
@@ -19,7 +20,13 @@ export function ProductCard({ product }: { product: Product }) {
             : "Accessory";
 
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden border border-outline-variant/70 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_14px_32px_rgba(15,23,42,0.10)]">
+    <article
+      onClick={(event) => {
+        if ((event.target as HTMLElement).closest("a"))
+          recordProductEngagement(product.slug, "click");
+      }}
+      className="group flex h-full min-w-0 flex-col overflow-hidden border border-outline-variant/70 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_14px_32px_rgba(15,23,42,0.10)]"
+    >
       <Link
         to="/product/$slug"
         params={{ slug: product.slug }}

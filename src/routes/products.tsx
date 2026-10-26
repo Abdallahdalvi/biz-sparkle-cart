@@ -2,16 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
-import {
-  CATEGORIES,
-  getAllProducts,
-  getStorefrontCms,
-  type Category,
-  type Product,
-  type StorefrontCms,
-} from "@/lib/products";
+import { CATEGORIES, getAllProducts, getStorefrontCms, type Category } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
 import { trackCommerceEvent } from "@/lib/tracking";
+import { rankProducts } from "@/lib/product-ranking";
 
 const PAGE_SIZE = 12;
 
@@ -19,7 +13,7 @@ export const Route = createFileRoute("/products")({
   loader: async () => {
     const all = await getAllProducts();
     const cms = await getStorefrontCms();
-    return { all, cms };
+    return { all, cms, rankingSeed: crypto.randomUUID(), rankingTime: Date.now() };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -50,14 +44,17 @@ export const Route = createFileRoute("/products")({
           mainEntity: {
             "@type": "ItemList",
             name: "Phones and Gadgets",
-            itemListElement: [...(loaderData?.all || [])]
-              .sort((a, b) => a.pricePaise - b.pricePaise)
-              .map((product, index) => ({
-                "@type": "ListItem",
-                position: index + 1,
-                name: product.name,
-                url: absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`),
-              })),
+            itemListElement: rankProducts(
+              loaderData?.all || [],
+              "recommended",
+              loaderData?.rankingSeed,
+              loaderData?.rankingTime,
+            ).map((product, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              name: product.name,
+              url: absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`),
+            })),
           },
         }),
       },
@@ -67,14 +64,14 @@ export const Route = createFileRoute("/products")({
 });
 
 function Catalog() {
-  const { all, cms } = Route.useLoaderData() as { all: Product[]; cms: StorefrontCms };
+  const { all, cms, rankingSeed, rankingTime } = Route.useLoaderData();
 
   // Filtering States
   const [cat, setCat] = useState<Category | "all">("all");
   const [formFactor, setFormFactor] = useState<string>("all");
   const [availability, setAvailability] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("price_asc");
+  const [sortBy, setSortBy] = useState<string>("recommended");
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const trackedSearches = useRef(new Set<string>());
@@ -144,10 +141,27 @@ function Catalog() {
       result.sort((a, b) => a.pricePaise - b.pricePaise);
     } else if (sortBy === "price_desc") {
       result.sort((a, b) => b.pricePaise - a.pricePaise);
+    } else {
+      result = rankProducts(
+        result,
+        sortBy === "newest" ? "newest" : sortBy === "popular" ? "popular" : "recommended",
+        rankingSeed,
+        rankingTime,
+      );
     }
 
     return result;
-  }, [all, cat, formFactor, availability, priceRange, searchTerm, sortBy]);
+  }, [
+    all,
+    cat,
+    formFactor,
+    availability,
+    priceRange,
+    searchTerm,
+    sortBy,
+    rankingSeed,
+    rankingTime,
+  ]);
 
   useEffect(() => {
     const normalizedSearch = searchTerm.trim().toLocaleLowerCase();
@@ -328,9 +342,11 @@ function Catalog() {
                 }}
                 className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
               >
+                <option value="recommended">Recommended</option>
+                <option value="popular">Most Popular</option>
+                <option value="newest">Newly Added</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
-                <option value="featured">Featured</option>
               </select>
             </div>
           </div>

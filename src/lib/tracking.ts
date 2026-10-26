@@ -156,6 +156,15 @@ export function trackPageView(path: string) {
 
 export function trackCommerceEvent(event: CommerceEvent, data: CommerceEventData) {
   if (typeof window === "undefined") return;
+  if ((event === "view_item" || event === "add_to_cart") && readTrackingConsent()?.analytics) {
+    void import("@/lib/product-engagement")
+      .then(({ recordProductEngagement }) => {
+        for (const item of data.items) {
+          recordProductEngagement(item.item_id, event === "view_item" ? "view" : "cart");
+        }
+      })
+      .catch(() => {});
+  }
   if (!window.gtag && !window.fbq && !window.clarity) return;
   if (event === "purchase" && purchaseAlreadyTracked(data.transactionId)) return;
 

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   TRACKING_PREFERENCES_EVENT,
-  hasConfiguredTracking,
   readTrackingConsent,
   saveTrackingConsent,
   trackPageView,
@@ -34,6 +33,7 @@ function ensureGoogleTag(settings: TrackingSettings) {
     window.gtag ||
     function gtag(..._args: unknown[]) {
       // gtag.js consumes Arguments commands, not ordinary arrays.
+      // eslint-disable-next-line prefer-rest-params
       window.dataLayer?.push(arguments);
     };
   if (!document.getElementById("aghanims-google-tag")) {
@@ -105,7 +105,6 @@ function applyConsent(settings: TrackingSettings, consent: TrackingConsent) {
 
 export function TrackingManager({ settings }: { settings: TrackingSettings }) {
   const location = useLocation();
-  const configured = hasConfiguredTracking(settings);
   const [consent, setConsent] = useState<TrackingConsent | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
@@ -114,7 +113,8 @@ export function TrackingManager({ settings }: { settings: TrackingSettings }) {
   const lastPage = useRef("");
 
   useEffect(() => {
-    if (!configured || location.pathname.startsWith("/admin")) return;
+    // Store recommendations use first-party analytics even without external tags.
+    if (location.pathname.startsWith("/admin")) return;
     window.__aghanimsTrackingSettings = settings;
     ensureGoogleTag(settings);
     const saved = readTrackingConsent();
@@ -126,7 +126,7 @@ export function TrackingManager({ settings }: { settings: TrackingSettings }) {
     } else {
       setPanelOpen(true);
     }
-  }, [configured, location.pathname, settings]);
+  }, [location.pathname, settings]);
 
   useEffect(() => {
     const open = () => {
@@ -141,14 +141,14 @@ export function TrackingManager({ settings }: { settings: TrackingSettings }) {
   }, []);
 
   useEffect(() => {
-    if (!configured || !consent || location.pathname.startsWith("/admin")) return;
+    if (!consent || location.pathname.startsWith("/admin")) return;
     const path = `${location.pathname}${location.searchStr || ""}`;
     if (lastPage.current === path) return;
     lastPage.current = path;
     trackPageView(path);
-  }, [configured, consent, location.pathname, location.searchStr]);
+  }, [consent, location.pathname, location.searchStr]);
 
-  if (!configured || location.pathname.startsWith("/admin") || !panelOpen) return null;
+  if (location.pathname.startsWith("/admin") || !panelOpen) return null;
 
   const choose = (analytics: boolean, marketing: boolean) => {
     const previous = readTrackingConsent();
