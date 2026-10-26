@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
+import { getStorefrontCms } from "@/lib/products";
+import { PolicySupport, PolicySupportEmail } from "@/components/legal/PolicySupport";
 
 export const Route = createFileRoute("/legal/shipping")({
+  loader: () => getStorefrontCms(),
   head: () => ({
     meta: [
       { title: "Shipping & Delivery — Aghanims Phones and Gadgets" },
@@ -13,7 +16,12 @@ export const Route = createFileRoute("/legal/shipping")({
       },
     ],
   }),
-  component: () => (
+  component: ShippingPolicy,
+});
+
+function ShippingPolicy() {
+  const cms = Route.useLoaderData();
+  return (
     <LegalPage title="Shipping & Delivery Policy" updated="15 October 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalShippingText}
@@ -63,14 +71,14 @@ export const Route = createFileRoute("/legal/shipping")({
       <h2>Damaged in transit</h2>
       <p>
         If your shipment arrives visibly damaged, please refuse delivery if possible and email{" "}
-        <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> with photos/video within 48 hours of
-        delivery. Approved cases may receive a replacement, repair support, or refund where
-        applicable. Customer-damaged, used, modified, or incomplete products are not eligible.
+        <PolicySupportEmail cms={cms} /> with photos/video within 48 hours of delivery. Approved
+        cases may receive a replacement, repair support, or refund where applicable.
+        Customer-damaged, used, modified, or incomplete products are not eligible.
       </p>
       <h2>Questions</h2>
       <p>
-        <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> · {BIZ.phone} ({BIZ.hours})
+        <PolicySupport cms={cms} />
       </p>
     </LegalPage>
-  ),
-});
+  );
+}

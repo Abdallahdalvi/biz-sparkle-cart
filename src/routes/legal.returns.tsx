@@ -3,8 +3,11 @@ import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
 import { ACCESSORY_WARRANTY_POLICY } from "@/lib/warranty-policy";
 import { CUSTOMER_CANCELLATION_POLICY, STORE_CANCELLATION_POLICY } from "@/lib/cancellation-policy";
+import { getStorefrontCms } from "@/lib/products";
+import { PolicySupport, PolicySupportEmail } from "@/components/legal/PolicySupport";
 
 export const Route = createFileRoute("/legal/returns")({
+  loader: () => getStorefrontCms(),
   head: () => ({
     meta: [
       { title: "Return & Refund Policy — Aghanims Phones and Gadgets" },
@@ -15,7 +18,12 @@ export const Route = createFileRoute("/legal/returns")({
       },
     ],
   }),
-  component: () => (
+  component: ReturnsPolicy,
+});
+
+function ReturnsPolicy() {
+  const cms = Route.useLoaderData();
+  return (
     <LegalPage title="Return & Refund Policy" updated="16 October 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalReturnsText}
@@ -49,8 +57,7 @@ export const Route = createFileRoute("/legal/returns")({
       <h2>How to raise a 48-hour claim</h2>
       <ol className="list-decimal pl-6 text-on-surface-variant space-y-1">
         <li>
-          Email <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> with your order ID within 48 hours
-          of delivery.
+          Contact <PolicySupportEmail cms={cms} /> with your order ID within 48 hours of delivery.
         </li>
         <li>
           Attach clear unboxing photos/video showing the packaging, label, product, and issue.
@@ -128,8 +135,8 @@ export const Route = createFileRoute("/legal/returns")({
       </p>
       <h2>Contact</h2>
       <p>
-        <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a> · {BIZ.phone}
+        <PolicySupport cms={cms} />
       </p>
     </LegalPage>
-  ),
-});
+  );
+}

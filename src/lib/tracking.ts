@@ -134,11 +134,19 @@ function createEventId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
+const trackedPurchases = new Set<string>();
+
 function purchaseAlreadyTracked(transactionId?: string) {
   if (!transactionId || typeof window === "undefined") return false;
   const key = `aghanims-tracked-purchase:${transactionId}`;
-  if (window.localStorage.getItem(key)) return true;
-  window.localStorage.setItem(key, new Date().toISOString());
+  if (trackedPurchases.has(key)) return true;
+  try {
+    if (window.localStorage.getItem(key)) return true;
+    window.localStorage.setItem(key, new Date().toISOString());
+  } catch {
+    // Purchase measurement must not interrupt checkout in restricted browsers.
+  }
+  trackedPurchases.add(key);
   return false;
 }
 
