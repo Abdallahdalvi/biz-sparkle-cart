@@ -7,6 +7,7 @@ import { getStorefrontCms, inferProductBrand, orderProducts, PRODUCTS } from "@/
 import { CONDITION_GRADES, PRODUCT_CONDITIONS, productCondition } from "@/lib/product-condition";
 import { useServerFn } from "@tanstack/react-start";
 import { type StockVariant } from "@/lib/inventory";
+import { ProductSources } from "@/components/admin/ProductSources";
 import {
   createProduct,
   updateProduct,
@@ -663,6 +664,7 @@ function AdminProducts() {
                       {r.metadata?.images?.length || 0} images • {r.metadata?.videos?.length || 0}{" "}
                       videos
                     </p>
+                    <ProductSources metadata={r.metadata} compact />
                     {r.metadata?.badge && (
                       <span className="mt-2 inline-block rounded border border-primary bg-primary/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
                         {r.metadata.badge}
@@ -797,6 +799,7 @@ function AdminProducts() {
                             {r.metadata?.images?.length || 0} images •{" "}
                             {r.metadata?.videos?.length || 0} videos
                           </p>
+                          <ProductSources metadata={r.metadata} compact />
                         </div>
                       </div>
                     </td>
@@ -1720,6 +1723,7 @@ function EditProductForm({
       </div>
 
       <ProductConditionFields metadata={prod.metadata} />
+      <ProductSources metadata={prod.metadata} />
       {/* Pricing & Stock & Advanced Financials */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-3">
