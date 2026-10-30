@@ -335,7 +335,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   reviews: LATEST_GOOGLE_TEXT_REVIEWS,
   cod_charge_amount: 99,
   cod_charge_type: "advance",
-  prepaid_discount_amount: 200,
+  prepaid_discount_amount: 150,
   prepaid_discount_type: "flat",
   biz_name: "Aghanims Phones and Gadgets",
   biz_legal_name: "",
