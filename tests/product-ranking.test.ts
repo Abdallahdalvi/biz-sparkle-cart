@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { catalogSourceKey, rankProducts, popularityScore } from "../src/lib/product-ranking.ts";
+import { rankProducts, popularityScore } from "../src/lib/product-ranking.ts";
 
 const now = Date.parse("2026-10-26T12:00:00Z");
 const products = [
@@ -86,19 +86,17 @@ test("cold start, missing dates, empty inventory and price changes are safe", ()
   assert.equal(result.length, cold.length);
 });
 
-test("default source order keeps original devices before the three supplier collections", () => {
+test("default merchandising order keeps original devices before imported collections", () => {
   const sourced = [
-    { slug: "vintage", stock: 1, catalogSource: "vintage" },
-    { slug: "zone", stock: 1, catalogSource: "zone" },
-    { slug: "manual", stock: 1 },
-    { slug: "universal", stock: 1, catalogSource: "Universal Traders" },
+    { slug: "vintage", stock: 1, merchandisingGroup: 3 },
+    { slug: "zone", stock: 1, merchandisingGroup: 1 },
+    { slug: "manual", stock: 1, merchandisingGroup: 0 },
+    { slug: "universal", stock: 1, merchandisingGroup: 2 },
   ];
   assert.deepEqual(
     rankProducts(sourced, "recommended", "source-order").map((product) => product.slug),
     ["manual", "zone", "universal", "vintage"],
   );
-  assert.equal(catalogSourceKey("vintage"), "vintagemobilearena");
-  assert.equal(catalogSourceKey("Zone of Deals"), "zoneofdeals");
 });
 
 test("recommended and popular use distinct tie-breaking so cold-start lists do not mirror", () => {

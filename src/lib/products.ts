@@ -38,8 +38,9 @@ export interface Product {
   deliveryEstimate?: string;
   condition?: ProductCondition;
   conditionGrade?: string;
-  /** Internal merchandising source label; supplier URLs remain server/admin-only. */
-  catalogSource?: string;
+  /** Internal ordering value keeps the storefront grouped without exposing suppliers. */
+  merchandisingGroup?: number;
+  isVintageCollection?: boolean;
 }
 
 export interface StorefrontCms {
@@ -471,10 +472,15 @@ export async function getAllProducts(): Promise<Product[]> {
         typeof row.metadata?.delivery_estimate === "string" && row.metadata.delivery_estimate.trim()
           ? row.metadata.delivery_estimate.trim()
           : undefined,
-      catalogSource:
-        typeof row.metadata?.supplier_import?.source === "string"
-          ? row.metadata.supplier_import.source
-          : undefined,
+      merchandisingGroup:
+        (
+          {
+            zone: 1,
+            universal: 2,
+            vintage: 3,
+          } as Record<string, number>
+        )[String(row.metadata?.supplier_import?.source || "")] ?? 0,
+      isVintageCollection: row.metadata?.supplier_import?.source === "vintage",
     }));
 
     return dbProducts;

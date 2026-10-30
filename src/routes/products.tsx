@@ -5,7 +5,12 @@ import { ProductCard } from "@/components/ProductCard";
 import { CATEGORIES, getAllProducts, getStorefrontCms, type Category } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
 import { trackCommerceEvent } from "@/lib/tracking";
-import { catalogSourceKey, catalogSourceLabel, rankProducts } from "@/lib/product-ranking";
+import { rankProducts } from "@/lib/product-ranking";
+import {
+  isSmartphone,
+  matchesQuickShopCategory,
+  type QuickShopCategory,
+} from "@/lib/quick-shop-categories";
 
 const PAGE_SIZE = 30;
 
@@ -73,10 +78,10 @@ function Catalog() {
 
   // Filtering States
   const [cat, setCat] = useState<Category | "all">("all");
+  const [quickCategory, setQuickCategory] = useState<QuickShopCategory | "all">("all");
   const [formFactor, setFormFactor] = useState<string>("all");
   const [availability, setAvailability] = useState<string>("all");
   const [brand, setBrand] = useState<string>("all");
-  const [supplier, setSupplier] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("recommended");
   const [searchTerm, setSearchTerm] = useState(searchParams.q);
@@ -114,13 +119,29 @@ function Catalog() {
       ),
     [all],
   );
-  const suppliers = useMemo(() => {
-    return ["original", "zoneofdeals", "universaltraders", "vintagemobilearena"].map((key) => ({
-      key,
-      label: catalogSourceLabel(key),
-      count: all.filter((product) => catalogSourceKey(product.catalogSource) === key).length,
-    }));
-  }, [all]);
+  const quickCategories: { key: QuickShopCategory; label: string; count: number }[] = [
+    {
+      key: "blackberry",
+      label: "BlackBerry",
+      count: all.filter((product) => matchesQuickShopCategory(product, "blackberry")).length,
+    },
+    {
+      key: "samsung",
+      label: "Samsung",
+      count: all.filter((product) => matchesQuickShopCategory(product, "samsung")).length,
+    },
+    {
+      key: "vintage_collection",
+      label: "Vintage Collection",
+      count: all.filter((product) => matchesQuickShopCategory(product, "vintage_collection"))
+        .length,
+    },
+    {
+      key: "smartphones",
+      label: "Smartphones",
+      count: all.filter((product) => isSmartphone(product)).length,
+    },
+  ];
 
   const filteredProducts = useMemo(() => {
     let result = [...all];
@@ -146,10 +167,10 @@ function Catalog() {
     if (cat !== "all") {
       result = result.filter((p) => p.category === cat);
     }
-    if (brand !== "all") result = result.filter((p) => p.brand === brand);
-    if (supplier !== "all") {
-      result = result.filter((p) => catalogSourceKey(p.catalogSource) === supplier);
+    if (quickCategory !== "all") {
+      result = result.filter((product) => matchesQuickShopCategory(product, quickCategory));
     }
+    if (brand !== "all") result = result.filter((p) => p.brand === brand);
 
     // Form Factor filter
     if (formFactor !== "all") {
@@ -190,8 +211,8 @@ function Catalog() {
   }, [
     all,
     cat,
+    quickCategory,
     brand,
-    supplier,
     formFactor,
     availability,
     priceRange,
@@ -268,6 +289,7 @@ function Catalog() {
               key={c.id}
               onClick={() => {
                 setCat(c.id);
+                setQuickCategory("all");
                 setPage(1);
               }}
               className={
@@ -281,6 +303,33 @@ function Catalog() {
             </button>
           ))}
         </div>
+
+        <section aria-label="Shop popular categories" className="mb-7">
+          <h2 className="mb-3 text-sm font-bold text-primary">Shop by category</h2>
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
+            {quickCategories.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                aria-pressed={quickCategory === item.key}
+                onClick={() => {
+                  setQuickCategory((current) => (current === item.key ? "all" : item.key));
+                  setCat("all");
+                  setBrand("all");
+                  setPage(1);
+                }}
+                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+                  quickCategory === item.key
+                    ? "border-primary bg-primary text-on-primary"
+                    : "border-outline-variant bg-white text-primary hover:border-primary"
+                }`}
+              >
+                {item.label}
+                <span className="text-xs opacity-75">{item.count}</span>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <form
           className="mb-6 flex gap-2"
@@ -317,142 +366,123 @@ function Catalog() {
           </button>
         </form>
 
-        {/* Faceted Filtering Bar */}
-        <div className="bg-surface-container-lowest border border-outline-variant/40 p-6 rounded shadow-sm mb-12 space-y-6">
-          <div className="flex items-center justify-between border-b border-outline-variant/30 pb-3">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base">tune</span>
-              Faceted Catalog Filtering
-            </h3>
-            <span className="text-[11px] font-bold text-on-surface-variant">
-              {filteredProducts.length} {filteredProducts.length === 1 ? "DEVICE" : "DEVICES"}{" "}
-              MATCHED
+        <details className="mb-10 border border-outline-variant/40 bg-white shadow-sm">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 px-4 text-sm font-semibold text-primary [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg" aria-hidden="true">
+                tune
+              </span>
+              More filters and sorting
             </span>
-          </div>
+            <span className="text-xs font-medium text-on-surface-variant">
+              {filteredProducts.length} devices
+            </span>
+          </summary>
+          <div className="space-y-5 border-t border-outline-variant/30 p-4 sm:p-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                  Brand
+                </label>
+                <select
+                  value={brand}
+                  onChange={(e) => {
+                    setBrand(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold text-primary shadow-sm"
+                >
+                  <option value="all">All Brands</option>
+                  {brands.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Form Factor */}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                  Form Factor
+                </label>
+                <select
+                  value={formFactor}
+                  onChange={(e) => {
+                    setFormFactor(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
+                >
+                  {formFactors.map((ff) => (
+                    <option key={ff} value={ff}>
+                      {ff === "all" ? "All Form Factors" : ff}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
-                Brand
-              </label>
-              <select
-                value={brand}
-                onChange={(e) => {
-                  setBrand(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold text-primary shadow-sm"
-              >
-                <option value="all">All Brands</option>
-                {brands.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
-                Collection
-              </label>
-              <select
-                value={supplier}
-                onChange={(e) => {
-                  setSupplier(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold text-primary shadow-sm"
-              >
-                <option value="all">All Collections</option>
-                {suppliers.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label} ({item.count})
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Form Factor */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
-                Form Factor
-              </label>
-              <select
-                value={formFactor}
-                onChange={(e) => {
-                  setFormFactor(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
-              >
-                {formFactors.map((ff) => (
-                  <option key={ff} value={ff}>
-                    {ff === "all" ? "All Form Factors" : ff}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {/* Availability */}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                  Availability
+                </label>
+                <select
+                  value={availability}
+                  onChange={(e) => {
+                    setAvailability(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
+                >
+                  <option value="all">All Items</option>
+                  <option value="in_stock">In Stock Only</option>
+                  <option value="waitlist">Pre-order / Waitlist</option>
+                </select>
+              </div>
 
-            {/* Availability */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
-                Availability
-              </label>
-              <select
-                value={availability}
-                onChange={(e) => {
-                  setAvailability(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
-              >
-                <option value="all">All Items</option>
-                <option value="in_stock">In Stock Only</option>
-                <option value="waitlist">Pre-order / Waitlist</option>
-              </select>
-            </div>
+              {/* Price Range */}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                  Price Range
+                </label>
+                <select
+                  value={priceRange}
+                  onChange={(e) => {
+                    setPriceRange(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
+                >
+                  <option value="all">All Prices</option>
+                  <option value="under_15k">Under ₹15,000</option>
+                  <option value="15k_25k">₹15,000 - ₹25,000</option>
+                  <option value="above_25k">Above ₹25,000</option>
+                </select>
+              </div>
 
-            {/* Price Range */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
-                Price Range
-              </label>
-              <select
-                value={priceRange}
-                onChange={(e) => {
-                  setPriceRange(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
-              >
-                <option value="all">All Prices</option>
-                <option value="under_15k">Under ₹15,000</option>
-                <option value="15k_25k">₹15,000 - ₹25,000</option>
-                <option value="above_25k">Above ₹25,000</option>
-              </select>
-            </div>
-
-            {/* Sort By */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
-                Sort By
-              </label>
-              <select
-                value={sortBy}
-                onChange={(e) => {
-                  setSortBy(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
-              >
-                <option value="recommended">Recommended</option>
-                <option value="popular">Most Popular</option>
-                <option value="newest">Newly Added</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-              </select>
+              {/* Sort By */}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                  Sort By
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-primary focus:outline-none focus:border-primary shadow-sm"
+                >
+                  <option value="recommended">Recommended</option>
+                  <option value="popular">Most Popular</option>
+                  <option value="newest">Newly Added</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
+        </details>
 
         {filteredProducts.length === 0 ? (
           <div className="bg-white border border-outline-variant/30 py-20 text-center rounded shadow-sm space-y-3">
@@ -469,7 +499,7 @@ function Catalog() {
                 setAvailability("all");
                 setPriceRange("all");
                 setBrand("all");
-                setSupplier("all");
+                setQuickCategory("all");
                 setSortBy("recommended");
                 setSearchTerm("");
                 setPage(1);

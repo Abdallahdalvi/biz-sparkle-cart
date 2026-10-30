@@ -5,34 +5,10 @@ type RankableProduct = {
   stock: number;
   createdAt?: string;
   engagement?: ProductEngagement;
-  catalogSource?: string;
+  merchandisingGroup?: number;
 };
 
 export type ProductSort = "recommended" | "popular" | "newest";
-
-const SOURCE_ORDER = ["original", "zoneofdeals", "universaltraders", "vintagemobilearena"];
-
-export function catalogSourceKey(source?: string) {
-  const value = source?.toLocaleLowerCase().replace(/[^a-z]/g, "") || "original";
-  if (value.includes("zone")) return "zoneofdeals";
-  if (value.includes("universal")) return "universaltraders";
-  if (value.includes("vintage")) return "vintagemobilearena";
-  return value === "original" ? "original" : "other";
-}
-
-export function catalogSourceLabel(source?: string) {
-  const key = catalogSourceKey(source);
-  return (
-    (
-      {
-        original: "Original collection",
-        zoneofdeals: "Zone of Deals",
-        universaltraders: "Universal Traders",
-        vintagemobilearena: "Vintage Mobile Arena",
-      } as Record<string, string>
-    )[key] || "Other supplier"
-  );
-}
 
 function hash(value: string) {
   let result = 2166136261;
@@ -72,14 +48,8 @@ export function rankProducts<T extends RankableProduct>(
     }),
   );
   return [...products].sort((a, b) => {
-    const sourceDifference =
-      (SOURCE_ORDER.indexOf(catalogSourceKey(a.catalogSource)) < 0
-        ? SOURCE_ORDER.length
-        : SOURCE_ORDER.indexOf(catalogSourceKey(a.catalogSource))) -
-      (SOURCE_ORDER.indexOf(catalogSourceKey(b.catalogSource)) < 0
-        ? SOURCE_ORDER.length
-        : SOURCE_ORDER.indexOf(catalogSourceKey(b.catalogSource)));
-    if (sourceDifference) return sourceDifference;
+    const groupDifference = (a.merchandisingGroup || 0) - (b.merchandisingGroup || 0);
+    if (groupDifference) return groupDifference;
     if (sort === "newest") return created(b) - created(a) || a.slug.localeCompare(b.slug);
     const stockOrder = Number(b.stock > 0) - Number(a.stock > 0);
     if (stockOrder) return stockOrder;
