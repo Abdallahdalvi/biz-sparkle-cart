@@ -131,6 +131,16 @@ function Catalog() {
       count: all.filter((product) => matchesQuickShopCategory(product, "samsung")).length,
     },
     {
+      key: "nokia",
+      label: "Nokia",
+      count: all.filter((product) => matchesQuickShopCategory(product, "nokia")).length,
+    },
+    {
+      key: "motorola",
+      label: "Motorola",
+      count: all.filter((product) => matchesQuickShopCategory(product, "motorola")).length,
+    },
+    {
       key: "vintage_collection",
       label: "Vintage Collection",
       count: all.filter((product) => matchesQuickShopCategory(product, "vintage_collection"))
@@ -140,6 +150,26 @@ function Catalog() {
       key: "smartphones",
       label: "Smartphones",
       count: all.filter((product) => isSmartphone(product)).length,
+    },
+    {
+      key: "qwerty",
+      label: "QWERTY",
+      count: all.filter((product) => matchesQuickShopCategory(product, "qwerty")).length,
+    },
+    {
+      key: "t9",
+      label: "T9 Keypad",
+      count: all.filter((product) => matchesQuickShopCategory(product, "t9")).length,
+    },
+    {
+      key: "flip",
+      label: "Flip Phones",
+      count: all.filter((product) => matchesQuickShopCategory(product, "flip")).length,
+    },
+    {
+      key: "slider",
+      label: "Slider Phones",
+      count: all.filter((product) => matchesQuickShopCategory(product, "slider")).length,
     },
   ];
 
