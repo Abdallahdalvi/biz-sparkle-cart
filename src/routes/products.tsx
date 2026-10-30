@@ -115,10 +115,11 @@ function Catalog() {
     [all],
   );
   const suppliers = useMemo(() => {
-    const keys = new Set(all.map((product) => catalogSourceKey(product.catalogSource)));
-    return ["original", "zoneofdeals", "universaltraders", "vintagemobilearena"]
-      .filter((key) => keys.has(key))
-      .map((key) => ({ key, label: catalogSourceLabel(key) }));
+    return ["original", "zoneofdeals", "universaltraders", "vintagemobilearena"].map((key) => ({
+      key,
+      label: catalogSourceLabel(key),
+      count: all.filter((product) => catalogSourceKey(product.catalogSource) === key).length,
+    }));
   }, [all]);
 
   const filteredProducts = useMemo(() => {
@@ -365,7 +366,7 @@ function Catalog() {
                 <option value="all">All Collections</option>
                 {suppliers.map((item) => (
                   <option key={item.key} value={item.key}>
-                    {item.label}
+                    {item.label} ({item.count})
                   </option>
                 ))}
               </select>
