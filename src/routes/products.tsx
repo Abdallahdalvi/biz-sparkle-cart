@@ -1,15 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
 import { CATEGORIES, getAllProducts, getStorefrontCms, type Category } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
 import { trackCommerceEvent } from "@/lib/tracking";
-import { rankProducts } from "@/lib/product-ranking";
+import { catalogSourceKey, catalogSourceLabel, rankProducts } from "@/lib/product-ranking";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 30;
 
 export const Route = createFileRoute("/products")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" ? search.q : "",
+  }),
   loader: async () => {
     const all = await getAllProducts();
     const cms = await getStorefrontCms();
@@ -65,16 +68,22 @@ export const Route = createFileRoute("/products")({
 
 function Catalog() {
   const { all, cms, rankingSeed, rankingTime } = Route.useLoaderData();
+  const searchParams = Route.useSearch();
+  const navigate = useNavigate({ from: "/products" });
 
   // Filtering States
   const [cat, setCat] = useState<Category | "all">("all");
   const [formFactor, setFormFactor] = useState<string>("all");
   const [availability, setAvailability] = useState<string>("all");
+  const [brand, setBrand] = useState<string>("all");
+  const [supplier, setSupplier] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("recommended");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.q);
   const [page, setPage] = useState(1);
   const trackedSearches = useRef(new Set<string>());
+
+  useEffect(() => setSearchTerm(searchParams.q), [searchParams.q]);
 
   const formFactors = [
     "all",
@@ -98,13 +107,35 @@ function Catalog() {
     "Gaming",
   ];
 
+  const brands = useMemo(
+    () =>
+      [...new Set(all.map((product) => product.brand).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b),
+      ),
+    [all],
+  );
+  const suppliers = useMemo(() => {
+    const keys = new Set(all.map((product) => catalogSourceKey(product.catalogSource)));
+    return ["original", "zoneofdeals", "universaltraders", "vintagemobilearena"]
+      .filter((key) => keys.has(key))
+      .map((key) => ({ key, label: catalogSourceLabel(key) }));
+  }, [all]);
+
   const filteredProducts = useMemo(() => {
     let result = [...all];
 
     const normalizedSearch = searchTerm.trim().toLocaleLowerCase();
     if (normalizedSearch) {
       result = result.filter((product) =>
-        [product.name, product.brand, product.tagline, product.formFactor, product.category]
+        [
+          product.name,
+          product.brand,
+          product.tagline,
+          product.formFactor,
+          product.category,
+          product.description,
+          ...product.specs.flatMap((spec) => [spec.label, spec.value]),
+        ]
           .filter(Boolean)
           .some((value) => String(value).toLocaleLowerCase().includes(normalizedSearch)),
       );
@@ -113,6 +144,10 @@ function Catalog() {
     // Category filter
     if (cat !== "all") {
       result = result.filter((p) => p.category === cat);
+    }
+    if (brand !== "all") result = result.filter((p) => p.brand === brand);
+    if (supplier !== "all") {
+      result = result.filter((p) => catalogSourceKey(p.catalogSource) === supplier);
     }
 
     // Form Factor filter
@@ -154,6 +189,8 @@ function Catalog() {
   }, [
     all,
     cat,
+    brand,
+    supplier,
     formFactor,
     availability,
     priceRange,
@@ -170,7 +207,15 @@ function Catalog() {
     const timer = window.setTimeout(() => {
       const matches = all
         .filter((product) =>
-          [product.name, product.brand, product.tagline, product.formFactor, product.category]
+          [
+            product.name,
+            product.brand,
+            product.tagline,
+            product.formFactor,
+            product.category,
+            product.description,
+            ...product.specs.flatMap((spec) => [spec.label, spec.value]),
+          ]
             .filter(Boolean)
             .some((value) => String(value).toLocaleLowerCase().includes(normalizedSearch)),
         )
@@ -236,24 +281,40 @@ function Catalog() {
           ))}
         </div>
 
-        <label className="mb-6 block">
-          <span className="sr-only">Search products</span>
-          <span className="relative block">
-            <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-on-surface-variant">
-              search
+        <form
+          className="mb-6 flex gap-2"
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setPage(1);
+            void navigate({ search: (previous) => ({ ...previous, q: searchTerm.trim() }) });
+          }}
+        >
+          <label className="block min-w-0 flex-1">
+            <span className="sr-only">Search products</span>
+            <span className="relative block">
+              <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-on-surface-variant">
+                search
+              </span>
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search phones and gadgets"
+                className="w-full border border-outline-variant/50 bg-white py-3.5 pl-12 pr-4 text-sm text-primary shadow-sm outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary"
+              />
             </span>
-            <input
-              type="search"
-              value={searchTerm}
-              onChange={(event) => {
-                setSearchTerm(event.target.value);
-                setPage(1);
-              }}
-              placeholder="Search phones and gadgets"
-              className="w-full border border-outline-variant/50 bg-white py-3.5 pl-12 pr-4 text-sm text-primary shadow-sm outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary"
-            />
-          </span>
-        </label>
+          </label>
+          <button
+            type="submit"
+            className="min-h-12 shrink-0 bg-primary px-5 text-sm font-bold text-on-primary hover:opacity-90"
+          >
+            Search
+          </button>
+        </form>
 
         {/* Faceted Filtering Bar */}
         <div className="bg-surface-container-lowest border border-outline-variant/40 p-6 rounded shadow-sm mb-12 space-y-6">
@@ -268,7 +329,47 @@ function Catalog() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                Brand
+              </label>
+              <select
+                value={brand}
+                onChange={(e) => {
+                  setBrand(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold text-primary shadow-sm"
+              >
+                <option value="all">All Brands</option>
+                {brands.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                Collection
+              </label>
+              <select
+                value={supplier}
+                onChange={(e) => {
+                  setSupplier(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-white border border-outline-variant/40 px-3 py-2.5 text-xs font-bold text-primary shadow-sm"
+              >
+                <option value="all">All Collections</option>
+                {suppliers.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             {/* Form Factor */}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
@@ -366,9 +467,12 @@ function Catalog() {
                 setFormFactor("all");
                 setAvailability("all");
                 setPriceRange("all");
-                setSortBy("price_asc");
+                setBrand("all");
+                setSupplier("all");
+                setSortBy("recommended");
                 setSearchTerm("");
                 setPage(1);
+                void navigate({ search: { q: "" } });
               }}
               className="bg-primary text-on-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm inline-block mt-2"
             >

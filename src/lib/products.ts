@@ -38,6 +38,8 @@ export interface Product {
   deliveryEstimate?: string;
   condition?: ProductCondition;
   conditionGrade?: string;
+  /** Internal merchandising source label; supplier URLs remain server/admin-only. */
+  catalogSource?: string;
 }
 
 export interface StorefrontCms {
@@ -468,6 +470,10 @@ export async function getAllProducts(): Promise<Product[]> {
       deliveryEstimate:
         typeof row.metadata?.delivery_estimate === "string" && row.metadata.delivery_estimate.trim()
           ? row.metadata.delivery_estimate.trim()
+          : undefined,
+      catalogSource:
+        typeof row.metadata?.supplier_import?.source === "string"
+          ? row.metadata.supplier_import.source
           : undefined,
     }));
 

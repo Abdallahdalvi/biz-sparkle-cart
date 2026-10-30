@@ -58,13 +58,13 @@ export function Header() {
           })}
         </div>
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <a
-            href="/#products"
+          <Link
+            to="/products"
             aria-label="Search"
             className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
           >
             search
-          </a>
+          </Link>
           <Link
             to="/cart"
             aria-label="Cart"

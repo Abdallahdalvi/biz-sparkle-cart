@@ -20,7 +20,7 @@ import { OFFICIAL_SOCIAL_LINKS } from "@/lib/social-links";
 import { rankProducts, type ProductSort } from "@/lib/product-ranking";
 import { getYouTubeChannelVideos, type YouTubeChannelVideo } from "@/lib/youtube.functions";
 
-const HOME_PRODUCT_LIMIT = 12;
+const HOME_PRODUCT_LIMIT = 30;
 function youtubeVideoId(url: string) {
   try {
     const parsed = new URL(url);
