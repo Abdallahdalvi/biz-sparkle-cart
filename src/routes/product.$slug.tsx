@@ -410,14 +410,14 @@ function ProductPage() {
             </div>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div>
               {product.badge && (
                 <span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary px-2.5 py-1 inline-block mb-4 shadow-sm bg-primary/5">
                   {product.badge}
                 </span>
               )}
-              <h1 className="text-4xl md:text-5xl font-bold text-on-surface leading-tight mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-on-surface leading-tight mb-2">
                 {product.name}
               </h1>
               <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-6">
@@ -481,70 +481,6 @@ function ProductPage() {
               )}
             </div>
 
-            <section
-              aria-label="Reviews and phone video requests"
-              className="rounded border border-emerald-200 bg-emerald-50/60 p-4 space-y-4"
-            >
-              <div>
-                <h2 className="text-sm font-bold text-primary">See it before you order</h2>
-                <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
-                  Ask for a current video of the actual phone, including its condition and
-                  functions, or request a WhatsApp video call. Our team will confirm availability
-                  and a time.
-                </p>
-                <a
-                  href={whatsappVideoRequest}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded bg-[#128C7E] px-4 py-3 text-xs font-bold text-white hover:opacity-90"
-                >
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                  Request a video / WhatsApp call
-                </a>
-                {!!product.videos?.length && (
-                  <a
-                    href="#product-videos"
-                    className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary underline"
-                  >
-                    <Youtube className="h-4 w-4" aria-hidden="true" /> Watch this model’s video
-                  </a>
-                )}
-              </div>
-              <div className="border-t border-emerald-200 pt-4">
-                <a
-                  href={GOOGLE_ALL_REVIEWS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary underline"
-                >
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-600" aria-hidden="true" />
-                  Read our Google reviews
-                </a>
-                <p className="text-xs text-on-surface-variant">
-                  Store review excerpts; read the full reviews on Google.
-                </p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {cms.reviews
-                    .filter((review) => review.snippet && review.author)
-                    .slice(0, 2)
-                    .map((review) => (
-                      <figure
-                        key={`${review.author}-${review.time}`}
-                        className="rounded border border-emerald-100 bg-white p-3 text-xs"
-                      >
-                        <blockquote className="leading-relaxed text-on-surface">
-                          “{review.snippet}”
-                        </blockquote>
-                        <figcaption className="mt-2 text-on-surface-variant">
-                          {review.author} · {review.time}
-                        </figcaption>
-                      </figure>
-                    ))}
-                </div>
-              </div>
-            </section>
-
-            <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
             {product.variants && product.variants.length > 0 && (
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest mb-2">Variant</p>
@@ -722,6 +658,71 @@ function ProductPage() {
             )}
 
             {/* Supporting information follows colour selection and purchase controls. */}
+            <section
+              aria-label="Reviews and phone video requests"
+              className="rounded border border-emerald-200 bg-emerald-50/60 p-4 space-y-4"
+            >
+              <div>
+                <h2 className="text-sm font-bold text-primary">See it before you order</h2>
+                <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+                  Ask for a current video of the actual phone, including its condition and
+                  functions, or request a WhatsApp video call. Our team will confirm availability
+                  and a time.
+                </p>
+                <a
+                  href={whatsappVideoRequest}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded bg-[#128C7E] px-4 py-3 text-xs font-bold text-white hover:opacity-90"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  Request a video / WhatsApp call
+                </a>
+                {!!product.videos?.length && (
+                  <a
+                    href="#product-videos"
+                    className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary underline"
+                  >
+                    <Youtube className="h-4 w-4" aria-hidden="true" /> Watch this model’s video
+                  </a>
+                )}
+              </div>
+              <div className="border-t border-emerald-200 pt-4">
+                <a
+                  href={GOOGLE_ALL_REVIEWS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary underline"
+                >
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-600" aria-hidden="true" />
+                  Read our Google reviews
+                </a>
+                <p className="text-xs text-on-surface-variant">
+                  Store review excerpts; read the full reviews on Google.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {cms.reviews
+                    .filter((review) => review.snippet && review.author)
+                    .slice(0, 2)
+                    .map((review) => (
+                      <figure
+                        key={`${review.author}-${review.time}`}
+                        className="rounded border border-emerald-100 bg-white p-3 text-xs"
+                      >
+                        <blockquote className="leading-relaxed text-on-surface">
+                          “{review.snippet}”
+                        </blockquote>
+                        <figcaption className="mt-2 text-on-surface-variant">
+                          {review.author} · {review.time}
+                        </figcaption>
+                      </figure>
+                    ))}
+                </div>
+              </div>
+            </section>
+
+            <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
+
             {product.category === "phones" && (
               <div className="border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
                 <strong>One-month battery & charger warranty</strong>
