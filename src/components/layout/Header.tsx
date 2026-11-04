@@ -22,110 +22,129 @@ export function Header() {
   const count = mounted && !loading ? items.reduce((a, i) => a + i.qty, 0) : 0;
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white border-b border-outline-variant/30">
-      <div className="flex justify-between items-center w-full px-4 md:px-10 max-w-[1280px] mx-auto h-16 box-border">
-        <Link
-          to="/"
-          aria-label="Aghanims Phones and Gadgets Home"
-          className="flex-shrink-0 flex items-center"
-        >
-          <img
-            src="/logo.png"
-            alt="Aghanims Phones and Gadgets"
-            width={40}
-            height={40}
-            className="w-10 h-10 rounded-full"
-          />
-        </Link>
-        <div className="hidden md:flex items-center gap-8 font-medium text-sm uppercase tracking-wider">
-          {NAV.map((n) => {
-            const active =
-              n.route === "/" ? pathname === "/" : n.route && pathname.startsWith(n.route);
-            return (
-              <a
-                key={n.href}
-                href={n.href}
-                aria-current={active ? "page" : undefined}
-                className={
-                  active
-                    ? "text-primary border-b-2 border-primary pb-1"
-                    : "text-on-surface-variant hover:text-primary transition-colors"
-                }
-              >
-                {n.label}
-              </a>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <Link
-            to="/products"
-            aria-label="Search"
-            className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
-          >
-            search
-          </Link>
-          <Link
-            to="/cart"
-            aria-label="Cart"
-            className="relative material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
-          >
-            shopping_cart
-            {count > 0 && (
-              <span className="absolute -top-1 -right-2 bg-primary text-on-primary text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
-                {count}
-              </span>
-            )}
-          </Link>
-          <Link
-            to="/account"
-            aria-label="Account"
-            className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
-          >
-            account_circle
-          </Link>
-          {mounted && isAdmin && (
-            <Link
-              to="/admin"
-              className="text-[10px] font-bold uppercase tracking-widest border border-primary px-2 py-1 hover:bg-primary hover:text-on-primary transition-colors flex-shrink-0"
-            >
-              Admin
-            </Link>
-          )}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle mobile menu"
-            className="md:hidden material-symbols-outlined text-primary hover:opacity-70 transition-opacity flex items-center justify-center p-1"
-          >
-            {mobileMenuOpen ? "close" : "menu"}
-          </button>
-        </div>
+    <header className="fixed top-0 w-full z-50 bg-white border-b border-outline-variant/30">
+      <div
+        role="region"
+        aria-label="Delivery and payment options"
+        className="flex h-14 flex-col items-center justify-center gap-1 bg-primary px-3 text-center text-[11px] leading-4 text-on-primary sm:h-8 sm:flex-row sm:gap-6 sm:text-xs"
+      >
+        <p className="flex items-center justify-center gap-3">
+          <strong className="font-semibold">Free delivery</strong>
+          <span aria-hidden="true" className="opacity-50">
+            ·
+          </span>
+          <span>COD with online advance</span>
+        </p>
+        <p>
+          Credit/Debit Cards <span aria-hidden="true">·</span> UPI <span aria-hidden="true">·</span>{" "}
+          Net Banking
+        </p>
       </div>
-
-      {/* Mobile Navigation Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-outline-variant/30 px-6 py-4 space-y-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-          {NAV.map((n) => {
-            const active =
-              n.route === "/" ? pathname === "/" : n.route && pathname.startsWith(n.route);
-            return (
-              <a
-                key={n.href}
-                href={n.href}
-                onClick={() => setMobileMenuOpen(false)}
-                aria-current={active ? "page" : undefined}
-                className={`block font-bold text-base uppercase tracking-wider py-1.5 ${
-                  active
-                    ? "text-primary border-l-4 border-primary pl-3"
-                    : "text-on-surface-variant hover:text-primary pl-3"
-                }`}
+      <nav aria-label="Main navigation">
+        <div className="flex justify-between items-center w-full px-4 md:px-10 max-w-[1280px] mx-auto h-16 box-border">
+          <Link
+            to="/"
+            aria-label="Aghanims Phones and Gadgets Home"
+            className="flex-shrink-0 flex items-center"
+          >
+            <img
+              src="/logo.png"
+              alt="Aghanims Phones and Gadgets"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full"
+            />
+          </Link>
+          <div className="hidden md:flex items-center gap-8 font-medium text-sm uppercase tracking-wider">
+            {NAV.map((n) => {
+              const active =
+                n.route === "/" ? pathname === "/" : n.route && pathname.startsWith(n.route);
+              return (
+                <a
+                  key={n.href}
+                  href={n.href}
+                  aria-current={active ? "page" : undefined}
+                  className={
+                    active
+                      ? "text-primary border-b-2 border-primary pb-1"
+                      : "text-on-surface-variant hover:text-primary transition-colors"
+                  }
+                >
+                  {n.label}
+                </a>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <Link
+              to="/products"
+              aria-label="Search"
+              className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
+            >
+              search
+            </Link>
+            <Link
+              to="/cart"
+              aria-label="Cart"
+              className="relative material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
+            >
+              shopping_cart
+              {count > 0 && (
+                <span className="absolute -top-1 -right-2 bg-primary text-on-primary text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
+                  {count}
+                </span>
+              )}
+            </Link>
+            <Link
+              to="/account"
+              aria-label="Account"
+              className="material-symbols-outlined text-primary hover:opacity-70 transition-opacity"
+            >
+              account_circle
+            </Link>
+            {mounted && isAdmin && (
+              <Link
+                to="/admin"
+                className="text-[10px] font-bold uppercase tracking-widest border border-primary px-2 py-1 hover:bg-primary hover:text-on-primary transition-colors flex-shrink-0"
               >
-                {n.label}
-              </a>
-            );
-          })}
+                Admin
+              </Link>
+            )}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle mobile menu"
+              className="md:hidden material-symbols-outlined text-primary hover:opacity-70 transition-opacity flex items-center justify-center p-1"
+            >
+              {mobileMenuOpen ? "close" : "menu"}
+            </button>
+          </div>
         </div>
-      )}
-    </nav>
+
+        {/* Mobile Navigation Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-outline-variant/30 px-6 py-4 space-y-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+            {NAV.map((n) => {
+              const active =
+                n.route === "/" ? pathname === "/" : n.route && pathname.startsWith(n.route);
+              return (
+                <a
+                  key={n.href}
+                  href={n.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={`block font-bold text-base uppercase tracking-wider py-1.5 ${
+                    active
+                      ? "text-primary border-l-4 border-primary pl-3"
+                      : "text-on-surface-variant hover:text-primary pl-3"
+                  }`}
+                >
+                  {n.label}
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </nav>
+    </header>
   );
 }

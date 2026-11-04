@@ -8,7 +8,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     <div className="flex flex-col min-h-screen w-full overflow-x-hidden box-border">
       <GoogleMerchantWidget />
       <Header />
-      <main className="pt-16 flex-1 w-full">{children}</main>
+      <main className="pt-[120px] sm:pt-24 flex-1 w-full">{children}</main>
       <Footer />
     </div>
   );
