@@ -26,7 +26,7 @@ export function Header() {
       <div
         role="region"
         aria-label="Delivery and payment options"
-        className="flex h-14 flex-col items-center justify-center gap-1 bg-primary px-3 text-center text-[11px] leading-4 text-on-primary sm:h-8 sm:flex-row sm:gap-6 sm:text-xs"
+        className="flex h-14 flex-col items-center justify-center gap-1 border-b border-amber-500 bg-amber-400 px-3 text-center text-[11px] font-semibold leading-4 text-slate-950 sm:h-8 sm:flex-row sm:gap-6 sm:text-xs"
       >
         <p className="flex items-center justify-center gap-3">
           <strong className="font-semibold">Free delivery</strong>
