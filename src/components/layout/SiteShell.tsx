@@ -5,7 +5,7 @@ import { Footer } from "./Footer";
 
 export function SiteShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden box-border">
+    <div className="flex flex-col min-h-screen w-full overflow-x-clip box-border">
       <GoogleMerchantWidget />
       <Header />
       <main className="pt-[120px] sm:pt-24 flex-1 w-full">{children}</main>

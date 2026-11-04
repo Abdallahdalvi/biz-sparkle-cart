@@ -293,8 +293,8 @@ function ProductPage() {
           </Link>{" "}
           / <span className="text-primary">{product.name}</span>
         </p>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          <div>
+        <div className="grid grid-cols-1 items-start lg:grid-cols-2 gap-12 lg:gap-20">
+          <div className="lg:sticky lg:top-28">
             <div
               className="group relative mb-3 aspect-square touch-pan-y overflow-hidden bg-white shadow-sm shopify-border"
               onTouchStart={(event) => {
@@ -656,81 +656,11 @@ function ProductPage() {
                 </Link>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Supporting details use the full page width after the gallery and buying controls. */}
-        <section
-          aria-label="Product details and support"
-          className="mt-10 space-y-6 border-t border-outline-variant/30 pt-8"
-        >
-          <div className="rounded border border-outline-variant/40 bg-white p-5">
-            <h2 className="mb-2 text-lg font-bold text-primary">About this product</h2>
-            <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
-          </div>
-          <div className="grid items-start gap-6 lg:grid-cols-2">
-            <section
-              aria-label="Reviews and phone video requests"
-              className="rounded border border-emerald-200 bg-emerald-50/60 p-4 space-y-4"
-            >
-              <div>
-                <h2 className="text-sm font-bold text-primary">See it before you order</h2>
-                <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
-                  Ask for a current video of the actual phone, including its condition and
-                  functions, or request a WhatsApp video call. Our team will confirm availability
-                  and a time.
-                </p>
-                <a
-                  href={whatsappVideoRequest}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded bg-[#128C7E] px-4 py-3 text-xs font-bold text-white hover:opacity-90"
-                >
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                  Request a video / WhatsApp call
-                </a>
-                {!!product.videos?.length && (
-                  <a
-                    href="#product-videos"
-                    className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary underline"
-                  >
-                    <Youtube className="h-4 w-4" aria-hidden="true" /> Watch this model’s video
-                  </a>
-                )}
-              </div>
-              <div className="border-t border-emerald-200 pt-4">
-                <a
-                  href={GOOGLE_ALL_REVIEWS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary underline"
-                >
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-600" aria-hidden="true" />
-                  Read our Google reviews
-                </a>
-                <p className="text-xs text-on-surface-variant">
-                  Store review excerpts; read the full reviews on Google.
-                </p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {cms.reviews
-                    .filter((review) => review.snippet && review.author)
-                    .slice(0, 2)
-                    .map((review) => (
-                      <figure
-                        key={`${review.author}-${review.time}`}
-                        className="rounded border border-emerald-100 bg-white p-3 text-xs"
-                      >
-                        <blockquote className="leading-relaxed text-on-surface">
-                          “{review.snippet}”
-                        </blockquote>
-                        <figcaption className="mt-2 text-on-surface-variant">
-                          {review.author} · {review.time}
-                        </figcaption>
-                      </figure>
-                    ))}
-                </div>
-              </div>
-            </section>
+            <div className="rounded border border-outline-variant/40 bg-white p-5">
+              <h2 className="mb-2 text-lg font-bold text-primary">About this product</h2>
+              <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
+            </div>
             <div className="space-y-6">
               {product.category === "phones" && (
                 <div className="border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
@@ -764,6 +694,74 @@ function ProductPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Larger review and social sections follow the compact product summary. */}
+        <section
+          aria-label="Product details and support"
+          className="mt-10 grid items-start gap-6 border-t border-outline-variant/30 pt-8 lg:grid-cols-2"
+        >
+          <section
+            aria-label="Reviews and phone video requests"
+            className="rounded border border-emerald-200 bg-emerald-50/60 p-4 space-y-4"
+          >
+            <div>
+              <h2 className="text-sm font-bold text-primary">See it before you order</h2>
+              <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+                Ask for a current video of the actual phone, including its condition and functions,
+                or request a WhatsApp video call. Our team will confirm availability and a time.
+              </p>
+              <a
+                href={whatsappVideoRequest}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded bg-[#128C7E] px-4 py-3 text-xs font-bold text-white hover:opacity-90"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                Request a video / WhatsApp call
+              </a>
+              {!!product.videos?.length && (
+                <a
+                  href="#product-videos"
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary underline"
+                >
+                  <Youtube className="h-4 w-4" aria-hidden="true" /> Watch this model’s video
+                </a>
+              )}
+            </div>
+            <div className="border-t border-emerald-200 pt-4">
+              <a
+                href={GOOGLE_ALL_REVIEWS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-primary underline"
+              >
+                <Star className="h-4 w-4 fill-amber-400 text-amber-600" aria-hidden="true" />
+                Read our Google reviews
+              </a>
+              <p className="text-xs text-on-surface-variant">
+                Store review excerpts; read the full reviews on Google.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {cms.reviews
+                  .filter((review) => review.snippet && review.author)
+                  .slice(0, 2)
+                  .map((review) => (
+                    <figure
+                      key={`${review.author}-${review.time}`}
+                      className="rounded border border-emerald-100 bg-white p-3 text-xs"
+                    >
+                      <blockquote className="leading-relaxed text-on-surface">
+                        “{review.snippet}”
+                      </blockquote>
+                      <figcaption className="mt-2 text-on-surface-variant">
+                        {review.author} · {review.time}
+                      </figcaption>
+                    </figure>
+                  ))}
+              </div>
+            </div>
+          </section>
           <div className="border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 h-6 w-6 flex-shrink-0 text-emerald-700" />
