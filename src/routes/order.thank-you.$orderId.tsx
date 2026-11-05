@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Facebook, Instagram, MessageCircle, Youtube } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,8 @@ import { orderReceiptStorageKey } from "@/lib/order-receipt-client";
 import { OFFICIAL_SOCIAL_LINKS, whatsappChatUrl } from "@/lib/social-links";
 import { useAuth } from "@/lib/use-auth";
 import { useServerFn } from "@tanstack/react-start";
+import { DeliveryGuide } from "@/components/DeliveryGuide";
+import { canShowDeliveryGuide } from "@/lib/delivery-guide";
 
 interface Address {
   first_name?: string;
@@ -114,6 +116,8 @@ function OrderThankYou() {
   const fetchConfirmation = useServerFn(getOrderConfirmation);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [guideAcknowledgedOrder, setGuideAcknowledgedOrder] = useState<string | null>(null);
+  const acknowledgeGuide = useCallback(() => setGuideAcknowledgedOrder(orderId), [orderId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -195,15 +199,25 @@ function OrderThankYou() {
 
   return (
     <SiteShell>
-      {completedCheckout && (
-        <GoogleCustomerReviewsOptIn
-          orderId={confirmation.orderNumber}
-          email={confirmation.email}
-          deliveryDate={confirmation.googleCustomerReviewDeliveryDate}
-        />
-      )}
+      {completedCheckout &&
+        (!canShowDeliveryGuide(confirmation) || guideAcknowledgedOrder === orderId) && (
+          <GoogleCustomerReviewsOptIn
+            orderId={confirmation.orderNumber}
+            email={confirmation.email}
+            deliveryDate={confirmation.googleCustomerReviewDeliveryDate}
+          />
+        )}
       <main className="bg-surface-container-low px-margin-mobile py-10 md:px-margin-desktop md:py-16">
         <div className="mx-auto max-w-[1180px] space-y-6">
+          {canShowDeliveryGuide(confirmation) && (
+            <DeliveryGuide
+              key={confirmation.id}
+              orderId={confirmation.id}
+              orderNumber={confirmation.orderNumber}
+              deliveryBalancePaise={isCod ? confirmation.codCollectablePaise : 0}
+              onAcknowledged={acknowledgeGuide}
+            />
+          )}
           <section className="overflow-hidden border border-outline-variant/50 bg-white shadow-sm">
             <div className="border-b border-outline-variant/40 bg-emerald-50 px-5 py-8 text-center sm:px-8 md:py-10">
               <span className="material-symbols-outlined rounded-full bg-emerald-600 p-3 text-4xl text-white">
