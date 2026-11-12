@@ -1,4 +1,5 @@
-import { COD_FOLLOW_UP_MESSAGE, followUpAdvanceForPrice } from "@/lib/cod-follow-up";
+import { CodAdvanceNotice } from "@/components/CodAdvanceNotice";
+import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { load as loadCashfree } from "@cashfreepayments/cashfree-js";
@@ -328,7 +329,9 @@ function Checkout() {
                   items: trackingItems,
                 });
                 clear();
-                toast.success(`Order ${res.orderNumber} confirmed with Cash on Delivery.`);
+                toast.success(
+                  `COD booking ${res.orderNumber} received. We’ll call to confirm your order and advance payment.`,
+                );
                 navigate({
                   to: "/order/thank-you/$orderId",
                   params: { orderId: res.orderId },
@@ -596,12 +599,14 @@ function Checkout() {
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-sm text-primary">Cash on Delivery (COD)</p>
                     <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                      ₹0 now
+                      {followUpAdvancePaise > 0
+                        ? `${formatINR(followUpAdvancePaise)} advance required`
+                        : "₹0 now"}
                     </span>
                   </div>
                   <p className="text-xs leading-relaxed text-on-surface-variant mt-1">
                     {followUpAdvancePaise > 0
-                      ? COD_FOLLOW_UP_MESSAGE
+                      ? `A ${formatINR(followUpAdvancePaise)} advance is required before dispatch. We’ll call within 1 hour to confirm your order and arrange payment. Pay ₹0 at checkout.`
                       : `Pay ${formatINR(amounts.totalPaise)} on delivery.`}
                   </p>
                 </div>
@@ -737,6 +742,12 @@ function Checkout() {
               <span className="font-bold">{formatINR(effectiveTotal)}</span>
             </div>
 
+            {payMode === "cod" && followUpAdvancePaise > 0 && (
+              <CodAdvanceNotice
+                advancePaise={followUpAdvancePaise}
+                balancePaise={Math.max(0, effectiveTotal - followUpAdvancePaise)}
+              />
+            )}
             <button
               disabled={busy || couponBusy}
               className="w-full bg-primary text-on-primary py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 disabled:opacity-50 shadow-sm"
@@ -745,7 +756,9 @@ function Checkout() {
                 ? "Processing…"
                 : payMode === "prepaid"
                   ? `Pay ${formatINR(effectiveTotal)}`
-                  : `Confirm COD Order — ₹0 Now`}
+                  : followUpAdvancePaise > 0
+                    ? `Place COD Order · ${formatINR(followUpAdvancePaise)} Advance Required`
+                    : `Confirm COD Order — ₹0 Now`}
             </button>
             <p className="text-[10px] text-on-surface-variant text-center">
               By placing this order you agree to our{" "}

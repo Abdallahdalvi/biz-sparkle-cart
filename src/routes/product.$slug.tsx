@@ -454,8 +454,10 @@ function ProductPage() {
                 <span className="material-symbols-outlined text-base">payments</span>
                 {product.followUpCodAdvancePaise || product.codAdvancePaise ? (
                   <span>
-                    Confirm COD with ₹0 now. We’ll contact you within 1 hour to arrange the advance,
-                    deducted from your total.
+                    COD requires a{" "}
+                    {formatINR(product.followUpCodAdvancePaise || product.codAdvancePaise)} advance
+                    before dispatch. We’ll call within 1 hour to confirm your order and arrange
+                    payment. Deducted from your total.
                   </span>
                 ) : (
                   <span>Cash on Delivery available. Pay ₹0 at checkout.</span>

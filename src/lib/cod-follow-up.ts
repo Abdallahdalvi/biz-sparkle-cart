@@ -1,6 +1,3 @@
-export const COD_FOLLOW_UP_MESSAGE =
-  "Pay ₹0 now. We’ll contact you within 1 hour to arrange the advance, which is deducted from your total.";
-
 export function followUpAdvanceForPrice(pricePaise: number) {
   if (!Number.isSafeInteger(pricePaise) || pricePaise <= 0) return 0;
   return Math.min(

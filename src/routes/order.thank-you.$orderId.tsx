@@ -1,3 +1,4 @@
+import { CodAdvanceNotice } from "@/components/CodAdvanceNotice";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Facebook, Instagram, MessageCircle, Youtube } from "lucide-react";
@@ -196,6 +197,10 @@ function OrderThankYou() {
   const pricingAdjustment = confirmation.totalPaise - (merchandiseSubtotal + confirmation.taxPaise);
   const estimatePending = /available after|awaiting/i.test(confirmation.tracking.estimatedDelivery);
   const completedCheckout = !["pending", "cancelled", "refunded"].includes(confirmation.status);
+  const requiredAdvancePaise =
+    completedCheckout && isCod && confirmation.codAdvanceAfterConfirmation
+      ? Math.max(0, confirmation.codAdvancePaise - confirmation.advancePaidPaise)
+      : 0;
 
   return (
     <SiteShell>
@@ -233,9 +238,31 @@ function OrderThankYou() {
               </p>
               <h1 className="mt-2 text-3xl font-black text-primary md:text-5xl">Thank you!</h1>
               <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant md:text-base">
-                Your order <strong className="text-primary">{confirmation.orderNumber}</strong> has
-                been confirmed. We’ll send order and shipment updates to {confirmation.email}.
+                {requiredAdvancePaise > 0 ? (
+                  <>
+                    Your COD booking{" "}
+                    <strong className="text-primary">{confirmation.orderNumber}</strong> has been
+                    received. We’ll call you to confirm.
+                  </>
+                ) : (
+                  <>
+                    Your order <strong className="text-primary">{confirmation.orderNumber}</strong>{" "}
+                    has been confirmed. We’ll send order and shipment updates to{" "}
+                    {confirmation.email}.
+                  </>
+                )}
               </p>
+              {requiredAdvancePaise > 0 && (
+                <div className="mx-auto mt-5 max-w-2xl">
+                  <CodAdvanceNotice
+                    advancePaise={requiredAdvancePaise}
+                    balancePaise={Math.max(
+                      0,
+                      confirmation.codCollectablePaise - requiredAdvancePaise,
+                    )}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid gap-px bg-outline-variant/40 sm:grid-cols-3">

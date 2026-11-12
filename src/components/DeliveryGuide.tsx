@@ -12,6 +12,7 @@ import {
 import { DELIVERY_GUIDE_STEPS } from "@/lib/delivery-guide";
 import { OFFICIAL_WHATSAPP_PHONE, whatsappChatUrl } from "@/lib/social-links";
 import { formatINR } from "@/lib/format";
+import { CodAdvanceNotice } from "@/components/CodAdvanceNotice";
 
 export function DeliveryGuide({
   orderId,
@@ -27,7 +28,7 @@ export function DeliveryGuide({
   onAcknowledged: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const acknowledgementKey = `aghanims-delivery-guide-v2:${orderId}`;
+  const acknowledgementKey = `aghanims-delivery-guide-${followUpAdvancePaise > 0 ? "cod-v3" : "v2"}:${orderId}`;
   useEffect(() => {
     try {
       const acknowledged = localStorage.getItem(acknowledgementKey) === "read";
@@ -54,10 +55,14 @@ export function DeliveryGuide({
         <div>
           <h2 className="flex items-center gap-2 font-bold text-amber-950">
             <ShieldCheck className="h-5 w-5" />
-            Before your parcel arrives
+            {followUpAdvancePaise > 0
+              ? `${formatINR(followUpAdvancePaise)} COD advance required`
+              : "Before your parcel arrives"}
           </h2>
           <p className="mt-1 text-sm text-amber-950">
-            Read the delivery checks. Record your unboxing or video-call us while unpacking.
+            {followUpAdvancePaise > 0
+              ? "We’ll call within 1 hour to confirm your order and arrange payment before dispatch."
+              : "Read the delivery checks. Record your unboxing or video-call us while unpacking."}
           </p>
         </div>
         <DialogTrigger asChild>
@@ -65,83 +70,95 @@ export function DeliveryGuide({
             type="button"
             className="min-h-11 shrink-0 rounded bg-primary px-4 py-3 text-sm font-bold text-on-primary"
           >
-            Read delivery guide
+            {followUpAdvancePaise > 0 ? "View advance details" : "Read delivery guide"}
           </button>
         </DialogTrigger>
       </div>
       <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto bg-white text-primary">
         <DialogHeader>
           <DialogTitle className="pr-6 text-xl leading-tight">
-            Your order is confirmed. Here’s how to receive it safely.
+            {followUpAdvancePaise > 0
+              ? "COD booking received — advance payment required"
+              : "Your order is confirmed. Here’s how to receive it safely."}
           </DialogTitle>
           <DialogDescription>
-            Order {orderNumber}. Keep this guide handy on delivery day.
+            Order {orderNumber}.{" "}
+            {followUpAdvancePaise > 0
+              ? "Please keep your phone available for our confirmation call."
+              : "Keep this guide handy on delivery day."}
           </DialogDescription>
         </DialogHeader>
-        <div className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm">
-          {followUpAdvancePaise > 0 ? (
-            <>
-              <strong>COD order confirmed — ₹0 paid now</strong>
-              <p className="mt-1">
-                We’ll contact you within 1 hour to arrange your {formatINR(followUpAdvancePaise)}{" "}
-                advance. It’s deducted from your total.
-              </p>
-              <p className="mt-1">
-                After the advance, pay{" "}
-                {formatINR(Math.max(0, deliveryBalancePaise - followUpAdvancePaise))} on delivery.
-              </p>
-            </>
-          ) : (
-            <>
-              <strong>Pay on delivery: {formatINR(deliveryBalancePaise)}</strong>
-              <p className="mt-1">Any advance or prepaid payment is already accounted for.</p>
-            </>
-          )}
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <a
-            href={`tel:+${OFFICIAL_WHATSAPP_PHONE}`}
-            className="flex min-h-12 items-center justify-center gap-2 rounded bg-primary px-3 py-3 text-sm font-bold text-on-primary"
+        {followUpAdvancePaise > 0 ? (
+          <>
+            <CodAdvanceNotice
+              advancePaise={followUpAdvancePaise}
+              balancePaise={Math.max(0, deliveryBalancePaise - followUpAdvancePaise)}
+            />
+            <button
+              type="button"
+              onClick={() => changeOpen(false)}
+              className="min-h-12 rounded bg-orange-600 px-4 py-3 text-sm font-bold text-white"
+            >
+              I understand — {formatINR(followUpAdvancePaise)} advance required
+            </button>
+          </>
+        ) : (
+          <div className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm">
+            <strong>Pay on delivery: {formatINR(deliveryBalancePaise)}</strong>
+            <p className="mt-1">Any advance or prepaid payment is already accounted for.</p>
+          </div>
+        )}
+        <details open={followUpAdvancePaise <= 0} className="space-y-4">
+          <summary className="cursor-pointer text-sm font-bold underline">
+            Delivery and unboxing guide
+          </summary>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <a
+              href={`tel:+${OFFICIAL_WHATSAPP_PHONE}`}
+              className="flex min-h-12 items-center justify-center gap-2 rounded bg-primary px-3 py-3 text-sm font-bold text-on-primary"
+            >
+              <Phone className="h-4 w-4" />
+              Call +91 93721 68726
+            </a>
+            <a
+              href={whatsappChatUrl(
+                `Hi Aghanims, I have received order ${orderNumber} and completed the courier handover. The parcel is still unopened. Can we arrange a WhatsApp video call while I unpack and check the contents? If you are unavailable, I will record a continuous unboxing video.`,
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-12 items-center justify-center gap-2 rounded bg-[#128C7E] px-3 py-3 text-sm font-bold text-white"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Video call while unpacking
+            </a>
+          </div>
+          <p className="text-xs text-on-surface-variant">
+            Video calls are for unpacking after the courier handover. If our team is unavailable,
+            record a continuous unboxing video so you have evidence if there is an issue.
+          </p>
+          <ol className="space-y-4">
+            {DELIVERY_GUIDE_STEPS.map((step, index) => (
+              <li key={step.title} className="rounded border border-outline-variant/40 p-3">
+                <h3 className="text-sm font-bold">
+                  {index + 1}. {step.title}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+          <Link to="/legal/returns" className="text-sm underline">
+            Read replacement and return terms
+          </Link>
+        </details>
+        {followUpAdvancePaise <= 0 && (
+          <button
+            type="button"
+            onClick={() => changeOpen(false)}
+            className="min-h-12 rounded bg-primary px-4 py-3 text-sm font-bold text-on-primary"
           >
-            <Phone className="h-4 w-4" />
-            Call +91 93721 68726
-          </a>
-          <a
-            href={whatsappChatUrl(
-              `Hi Aghanims, I have received order ${orderNumber} and completed the courier handover. The parcel is still unopened. Can we arrange a WhatsApp video call while I unpack and check the contents? If you are unavailable, I will record a continuous unboxing video.`,
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-12 items-center justify-center gap-2 rounded bg-[#128C7E] px-3 py-3 text-sm font-bold text-white"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Video call while unpacking
-          </a>
-        </div>
-        <p className="text-xs text-on-surface-variant">
-          Video calls are for unpacking after the courier handover. If our team is unavailable,
-          record a continuous unboxing video so you have evidence if there is an issue.
-        </p>
-        <ol className="space-y-4">
-          {DELIVERY_GUIDE_STEPS.map((step, index) => (
-            <li key={step.title} className="rounded border border-outline-variant/40 p-3">
-              <h3 className="text-sm font-bold">
-                {index + 1}. {step.title}
-              </h3>
-              <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">{step.body}</p>
-            </li>
-          ))}
-        </ol>
-        <Link to="/legal/returns" className="text-sm underline">
-          Read replacement and return terms
-        </Link>
-        <button
-          type="button"
-          onClick={() => changeOpen(false)}
-          className="min-h-12 rounded bg-primary px-4 py-3 text-sm font-bold text-on-primary"
-        >
-          Got it — view my order
-        </button>
+            Got it — view my order
+          </button>
+        )}
       </DialogContent>
     </Dialog>
   );

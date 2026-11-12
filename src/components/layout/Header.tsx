@@ -33,7 +33,7 @@ export function Header() {
           <span aria-hidden="true" className="opacity-50">
             ·
           </span>
-          <span>COD · ₹0 at checkout</span>
+          <span>COD with advance</span>
         </p>
         <p>
           Credit/Debit Cards <span aria-hidden="true">·</span> UPI <span aria-hidden="true">·</span>{" "}
