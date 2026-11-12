@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
@@ -7,6 +7,13 @@ import { getStorefrontCms, inferProductBrand, orderProducts, PRODUCTS } from "@/
 import { CONDITION_GRADES, PRODUCT_CONDITIONS, productCondition } from "@/lib/product-condition";
 import { useServerFn } from "@tanstack/react-start";
 import { type StockVariant } from "@/lib/inventory";
+import { ProductFilters } from "@/components/admin/ProductFilters";
+import {
+  adminProductBrand,
+  DEFAULT_ADMIN_PRODUCT_FILTERS,
+  filterAdminProducts,
+  hasAdminProductFilters,
+} from "@/lib/admin-product-filters";
 import { ProductSources } from "@/components/admin/ProductSources";
 import {
   createProduct,
@@ -394,6 +401,17 @@ function AdminProducts() {
   const deleteProdFn = useServerFn(deleteProduct);
   const updateOrderFn = useServerFn(updateProductOrder);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [filters, setFilters] = useState({ ...DEFAULT_ADMIN_PRODUCT_FILTERS });
+  const filtered = hasAdminProductFilters(filters);
+  const visibleRows = useMemo(() => filterAdminProducts(rows || [], filters), [rows, filters]);
+  const brands = useMemo(
+    () => [...new Set((rows || []).map(adminProductBrand))].sort((a, b) => a.localeCompare(b)),
+    [rows],
+  );
+  const rowPositions = useMemo(
+    () => new Map((rows || []).map((row, index) => [row.id, index])),
+    [rows],
+  );
 
   async function refresh() {
     const [{ data, error }, cms] = await Promise.all([
@@ -543,7 +561,7 @@ function AdminProducts() {
   }
 
   async function moveProduct(index: number, direction: -1 | 1) {
-    if (!rows || savingOrder) return;
+    if (!rows || savingOrder || filtered) return;
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= rows.length) return;
     const previousRows = rows;
@@ -638,16 +656,32 @@ function AdminProducts() {
         </div>
       )}
 
+      {rows && (
+        <ProductFilters
+          filters={filters}
+          onChange={setFilters}
+          brands={brands}
+          categories={cats}
+          total={rows.length}
+          matching={visibleRows.length}
+          filtered={filtered}
+        />
+      )}
+
       {!rows ? (
         <p className="text-on-surface-variant animate-pulse">Loading catalog…</p>
       ) : rows.length === 0 ? (
         <p className="text-on-surface-variant bg-white shopify-border p-12 text-center">
           No products in database yet. Click <strong>+ New Product</strong> above to add one.
         </p>
+      ) : visibleRows.length === 0 ? (
+        <p className="bg-white shopify-border p-8 text-center text-sm text-on-surface-variant">
+          No products match these filters. Try another search or clear the filters.
+        </p>
       ) : (
         <>
           <div className="space-y-3 md:hidden">
-            {rows.map((r, index) => (
+            {visibleRows.map((r) => (
               <div key={r.id} className="bg-white shopify-border p-4 shadow-sm space-y-4">
                 <div className="flex gap-3">
                   {r.metadata?.images?.[0] && (
@@ -717,8 +751,8 @@ function AdminProducts() {
                   <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
                     <button
                       type="button"
-                      disabled={savingOrder || index === 0}
-                      onClick={() => void moveProduct(index, -1)}
+                      disabled={savingOrder || filtered || rowPositions.get(r.id)! === 0}
+                      onClick={() => void moveProduct(rowPositions.get(r.id)!, -1)}
                       className="rounded border border-outline-variant/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-30"
                       aria-label={`Move ${r.name} earlier`}
                     >
@@ -726,8 +760,10 @@ function AdminProducts() {
                     </button>
                     <button
                       type="button"
-                      disabled={savingOrder || index === rows.length - 1}
-                      onClick={() => void moveProduct(index, 1)}
+                      disabled={
+                        savingOrder || filtered || rowPositions.get(r.id)! === rows.length - 1
+                      }
+                      onClick={() => void moveProduct(rowPositions.get(r.id)!, 1)}
                       className="rounded border border-outline-variant/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-30"
                       aria-label={`Move ${r.name} later`}
                     >
@@ -781,7 +817,7 @@ function AdminProducts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/40">
-                {rows.map((r, index) => (
+                {visibleRows.map((r) => (
                   <tr key={r.id} className="hover:bg-surface-container-lowest transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -859,8 +895,8 @@ function AdminProducts() {
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          disabled={savingOrder || index === 0}
-                          onClick={() => void moveProduct(index, -1)}
+                          disabled={savingOrder || filtered || rowPositions.get(r.id)! === 0}
+                          onClick={() => void moveProduct(rowPositions.get(r.id)!, -1)}
                           className="flex h-8 w-8 items-center justify-center border border-outline-variant/50 font-bold text-primary disabled:cursor-not-allowed disabled:opacity-25"
                           aria-label={`Move ${r.name} earlier`}
                           title="Move earlier"
@@ -869,8 +905,10 @@ function AdminProducts() {
                         </button>
                         <button
                           type="button"
-                          disabled={savingOrder || index === rows.length - 1}
-                          onClick={() => void moveProduct(index, 1)}
+                          disabled={
+                            savingOrder || filtered || rowPositions.get(r.id)! === rows.length - 1
+                          }
+                          onClick={() => void moveProduct(rowPositions.get(r.id)!, 1)}
                           className="flex h-8 w-8 items-center justify-center border border-outline-variant/50 font-bold text-primary disabled:cursor-not-allowed disabled:opacity-25"
                           aria-label={`Move ${r.name} later`}
                           title="Move later"
@@ -878,7 +916,7 @@ function AdminProducts() {
                           ↓
                         </button>
                         <span className="ml-1 text-[10px] font-bold text-on-surface-variant">
-                          {index + 1}
+                          {rowPositions.get(r.id)! + 1}
                         </span>
                       </div>
                     </td>
