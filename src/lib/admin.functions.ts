@@ -4,6 +4,28 @@ import { inventoryTotal, type StockVariant } from "@/lib/inventory";
 
 type VariantInput = StockVariant;
 
+async function productCodSettings(
+  db: typeof import("@/integrations/supabase/client.server").supabaseAdmin,
+  categoryId: string | null,
+  metadata: Record<string, unknown>,
+  advance: number,
+) {
+  if (categoryId) {
+    const { data, error } = await db
+      .from("categories")
+      .select("slug")
+      .eq("id", categoryId)
+      .single();
+    if (error) throw new Error("Could not verify the product category.");
+    if (data.slug === "phones")
+      return {
+        cod_advance_paise: 0,
+        metadata: { ...metadata, cod_advance_collection: "after_confirmation" },
+      };
+  }
+  return { cod_advance_paise: advance, metadata };
+}
+
 async function syncProductVariants(
   supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin,
   productId: string,
@@ -82,12 +104,16 @@ export const createProduct = createServerFn({ method: "POST" })
         tagline: data.tagline,
         description: data.description,
         price_paise: data.price_paise,
-        cod_advance_paise: data.cod_advance_paise,
+        ...(await productCodSettings(
+          supabaseAdmin,
+          data.category_id,
+          data.metadata,
+          data.cod_advance_paise,
+        )),
         compare_at_paise: data.compare_at_paise,
         stock: inventoryTotal(data.metadata?.variants || [], data.stock),
         category_id: data.category_id,
         is_active: data.is_active,
-        metadata: data.metadata,
       })
       .select()
       .single();
@@ -150,12 +176,16 @@ export const updateProduct = createServerFn({ method: "POST" })
       tagline: data.tagline,
       description: data.description,
       price_paise: data.price_paise,
-      cod_advance_paise: data.cod_advance_paise,
+      ...(await productCodSettings(
+        supabaseAdmin,
+        data.category_id,
+        data.metadata,
+        data.cod_advance_paise,
+      )),
       compare_at_paise: data.compare_at_paise,
       stock: inventoryTotal(data.metadata?.variants || [], data.stock),
       category_id: data.category_id,
       is_active: data.is_active,
-      metadata: data.metadata,
     };
 
     let productId = data.id;

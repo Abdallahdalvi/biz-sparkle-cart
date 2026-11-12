@@ -16,6 +16,20 @@ test("delivery popup waits for confirmed payment, not a pending checkout", () =>
     assert.equal(canShowDeliveryGuide({ ...paid, status }), false);
   assert.equal(canShowDeliveryGuide({ ...paid, advancePaidPaise: 0 }), false);
   assert.equal(
+    canShowDeliveryGuide({
+      ...paid,
+      status: "processing",
+      onlinePaymentReceived: false,
+      advancePaidPaise: 0,
+      codAdvanceAfterConfirmation: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canShowDeliveryGuide({ ...paid, status: "pending", codAdvanceAfterConfirmation: true }),
+    false,
+  );
+  assert.equal(
     canShowDeliveryGuide({ ...paid, paymentMethod: "prepaid", onlinePaymentReceived: false }),
     false,
   );

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { followUpAdvanceForPrice, isFollowUpCod } from "@/lib/cod-follow-up";
 import { checkoutDiscount, couponDiscountForMerchandise, validateCoupon } from "@/lib/coupons";
 import {
   calculateGiftOrderAmounts,
@@ -201,7 +202,8 @@ export const createSecureOrder = createServerFn({ method: "POST" })
 
     // Securely fetch prices and details for each item
     let subtotalPaise = 0;
-    let codAdvancePaise = 0;
+    const codAdvancePaise = 0;
+    let followUpAdvancePaise = 0;
     const orderItemsToInsert: Array<{
       name: string;
       variant_label: string | null;
@@ -216,7 +218,9 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     for (const item of normalizedItems.values()) {
       const { data: prod, error: prodErr } = await supabaseAdmin
         .from("products")
-        .select("id, name, price_paise, cod_advance_paise, metadata, stock, is_active")
+        .select(
+          "id, name, price_paise, cod_advance_paise, metadata, stock, is_active, categories(slug)",
+        )
         .eq("slug", item.slug)
         .single();
       if (prodErr || !prod) throw new Error(`Product not found: ${item.slug}`);
@@ -258,11 +262,13 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       }
 
       subtotalPaise += unitPricePaise * item.qty;
-      const unitCodAdvancePaise = Math.min(
-        unitPricePaise,
-        Math.max(0, Number(prod.cod_advance_paise) || 0),
-      );
-      codAdvancePaise += unitCodAdvancePaise * item.qty;
+      const categories = prod.categories as unknown as { slug: string } | { slug: string }[] | null;
+      const categorySlug = Array.isArray(categories) ? categories[0]?.slug : categories?.slug;
+      const followUpCod = categorySlug === "phones" || isFollowUpCod(prod.metadata);
+      const unitFollowUpAdvancePaise = followUpCod
+        ? followUpAdvanceForPrice(unitPricePaise)
+        : Math.min(unitPricePaise, Math.max(0, Number(prod.cod_advance_paise) || 0));
+      followUpAdvancePaise += unitFollowUpAdvancePaise * item.qty;
 
       // Determine image url
       let imageUrl = "";
@@ -274,7 +280,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         name: prod.name,
         variant_label: variantLabel,
         unit_price_paise: unitPricePaise,
-        cod_advance_paise: unitCodAdvancePaise,
+        cod_advance_paise: unitFollowUpAdvancePaise,
         qty: item.qty,
         image_url: imageUrl,
         product_id: prod.id,
@@ -282,7 +288,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       });
     }
 
-    // Securely calculate the prepaid discount. COD advances are configured per product above.
+    // Securely calculate prepaid discounts. COD advances are arranged after confirmation.
     const { data: settings } = await supabaseAdmin
       .from("store_settings")
       .select("metadata")
@@ -311,11 +317,6 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     if (data.payMode === "prepaid" && !paymentReady) {
       throw new Error(
         "Online payments are temporarily unavailable. Please choose Cash on Delivery.",
-      );
-    }
-    if (data.payMode === "cod" && codAdvancePaise > 0 && !paymentReady) {
-      throw new Error(
-        "The COD advance cannot be collected because online payments are unavailable",
       );
     }
 
@@ -350,6 +351,9 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         phone: data.phone,
         shipping_address: {
           ...data.shippingAddress,
+          ...(data.payMode === "cod" && followUpAdvancePaise > 0
+            ? { cod_advance_collection: "after_confirmation" }
+            : {}),
           ...(couponRecord
             ? { coupon: { code: couponRecord.coupon.code, discount_paise: amounts.discountPaise } }
             : {}),
@@ -362,7 +366,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         subtotal_paise: subtotalPaise,
         shipping_paise: 0,
         total_paise: effectiveTotal,
-        cod_advance_paise: data.payMode === "cod" ? codAdvancePaise : 0,
+        cod_advance_paise: data.payMode === "cod" ? codAdvancePaise + followUpAdvancePaise : 0,
         advance_paid_paise: 0,
         cod_collectable_paise:
           data.payMode === "cod" ? Math.max(0, effectiveTotal - codAdvancePaise) : 0,

@@ -9,6 +9,19 @@ const adminOrderActionSchema = z.object({
 
 const adminTokenSchema = z.object({ token: z.string().min(1) });
 
+export const recordAdminCodAdvance = createServerFn({ method: "POST" })
+  .validator((input) =>
+    adminTokenSchema
+      .extend({ orderId: z.string().uuid(), reference: z.string().trim().min(3).max(100) })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    const admin = await requireSupabaseAuth(data.token, "admin");
+    const { recordAdminCodAdvanceInternal } = await import("@/lib/order-admin.server");
+    return recordAdminCodAdvanceInternal(data.orderId, data.reference, admin.id);
+  });
+
 export const cancelAdminOrder = createServerFn({ method: "POST" })
   .validator((input) => adminOrderActionSchema.parse(input))
   .handler(async ({ data }) => {

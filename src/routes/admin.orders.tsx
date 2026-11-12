@@ -1,3 +1,5 @@
+import { CodAdvanceReceipt } from "@/components/admin/CodAdvanceReceipt";
+import { outstandingCodAdvance } from "@/lib/cod-follow-up";
 import { createFileRoute } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +34,8 @@ import {
 } from "@/lib/order-admin-policy";
 
 interface ShippingAddress {
+  [key: string]: unknown;
+  cod_advance_receipt?: unknown;
   first_name?: string;
   last_name?: string;
   line1?: string;
@@ -462,10 +466,13 @@ function AdminOrders() {
   }
 
   async function cancelOrder(order: Order) {
-    const paid = Boolean(order.cashfree_payment_id || order.razorpay_payment_id);
-    const warning = paid
-      ? "Cancel this order and stop fulfilment? This does not return the payment. Use Refund via Cashfree afterward."
-      : "Cancel this order and stop fulfilment? Reserved stock will be restored.";
+    const paid = hasVerifiedOrderPayment(order);
+    const warning =
+      paid && !order.cashfree_payment_id && !order.razorpay_payment_id
+        ? "Cancel this order and restore stock? The recorded manual advance is not refunded automatically; arrange any refund separately under the cancellation policy."
+        : paid
+          ? "Cancel this order and stop fulfilment? This does not return the payment. Use Refund via Cashfree afterward."
+          : "Cancel this order and stop fulfilment? Reserved stock will be restored.";
     if (!window.confirm(warning)) return;
     const reason = window.prompt("Cancellation reason", "Cancelled by admin")?.trim();
     if (!reason) return;
@@ -668,7 +675,7 @@ function AdminOrders() {
             <div class="totals-row"><span>Merchandise subtotal</span><strong>${formatINR(merchandiseSubtotal)}</strong></div>
             ${Number(o.tax_paise || 0) > 0 ? `<div class="totals-row"><span>Tax</span><strong>${formatINR(o.tax_paise)}</strong></div>` : ""}
             ${pricingAdjustment < 0 ? `<div class="totals-row discount"><span>Prepaid discount</span><strong>-${formatINR(Math.abs(pricingAdjustment))}</strong></div>` : ""}
-            ${o.notes === "cod" && Number(o.advance_paid_paise) > 0 ? `<div class="totals-row discount"><span>COD advance paid online</span><strong>-${formatINR(o.advance_paid_paise)}</strong></div>` : ""}
+            ${o.notes === "cod" && Number(o.advance_paid_paise) > 0 ? `<div class="totals-row discount"><span>COD advance paid</span><strong>-${formatINR(o.advance_paid_paise)}</strong></div>` : ""}
             <div class="totals-row final-total"><span>${o.notes === "cod" ? "REMAINING COD TO COURIER" : "FINAL PAYABLE TOTAL"}</span><span>${formatINR(o.notes === "cod" ? o.cod_collectable_paise : o.total_paise)}</span></div>
           </div>
           <div class="footer">
@@ -1087,6 +1094,7 @@ function AdminOrders() {
                         </div>
                       </div>
 
+                      <CodAdvanceReceipt order={o} onSaved={load} />
                       {awbWalletResults[o.id] && (
                         <WalletDebitSummary
                           result={awbWalletResults[o.id]}
@@ -1346,11 +1354,13 @@ function AdminOrders() {
                           <p className="font-bold text-primary">{formatINR(o.total_paise)}</p>
                           {hasVerifiedOrderPayment(o) ? (
                             <p className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                              {o.cashfree_payment_id || o.razorpay_payment_id}
+                              {o.cashfree_payment_id ||
+                                o.razorpay_payment_id ||
+                                "Manual advance recorded"}
                             </p>
-                          ) : unpaid && o.notes === "cod" ? (
+                          ) : outstandingCodAdvance(o) > 0 ? (
                             <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                              COD advance not paid
+                              Advance to arrange: {formatINR(outstandingCodAdvance(o))}
                             </p>
                           ) : o.notes === "cod" ? (
                             <p className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
@@ -1593,7 +1603,7 @@ function AdminOrders() {
                                   )}
                                   {o.notes === "cod" && Number(o.advance_paid_paise) > 0 && (
                                     <div className="flex justify-between font-medium text-emerald-700">
-                                      <span>COD advance paid online</span>
+                                      <span>COD advance paid</span>
                                       <span>-{formatINR(o.advance_paid_paise)}</span>
                                     </div>
                                   )}
@@ -1623,6 +1633,7 @@ function AdminOrders() {
                                   </span>
                                   Shiprocket Package Prep
                                 </h4>
+                                <CodAdvanceReceipt order={o} onSaved={load} />
                                 {awbWalletResults[o.id] && (
                                   <WalletDebitSummary
                                     result={awbWalletResults[o.id]}

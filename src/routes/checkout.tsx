@@ -1,3 +1,4 @@
+import { COD_FOLLOW_UP_MESSAGE, followUpAdvanceForPrice } from "@/lib/cod-follow-up";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { load as loadCashfree } from "@cashfreepayments/cashfree-js";
@@ -198,12 +199,20 @@ function Checkout() {
   );
 
   const productsBySlug = new Map(products.map((product) => [product.slug, product]));
-  const codAdvancePaise = items.reduce(
-    (sum, item) =>
+  const codAdvancePaise = 0;
+  const followUpAdvancePaise = items.reduce((sum, item) => {
+    const product = productsBySlug.get(item.slug);
+    return (
       sum +
-      Math.min(item.pricePaise, productsBySlug.get(item.slug)?.codAdvancePaise || 0) * item.qty,
-    0,
-  );
+      Math.min(
+        item.pricePaise,
+        product?.codAdvanceAfterConfirmation
+          ? followUpAdvanceForPrice(item.pricePaise)
+          : product?.codAdvancePaise || 0,
+      ) *
+        item.qty
+    );
+  }, 0);
 
   const amounts = calculateGiftOrderAmounts({
     merchandisePaise: total,
@@ -215,7 +224,6 @@ function Checkout() {
   const effectiveTotal = amounts.totalPaise;
 
   const paymentAmountPaise = payMode === "cod" ? codAdvancePaise : effectiveTotal;
-  const codAdvanceUnavailable = codAdvancePaise > 0 && !capabilities.onlinePaymentsConfigured;
   const deliveryEstimateItems = items
     .map((item) => ({
       name: item.name,
@@ -234,8 +242,8 @@ function Checkout() {
             <div>
               <p className="font-bold uppercase tracking-wider">Cash on Delivery is active</p>
               <p className="text-blue-900/80 mt-1">
-                Models with no advance can be ordered normally. A model that requires an advance
-                cannot be confirmed until online payments are available.
+                Confirm your COD order without paying online. Our team will contact you about any
+                advance.
               </p>
             </div>
           </div>
@@ -570,13 +578,12 @@ function Checkout() {
                 </div>
               </label>
               <label
-                className={`flex items-start gap-3 p-4 border rounded transition-colors ${codAdvanceUnavailable ? "cursor-not-allowed opacity-60" : "cursor-pointer"} ${payMode === "cod" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
+                className={`flex items-start gap-3 p-4 border rounded transition-colors cursor-pointer ${payMode === "cod" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
               >
                 <input
                   type="radio"
                   name="pay"
                   checked={payMode === "cod"}
-                  disabled={codAdvanceUnavailable}
                   onChange={() => {
                     setPayMode("cod");
                     couponRequestVersion.current++;
@@ -588,20 +595,14 @@ function Checkout() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-sm text-primary">Cash on Delivery (COD)</p>
-                    {codAdvancePaise > 0 ? (
-                      <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                        {formatINR(codAdvancePaise)} Advance
-                      </span>
-                    ) : (
-                      <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                        No Advance
-                      </span>
-                    )}
+                    <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                      ₹0 now
+                    </span>
                   </div>
                   <p className="text-xs leading-relaxed text-on-surface-variant mt-1">
-                    {codAdvancePaise > 0
-                      ? `Pay ${formatINR(codAdvancePaise)} now—deducted from your total. Pay the balance of ${formatINR(Math.max(0, amounts.subtotalPaise - codAdvancePaise))} on delivery. This is not an extra fee. Online payment is processed by Cashfree.`
-                      : `Shiprocket collects the full ${formatINR(total)} on delivery`}
+                    {followUpAdvancePaise > 0
+                      ? COD_FOLLOW_UP_MESSAGE
+                      : `Pay ${formatINR(amounts.totalPaise)} on delivery.`}
                   </p>
                 </div>
               </label>
@@ -725,16 +726,10 @@ function Checkout() {
                 <span>-{formatINR(amounts.discountPaise)}</span>
               </div>
             )}
-            {payMode === "cod" && codAdvancePaise > 0 && (
-              <div className="flex justify-between text-sm text-amber-800 font-medium">
-                <span>Advance payable now</span>
-                <span>{formatINR(codAdvancePaise)}</span>
-              </div>
-            )}
             {payMode === "cod" && (
               <div className="flex justify-between text-sm font-medium text-blue-800">
-                <span>Remaining COD to courier</span>
-                <span>{formatINR(amounts.codCollectablePaise)}</span>
+                <span>Pay now</span>
+                <span>{formatINR(paymentAmountPaise)}</span>
               </div>
             )}
             <div className="flex justify-between text-base border-t pt-3">
@@ -743,18 +738,14 @@ function Checkout() {
             </div>
 
             <button
-              disabled={busy || couponBusy || codAdvanceUnavailable}
+              disabled={busy || couponBusy}
               className="w-full bg-primary text-on-primary py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 disabled:opacity-50 shadow-sm"
             >
-              {codAdvanceUnavailable
-                ? "COD Advance Temporarily Unavailable"
-                : busy
-                  ? "Processing…"
-                  : payMode === "prepaid"
-                    ? `Pay ${formatINR(effectiveTotal)}`
-                    : paymentAmountPaise > 0
-                      ? `Pay COD Advance ${formatINR(paymentAmountPaise)}`
-                      : `Confirm Order (Pay on Delivery)`}
+              {busy
+                ? "Processing…"
+                : payMode === "prepaid"
+                  ? `Pay ${formatINR(effectiveTotal)}`
+                  : `Confirm COD Order — ₹0 Now`}
             </button>
             <p className="text-[10px] text-on-surface-variant text-center">
               By placing this order you agree to our{" "}

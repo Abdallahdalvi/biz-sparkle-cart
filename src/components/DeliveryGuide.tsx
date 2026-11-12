@@ -17,11 +17,13 @@ export function DeliveryGuide({
   orderId,
   orderNumber,
   deliveryBalancePaise,
+  followUpAdvancePaise = 0,
   onAcknowledged,
 }: {
   orderId: string;
   orderNumber: string;
   deliveryBalancePaise: number;
+  followUpAdvancePaise?: number;
   onAcknowledged: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -77,8 +79,24 @@ export function DeliveryGuide({
           </DialogDescription>
         </DialogHeader>
         <div className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm">
-          <strong>Pay on delivery: {formatINR(deliveryBalancePaise)}</strong>
-          <p className="mt-1">Any advance or prepaid payment is already accounted for.</p>
+          {followUpAdvancePaise > 0 ? (
+            <>
+              <strong>COD order confirmed — ₹0 paid now</strong>
+              <p className="mt-1">
+                We’ll contact you within 1 hour to arrange your {formatINR(followUpAdvancePaise)}{" "}
+                advance. It’s deducted from your total.
+              </p>
+              <p className="mt-1">
+                After the advance, pay{" "}
+                {formatINR(Math.max(0, deliveryBalancePaise - followUpAdvancePaise))} on delivery.
+              </p>
+            </>
+          ) : (
+            <>
+              <strong>Pay on delivery: {formatINR(deliveryBalancePaise)}</strong>
+              <p className="mt-1">Any advance or prepaid payment is already accounted for.</p>
+            </>
+          )}
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <a

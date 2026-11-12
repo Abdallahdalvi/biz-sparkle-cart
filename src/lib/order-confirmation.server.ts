@@ -96,7 +96,9 @@ export async function getOrderConfirmationInternal(input: {
       .in("id", productIds);
     deliveryEstimates = (products || [])
       .map((product) => product.metadata?.delivery_estimate)
-      .filter((estimate): estimate is string => typeof estimate === "string" && Boolean(estimate.trim()));
+      .filter(
+        (estimate): estimate is string => typeof estimate === "string" && Boolean(estimate.trim()),
+      );
   }
 
   return {
@@ -111,6 +113,9 @@ export async function getOrderConfirmationInternal(input: {
     totalPaise: Number(order.total_paise) || 0,
     codAdvancePaise: Number(order.cod_advance_paise) || 0,
     advancePaidPaise: Number(order.advance_paid_paise) || 0,
+    codAdvanceAfterConfirmation:
+      order.notes === "cod" &&
+      order.shipping_address?.cod_advance_collection === "after_confirmation",
     codCollectablePaise: Number(order.cod_collectable_paise) || 0,
     createdAt: order.created_at,
     paymentMethod: order.notes === "cod" ? ("cod" as const) : ("prepaid" as const),

@@ -1,3 +1,4 @@
+import { followUpAdvanceForPrice, isFollowUpCod } from "@/lib/cod-follow-up";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductEngagement } from "@/lib/product-ranking";
 import { inferProductBrand } from "@/lib/product-brand";
@@ -18,6 +19,8 @@ export interface Product {
   category: Category;
   pricePaise: number;
   codAdvancePaise: number;
+  followUpCodAdvancePaise?: number;
+  codAdvanceAfterConfirmation?: boolean;
   compareAtPaise?: number | null;
   badge?: string;
   images: string[];
@@ -140,12 +143,12 @@ export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
   {
     question: "Is Cash on Delivery available?",
     answer:
-      "COD availability and any required online advance are shown clearly on the product page and at checkout. If a model requires an advance, only the remaining balance is collected by the courier. Models showing no advance can be paid fully on delivery.",
+      "Confirm your COD order with ₹0 at checkout. We’ll contact you within 1 hour to arrange your advance, which is deducted from your order total. Pay the remaining balance on delivery.",
   },
   {
     question: "Are online payments secure?",
     answer:
-      "Online payments and COD advances are processed by Cashfree. Aghanims Phones and Gadgets does not receive or store your full card, UPI PIN, bank password, or OTP.",
+      "Prepaid checkout payments are processed by Cashfree. For COD, we contact you after order confirmation to arrange the advance. Aghanims Phones and Gadgets does not receive or store your full card, UPI PIN, bank password, or OTP.",
   },
   {
     question: "What if the product arrives damaged, incorrect, or defective?",
@@ -309,7 +312,8 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     {
       icon: "local_shipping",
       title: "COD SHIPPING",
-      description: "PAN India COD with a model-specific online advance where shown.",
+      description:
+        "PAN India COD. Confirm with ₹0 at checkout; advance arranged after confirmation.",
     },
     {
       icon: "currency_exchange",
@@ -429,7 +433,15 @@ export async function getAllProducts(): Promise<Product[]> {
       tagline: row.tagline || "",
       category: (row.categories?.slug || "phones") as Category,
       pricePaise: row.price_paise,
-      codAdvancePaise: Number(row.cod_advance_paise) || 0,
+      codAdvancePaise:
+        row.categories?.slug === "phones" || isFollowUpCod(row.metadata)
+          ? 0
+          : Number(row.cod_advance_paise) || 0,
+      codAdvanceAfterConfirmation: row.categories?.slug === "phones" || isFollowUpCod(row.metadata),
+      followUpCodAdvancePaise:
+        row.categories?.slug === "phones" || isFollowUpCod(row.metadata)
+          ? followUpAdvanceForPrice(row.price_paise)
+          : 0,
       compareAtPaise: row.compare_at_paise,
       badge: row.metadata?.badge || undefined,
       images: row.metadata?.images?.length

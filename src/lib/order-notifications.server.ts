@@ -53,11 +53,15 @@ function buildOrderMessage(order: OrderNotificationRow) {
       )}`,
   );
   const paymentLine =
-    order.notes === "cod"
-      ? `COD: ${formatINR(order.advance_paid_paise)} advance paid, ${formatINR(
-          order.cod_collectable_paise,
-        )} to collect`
-      : `Prepaid: ${formatINR(order.total_paise)} paid online`;
+    order.notes === "cod" &&
+    order.cod_advance_paise > order.advance_paid_paise &&
+    address.cod_advance_collection === "after_confirmation"
+      ? `COD confirmed: contact within 1 hour to arrange ${formatINR(order.cod_advance_paise - order.advance_paid_paise)} advance. ₹0 collected at checkout.`
+      : order.notes === "cod"
+        ? `COD: ${formatINR(order.advance_paid_paise)} advance paid, ${formatINR(
+            order.cod_collectable_paise,
+          )} to collect`
+        : `Prepaid: ${formatINR(order.total_paise)} paid online`;
   const deliveryLine = [
     textValue(address.line1),
     textValue(address.line2),

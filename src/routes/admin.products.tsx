@@ -1,3 +1,4 @@
+import { followUpAdvanceForPrice, isFollowUpCod } from "@/lib/cod-follow-up";
 import { createFileRoute } from "@tanstack/react-router";
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -726,7 +727,11 @@ function AdminProducts() {
                       COD Advance
                     </p>
                     <p className="font-bold text-amber-800">
-                      {r.cod_advance_paise > 0 ? formatINR(r.cod_advance_paise) : "Full COD"}
+                      {isFollowUpCod(r.metadata)
+                        ? `${formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation`
+                        : r.cod_advance_paise > 0
+                          ? formatINR(r.cod_advance_paise)
+                          : "Full COD"}
                     </p>
                   </div>
                   <div className="rounded bg-surface-container-low p-3">
@@ -860,10 +865,18 @@ function AdminProducts() {
                     </td>
                     <td className="p-4">
                       <p className="font-bold text-amber-800">
-                        {r.cod_advance_paise > 0 ? formatINR(r.cod_advance_paise) : "Full COD"}
+                        {isFollowUpCod(r.metadata)
+                          ? `${formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation`
+                          : r.cod_advance_paise > 0
+                            ? formatINR(r.cod_advance_paise)
+                            : "Full COD"}
                       </p>
                       <p className="text-[10px] text-on-surface-variant">
-                        {r.cod_advance_paise > 0 ? "Paid online first" : "No advance"}
+                        {isFollowUpCod(r.metadata)
+                          ? "₹0 at checkout"
+                          : r.cod_advance_paise > 0
+                            ? "Paid online first"
+                            : "No advance"}
                       </p>
                     </td>
                     <td className="p-4 font-bold">{r.stock}</td>
@@ -1183,8 +1196,8 @@ function NewProductForm({
             2. Pricing, Inventory & Financial Analytics Setup
           </h4>
           <p className="text-[11px] text-on-surface-variant mb-2">
-            Configure buying costs, GST rates, packaging, and the model-specific COD advance. Actual
-            courier cost is captured from Shiprocket when you assign delivery.
+            Configure buying costs, GST rates and packaging. Phone advances are arranged after
+            confirmation. Actual courier cost is captured from Shiprocket when you assign delivery.
           </p>
         </div>
         <div>
@@ -1266,7 +1279,7 @@ function NewProductForm({
         <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-              COD Advance Paid Online (₹)
+              Checkout Advance (₹)
             </label>
             <input
               name="cod_advance"
@@ -1278,7 +1291,8 @@ function NewProductForm({
               className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
             />
             <p className="mt-1 text-[10px] text-on-surface-variant">
-              Deducted from the product price; the balance is collected by Shiprocket as COD.
+              Phone checkout stays at ₹0. The follow-up advance is calculated automatically from the
+              selling price.
             </p>
           </div>
           <div>
@@ -1769,8 +1783,8 @@ function EditProductForm({
             2. Pricing, Inventory & Financial Analytics Setup
           </h4>
           <p className="text-[11px] text-on-surface-variant mb-2">
-            Configure buying costs, GST rates, packaging, and the model-specific COD advance. Actual
-            courier cost is captured from Shiprocket when you assign delivery.
+            Configure buying costs, GST rates and packaging. Phone advances are arranged after
+            confirmation. Actual courier cost is captured from Shiprocket when you assign delivery.
           </p>
         </div>
         <div>
@@ -1863,7 +1877,7 @@ function EditProductForm({
         <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-              COD Advance Paid Online (₹)
+              Checkout Advance (₹)
             </label>
             <input
               name="cod_advance"
@@ -1875,7 +1889,8 @@ function EditProductForm({
               className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
             />
             <p className="mt-1 text-[10px] text-on-surface-variant">
-              Deducted from the product price; the balance is collected by Shiprocket as COD.
+              Phone checkout stays at ₹0. The follow-up advance is calculated automatically from the
+              selling price.
             </p>
           </div>
           <div>

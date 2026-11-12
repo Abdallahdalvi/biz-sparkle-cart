@@ -211,6 +211,7 @@ async function getShiprocketPaymentSummary(order: {
   cashfree_order_id: string | null;
   razorpay_payment_id: string | null;
   razorpay_order_id: string | null;
+  advance_paid_paise?: number;
 }) {
   const orderTotalPaise = Number(order.total_paise);
   if (order.notes !== "cod") {
@@ -222,7 +223,7 @@ async function getShiprocketPaymentSummary(order: {
     return { valuePaise: storedCollectablePaise, paymentMethod: "COD" as const };
   }
 
-  let paidPaise = 0;
+  let paidPaise = Number(order.advance_paid_paise) || 0;
   if (order.cashfree_payment_id) {
     const { getSuccessfulCashfreePaymentInternal } = await import("@/lib/cashfree.server");
     const payment = await getSuccessfulCashfreePaymentInternal(

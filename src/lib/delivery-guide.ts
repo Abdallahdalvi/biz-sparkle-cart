@@ -4,10 +4,12 @@ export function canShowDeliveryGuide(order: {
   onlinePaymentReceived: boolean;
   codAdvancePaise: number;
   advancePaidPaise: number;
+  codAdvanceAfterConfirmation?: boolean;
 }) {
   if (!["paid", "processing", "shipped", "delivered"].includes(order.status)) return false;
   if (order.paymentMethod === "prepaid") return order.onlinePaymentReceived;
   return (
+    order.codAdvanceAfterConfirmation === true ||
     order.codAdvancePaise === 0 ||
     (order.onlinePaymentReceived && order.advancePaidPaise >= order.codAdvancePaise)
   );
@@ -32,6 +34,6 @@ export const DELIVERY_GUIDE_STEPS = [
   },
   {
     title: "Pay only the confirmed balance",
-    body: "Your online advance is already deducted from the total. Pay only the delivery balance on this receipt. Never disclose your UPI PIN, banking OTP or card details, install an app at someone’s request, or make an extra transfer to release the parcel. Share a delivery OTP only when the correct parcel is physically being handed to you and you are ready to accept it.",
+    body: "Any advance you have paid is deducted from your total. Use your latest confirmed payment summary and pay only the remaining delivery balance. Never disclose your UPI PIN, banking OTP or card details, install an app at someone’s request, or make an extra transfer to release the parcel. Share a delivery OTP only when the correct parcel is physically being handed to you and you are ready to accept it.",
   },
 ] as const;

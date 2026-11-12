@@ -1,7 +1,7 @@
 export const CANCELLATION_EFFECTIVE_DATE = "16 October 2026";
 
 export const CUSTOMER_CANCELLATION_POLICY =
-  "You may request cancellation before the parcel is handed to the courier. For an approved customer-requested cancellation, ₹50 is deducted from the amount actually paid, and the balance is refunded to the original payment method. For COD orders, this deduction is from the online advance already paid, not from the unpaid COD balance. The deduction cannot exceed the amount paid; an unpaid checkout attempt has no refund and no separate cancellation charge. No deduction applies where a full refund is required by applicable law.";
+  "You may request cancellation before the parcel is handed to the courier. For an approved customer-requested cancellation, ₹50 is deducted from the amount actually paid, and the balance is refunded to the original payment method. For COD orders, this deduction is from the advance already paid, not from the unpaid COD balance. The deduction cannot exceed the amount paid; an unpaid checkout attempt has no refund and no separate cancellation charge. No deduction applies where a full refund is required by applicable law.";
 
 export const STORE_CANCELLATION_POLICY =
   "If we cancel a confirmed order unilaterally, we refund the full amount actually paid without a cancellation deduction and pay ₹50 compensation to the customer. Our support team will confirm how the additional compensation will be paid. Your statutory consumer rights remain unaffected.";

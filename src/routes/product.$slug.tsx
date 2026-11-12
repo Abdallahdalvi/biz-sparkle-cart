@@ -452,17 +452,13 @@ function ProductPage() {
               </div>
               <div className="mt-3 inline-flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
                 <span className="material-symbols-outlined text-base">payments</span>
-                {product.codAdvancePaise > 0 ? (
+                {product.followUpCodAdvancePaise || product.codAdvancePaise ? (
                   <span>
-                    Pay <strong>{formatINR(product.codAdvancePaise)}</strong> now—deducted from your
-                    total. Pay the balance of{" "}
-                    <strong>
-                      {formatINR(Math.max(0, product.pricePaise - product.codAdvancePaise))}
-                    </strong>{" "}
-                    on delivery. This advance is per phone, not an extra fee.
+                    Confirm COD with ₹0 now. We’ll contact you within 1 hour to arrange the advance,
+                    deducted from your total.
                   </span>
                 ) : (
-                  <span>Full Cash on Delivery available with no online advance.</span>
+                  <span>Cash on Delivery available. Pay ₹0 at checkout.</span>
                 )}
               </div>
               {product.deliveryEstimate && (

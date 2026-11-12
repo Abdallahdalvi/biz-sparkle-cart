@@ -215,6 +215,11 @@ function OrderThankYou() {
               orderId={confirmation.id}
               orderNumber={confirmation.orderNumber}
               deliveryBalancePaise={isCod ? confirmation.codCollectablePaise : 0}
+              followUpAdvancePaise={
+                confirmation.codAdvanceAfterConfirmation
+                  ? Math.max(0, confirmation.codAdvancePaise - confirmation.advancePaidPaise)
+                  : 0
+              }
               onAcknowledged={acknowledgeGuide}
             />
           )}
@@ -353,14 +358,27 @@ function OrderThankYou() {
                 <div className="mt-4 space-y-3 text-sm">
                   {isCod ? (
                     <>
+                      {confirmation.codAdvanceAfterConfirmation &&
+                        confirmation.advancePaidPaise < confirmation.codAdvancePaise && (
+                          <div className="rounded border border-amber-200 bg-amber-50 p-3 text-amber-950">
+                            We’ll contact you within 1 hour to arrange the{" "}
+                            {formatINR(
+                              confirmation.codAdvancePaise - confirmation.advancePaidPaise,
+                            )}{" "}
+                            advance, deducted from your total.
+                          </div>
+                        )}
                       <AmountRow
-                        label="Advance paid online"
+                        label="Advance paid"
                         value={formatINR(confirmation.advancePaidPaise)}
                         positive={confirmation.advancePaidPaise > 0}
                       />
                       <div className="border-t border-outline-variant/50 pt-3">
                         <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
-                          Pay to the courier on delivery
+                          {confirmation.codAdvanceAfterConfirmation &&
+                          confirmation.advancePaidPaise < confirmation.codAdvancePaise
+                            ? "Total outstanding (advance deducted once paid)"
+                            : "Pay to the courier on delivery"}
                         </p>
                         <p className="mt-1 text-2xl font-black text-primary">
                           {formatINR(confirmation.codCollectablePaise)}

@@ -16,7 +16,7 @@ export const Route = createFileRoute("/legal/terms")({
     ],
   }),
   component: () => (
-    <LegalPage title="Terms & Conditions" updated="16 October 2026">
+    <LegalPage title="Terms & Conditions" updated="12 November 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalTermsText}
       </p>
@@ -40,11 +40,11 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>4. Payments</h2>
       <p>
-        Cash on Delivery is available where supported by the assigned courier. Some models require
-        the advance amount displayed at checkout to be paid online; that advance is deducted from
-        the product total and only the remaining balance is collected on delivery. Online payments
-        are processed by the provider identified at checkout. We do not store card or banking
-        credentials.
+        Cash on Delivery is available where supported by the assigned courier. Confirm a COD order
+        with ₹0 at checkout. We will contact you within 1 hour to arrange the advance, which is
+        deducted from the order total. Only the remaining balance is collected on delivery. Online
+        payments are processed by the provider identified at checkout. We do not store card or
+        banking credentials.
       </p>
       <h2>5. Shipping, Returns, Refunds, Cancellation</h2>
       <p>

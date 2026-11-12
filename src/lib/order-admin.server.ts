@@ -13,14 +13,50 @@ type AdminOrderRecord = {
   razorpay_payment_id: string | null;
   shiprocket_order_id: string | null;
   shiprocket_shipment_id: string | null;
+  advance_paid_paise: number;
+  cod_advance_paise: number;
+  shipping_address: { cod_advance_receipt?: unknown } | null;
 };
+
+export async function recordAdminCodAdvanceInternal(
+  orderId: string,
+  reference: string,
+  adminId: string,
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { recordedFollowUpAdvance } = await import("@/lib/cod-follow-up");
+  const { data: order, error } = await supabaseAdmin
+    .from("orders")
+    .select(
+      "id, updated_at, notes, status, shipping_address, cod_advance_paise, advance_paid_paise, total_paise, cashfree_order_id, shiprocket_shipment_id",
+    )
+    .eq("id", orderId)
+    .single();
+  if (error || !order) throw new Error(error?.message || "Order not found");
+  const receipt = recordedFollowUpAdvance(order, reference, adminId, new Date().toISOString());
+  const { data: saved, error: saveError } = await supabaseAdmin
+    .from("orders")
+    .update(receipt)
+    .eq("id", orderId)
+    .eq("updated_at", order.updated_at)
+    .eq("advance_paid_paise", 0)
+    .select("id")
+    .maybeSingle();
+  if (saveError) throw new Error(saveError.message);
+  if (!saved) throw new Error("The order changed. Refresh before recording the advance.");
+  return {
+    orderId,
+    advancePaidPaise: receipt.advance_paid_paise,
+    codCollectablePaise: receipt.cod_collectable_paise,
+  };
+}
 
 async function loadAdminOrder(orderId: string): Promise<AdminOrderRecord> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, order_number, status, notes, tracking_url, stock_decremented_at, stock_restored_at, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id",
+      "id, order_number, status, notes, tracking_url, stock_decremented_at, stock_restored_at, cashfree_order_id, cashfree_payment_id, cashfree_refund_id, cashfree_refund_status, razorpay_payment_id, shiprocket_order_id, shiprocket_shipment_id, advance_paid_paise, cod_advance_paise, shipping_address",
     )
     .eq("id", orderId)
     .single();
@@ -124,6 +160,13 @@ export async function refundAdminOrderInternal(orderId: string, reason: string) 
 
 export async function updateAdminOrderStatusInternal(orderId: string, status: string) {
   const order = await loadAdminOrder(orderId);
+  if (
+    ["packed", "shipped", "delivered"].includes(status) &&
+    order.notes === "cod" &&
+    order.advance_paid_paise < order.cod_advance_paise
+  ) {
+    throw new Error("Record the received COD advance before moving this order into dispatch.");
+  }
   if (["cancelled", "refunded"].includes(order.status)) {
     throw new Error(`A ${order.status} order cannot be moved back into fulfilment`);
   }

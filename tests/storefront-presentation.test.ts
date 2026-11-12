@@ -14,7 +14,6 @@ test("checkout has policy links without cancellation or replacement warning boxe
   assert.doesNotMatch(checkout, /CANCELLATION_CHECKOUT_NOTICE|REPLACEMENT_DELIVERY_NOTICE/);
   assert.match(checkout, /to="\/legal\/cancellation"/);
   assert.match(checkout, /to="\/legal\/returns"/);
-  assert.match(checkout, /amounts.subtotalPaise - codAdvancePaise/);
 });
 test("long cancellation and replacement notices are excluded from storefront FAQs", () => {
   const products = read("lib/products.ts");
