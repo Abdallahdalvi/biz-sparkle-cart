@@ -17,6 +17,7 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { TrackingManager } from "@/components/analytics/TrackingManager";
 import { getTrackingConfiguration } from "@/lib/tracking-settings.functions";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_SOCIAL_IMAGE_URL, SITE_URL } from "@/lib/site";
+import { StorefrontLanguageProvider } from "@/components/StorefrontLanguage";
 
 function NotFoundComponent() {
   return (
@@ -139,6 +140,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap",
+      },
+      {
+        rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap",
       },
     ],
@@ -169,10 +174,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <TrackingManager settings={tracking} />
-      <ClientToaster />
+      <StorefrontLanguageProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <TrackingManager settings={tracking} />
+        <ClientToaster />
+      </StorefrontLanguageProvider>
     </QueryClientProvider>
   );
 }

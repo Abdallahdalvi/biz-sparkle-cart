@@ -61,7 +61,7 @@ export function DeliveryGuide({
           </h2>
           <p className="mt-1 text-sm text-amber-950">
             {followUpAdvancePaise > 0
-              ? "We’ll call within 1 hour to confirm your order and arrange payment before dispatch."
+              ? "We’ll call within 1 hour to confirm your COD order and share a QR code for the advance."
               : "Read the delivery checks. Record your unboxing or video-call us while unpacking."}
           </p>
         </div>
@@ -99,7 +99,7 @@ export function DeliveryGuide({
               onClick={() => changeOpen(false)}
               className="min-h-12 rounded bg-orange-600 px-4 py-3 text-sm font-bold text-white"
             >
-              I understand — {formatINR(followUpAdvancePaise)} advance required
+              Got it — {formatINR(followUpAdvancePaise)} advance
             </button>
           </>
         ) : (

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
 import { CANCELLATION_POLICY_SUMMARY } from "@/lib/cancellation-policy";
+import { useStorefrontLanguage } from "@/components/StorefrontLanguage";
+import { POLICY_LANGUAGE_SUMMARIES } from "@/lib/policy-language-summaries";
 
 export function LegalPage({
   title,
@@ -12,6 +14,8 @@ export function LegalPage({
   updated?: string;
   children: ReactNode;
 }) {
+  const { language } = useStorefrontLanguage();
+  const summary = language !== "en" ? POLICY_LANGUAGE_SUMMARIES[title]?.[language] : undefined;
   return (
     <SiteShell>
       <article className="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-16">
@@ -25,7 +29,24 @@ export function LegalPage({
           </p>
         )}
         <div className="space-y-6 text-on-surface leading-relaxed [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-primary [&_h2]:mt-10 [&_h2]:mb-3 [&_p]:text-on-surface-variant [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:text-on-surface-variant [&_li]:mb-1 [&_a]:text-primary [&_a]:underline">
-          {children}
+          {summary ? (
+            <>
+              <section className="rounded border border-outline-variant/50 bg-white p-5">
+                <h2>Policy summary</h2>
+                <p data-no-translate lang={language}>
+                  {summary}
+                </p>
+              </section>
+              <details>
+                <summary className="cursor-pointer font-bold">Full policy (English)</summary>
+                <div translate="no" lang="en" dir="ltr" className="mt-5 space-y-6">
+                  {children}
+                </div>
+              </details>
+            </>
+          ) : (
+            children
+          )}
         </div>
       </article>
     </SiteShell>

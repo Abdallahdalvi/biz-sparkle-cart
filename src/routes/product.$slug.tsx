@@ -455,8 +455,8 @@ function ProductPage() {
                 {product.followUpCodAdvancePaise || product.codAdvancePaise ? (
                   <span>
                     COD requires a{" "}
-                    {formatINR(product.followUpCodAdvancePaise || product.codAdvancePaise)} advance
-                    before dispatch. We’ll call within 1 hour to confirm your order and arrange
+                    {formatINR(product.followUpCodAdvancePaise || product.codAdvancePaise)} advance.
+                    We’ll call within 1 hour to confirm your COD order and share a QR code for
                     payment. Deducted from your total.
                   </span>
                 ) : (

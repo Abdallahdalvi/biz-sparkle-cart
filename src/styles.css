@@ -4,6 +4,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html:lang(hi) body,
+html:lang(mr) body,
+html:lang(hi) .font-display,
+html:lang(mr) .font-display {
+  font-family: "Noto Sans Devanagari", system-ui, sans-serif;
+}
+html:lang(ar) body,
+html:lang(ar) .font-display {
+  font-family: "Noto Sans Arabic", system-ui, sans-serif;
+}
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[name="pincode"],
+html[dir="rtl"] input[name="gstin"] {
+  direction: ltr;
+  text-align: left;
+}
+
 /*
  * Aghanims Phones and Gadgets design system.
  * Minimalist black/white, Hanken Grotesk, Material Symbols.

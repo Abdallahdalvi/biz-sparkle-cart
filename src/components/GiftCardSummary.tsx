@@ -10,9 +10,25 @@ export function GiftCardSummary({ address }: { address: unknown }) {
       <p className="mt-1 text-xs">
         Gift-wrap this order and include a greeting card with the message below.
       </p>
-      {gift.to && <p className="mt-2">To: {gift.to}</p>}
-      {gift.from && <p>From: {gift.from}</p>}
-      <p className="mt-2 whitespace-pre-wrap break-words">{gift.message}</p>
+      {gift.to && (
+        <p className="mt-2">
+          To:{" "}
+          <span translate="no" dir="auto">
+            {gift.to}
+          </span>
+        </p>
+      )}
+      {gift.from && (
+        <p>
+          From:{" "}
+          <span translate="no" dir="auto">
+            {gift.from}
+          </span>
+        </p>
+      )}
+      <p translate="no" dir="auto" className="mt-2 whitespace-pre-wrap break-words">
+        {gift.message}
+      </p>
     </section>
   );
 }

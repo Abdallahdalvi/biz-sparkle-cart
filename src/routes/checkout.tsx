@@ -250,7 +250,8 @@ function Checkout() {
           </div>
         )}
 
-        {capabilities.onlinePaymentsConfigured &&
+        {payMode === "prepaid" &&
+          capabilities.onlinePaymentsConfigured &&
           capabilities.onlinePaymentEnvironment === "sandbox" && (
             <div className="bg-amber-50 border border-amber-200 p-4 rounded mb-8 flex items-start gap-3 text-xs text-amber-950">
               <span className="material-symbols-outlined text-amber-700 text-xl">science</span>
@@ -425,17 +426,18 @@ function Checkout() {
                 <Input name="state" required placeholder="State" />
                 <Input name="pincode" required placeholder="PIN code" pattern="[0-9]{6}" />
               </div>
-              <div className="pt-2 border-t border-outline-variant/30">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-primary block mb-1">
+              <details className="pt-2 border-t border-outline-variant/30">
+                <summary className="cursor-pointer text-xs text-on-surface-variant mb-2">
                   Business GSTIN (Optional)
-                </label>
+                </summary>
                 <Input
                   name="gstin"
+                  aria-label="Business GSTIN (Optional)"
                   placeholder="e.g. 27AAAAA0000A1Z5"
                   pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
                   title="Enter a valid 15-digit GSTIN"
                 />
-              </div>
+              </details>
             </fieldset>
             <fieldset disabled={busy} className="bg-white shopify-border p-6 space-y-4">
               <legend className="px-2 text-[11px] font-bold uppercase tracking-widest">
@@ -453,8 +455,7 @@ function Checkout() {
                     Gift wrap this order + greeting card · {formatINR(GIFT_CARD_PRICE_PAISE)}
                   </strong>
                   <span className="mt-1 block text-xs text-on-surface-variant">
-                    We’ll gift-wrap your order and include a physical greeting card with your
-                    personal message. ₹299 for both, once per order. Optional.
+                    Add your personal message.
                   </span>
                 </span>
               </label>
@@ -606,7 +607,7 @@ function Checkout() {
                   </div>
                   <p className="text-xs leading-relaxed text-on-surface-variant mt-1">
                     {followUpAdvancePaise > 0
-                      ? `A ${formatINR(followUpAdvancePaise)} advance is required before dispatch. We’ll call within 1 hour to confirm your order and arrange payment. Pay ₹0 at checkout.`
+                      ? "Book now, pay the advance after our call."
                       : `Pay ${formatINR(amounts.totalPaise)} on delivery.`}
                   </p>
                 </div>
@@ -614,7 +615,7 @@ function Checkout() {
             </fieldset>
           </div>
           <aside className="bg-white shopify-border p-6 h-fit space-y-4">
-            <h2 className="font-bold uppercase tracking-widest text-sm">Summary</h2>
+            <h2 className="font-bold text-sm">Your order</h2>
             {items.map((i) => (
               <div key={i.slug + (i.variantId ?? "")} className="flex justify-between text-sm">
                 <span className="text-on-surface-variant">
@@ -642,17 +643,13 @@ function Checkout() {
               </div>
             )}
             {payMode === "prepaid" ? (
-              <div className="space-y-2 border-t border-outline-variant/30 pt-4">
-                <label htmlFor="coupon-code" className="block text-sm font-bold">
-                  Have a coupon?
-                </label>
+              <details className="space-y-2 border-t border-outline-variant/30 pt-4">
+                <summary className="cursor-pointer text-sm font-semibold">Have a coupon?</summary>
                 <p className="text-xs text-on-surface-variant">
-                  Single use. Replaces the prepaid discount; offers cannot be combined.
+                  Prepaid only. Coupons replace other discounts.
                 </p>
                 {!couponEmail.trim() && (
-                  <p className="text-xs text-on-surface-variant">
-                    Enter your email in the contact section before applying a coupon.
-                  </p>
+                  <p className="text-xs text-on-surface-variant">Enter your email first.</p>
                 )}
                 <div className="flex gap-2">
                   <input
@@ -713,16 +710,16 @@ function Checkout() {
                     </button>
                   </div>
                 )}
-                <p className="text-[11px] text-on-surface-variant">
-                  Applies to products only, with at least ₹1 payable online. Unused coupon value is
-                  forfeited. Retry an interrupted payment with the same cart and delivery details.
-                </p>
-              </div>
-            ) : (
-              <p className="text-xs text-on-surface-variant">
-                Coupons are available for prepaid orders only.
-              </p>
-            )}
+                <details className="text-[11px] text-on-surface-variant">
+                  <summary className="cursor-pointer">Coupon terms</summary>
+                  <p>
+                    Applies to products only, with at least ₹1 payable online. Unused coupon value
+                    is forfeited. Retry an interrupted payment with the same cart and delivery
+                    details.
+                  </p>
+                </details>
+              </details>
+            ) : null}
             {payMode === "prepaid" && amounts.discountPaise > 0 && (
               <div className="flex justify-between text-sm text-emerald-700 font-medium">
                 <span>
@@ -757,7 +754,7 @@ function Checkout() {
                 : payMode === "prepaid"
                   ? `Pay ${formatINR(effectiveTotal)}`
                   : followUpAdvancePaise > 0
-                    ? `Place COD Order · ${formatINR(followUpAdvancePaise)} Advance Required`
+                    ? "Confirm COD order"
                     : `Confirm COD Order — ₹0 Now`}
             </button>
             <p className="text-[10px] text-on-surface-variant text-center">
@@ -789,6 +786,7 @@ function Checkout() {
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
+      aria-label={props["aria-label"] || props.placeholder}
       {...props}
       className="w-full bg-surface-container-low border border-outline-variant/40 px-4 py-3 text-sm focus:outline-none focus:border-primary transition-colors"
     />

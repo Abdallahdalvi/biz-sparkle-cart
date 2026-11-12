@@ -388,11 +388,10 @@ function OrderThankYou() {
                       {confirmation.codAdvanceAfterConfirmation &&
                         confirmation.advancePaidPaise < confirmation.codAdvancePaise && (
                           <div className="rounded border border-amber-200 bg-amber-50 p-3 text-amber-950">
-                            We’ll contact you within 1 hour to arrange the{" "}
+                            COD advance due:{" "}
                             {formatINR(
                               confirmation.codAdvancePaise - confirmation.advancePaidPaise,
-                            )}{" "}
-                            advance, deducted from your total.
+                            )}
                           </div>
                         )}
                       <AmountRow
@@ -425,7 +424,11 @@ function OrderThankYou() {
 
               <section className="border border-outline-variant/50 bg-white p-5 shadow-sm sm:p-7">
                 <h2 className="text-lg font-black text-primary">Delivering to</h2>
-                <div className="mt-3 text-sm leading-6 text-on-surface-variant">
+                <div
+                  translate="no"
+                  dir="auto"
+                  className="mt-3 text-sm leading-6 text-on-surface-variant"
+                >
                   <p className="font-bold text-primary">
                     {address.first_name} {address.last_name}
                   </p>

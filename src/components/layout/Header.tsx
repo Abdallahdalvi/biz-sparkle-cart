@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useCart, useCartOwnerSync } from "@/lib/cart-store";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
+import { LanguageSelector } from "@/components/StorefrontLanguage";
 
 const NAV = [
   { href: "/", route: "/", label: "Store" },
@@ -28,13 +29,16 @@ export function Header() {
         aria-label="Delivery and payment options"
         className="flex h-14 flex-col items-center justify-center gap-1 border-b border-amber-500 bg-amber-400 px-3 text-center text-[11px] font-semibold leading-4 text-slate-950 sm:h-8 sm:flex-row sm:gap-6 sm:text-xs"
       >
-        <p className="flex items-center justify-center gap-3">
-          <strong className="font-semibold">Free delivery</strong>
-          <span aria-hidden="true" className="opacity-50">
-            ·
-          </span>
-          <span>COD with advance</span>
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="flex items-center justify-center gap-2">
+            <strong className="font-semibold">Free delivery</strong>
+            <span aria-hidden="true" className="hidden opacity-50 min-[360px]:inline">
+              ·
+            </span>
+            <span className="hidden min-[360px]:inline">COD with advance</span>
+          </p>
+          <LanguageSelector />
+        </div>
         <p>
           Credit/Debit Cards <span aria-hidden="true">·</span> UPI <span aria-hidden="true">·</span>{" "}
           Net Banking
