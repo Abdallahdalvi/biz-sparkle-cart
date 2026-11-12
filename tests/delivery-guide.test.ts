@@ -35,7 +35,7 @@ test("guidance distinguishes suspicion from proof and explains after-handover in
   const text = DELIVERY_GUIDE_STEPS.map((step) => step.body).join(" ");
   assert.match(text, /label alone does not prove/);
   assert.match(text, /After accepting the parcel/);
-  assert.match(text, /do not pay or accept under pressure/);
+  assert.match(text, /do not pay or accept under pressure/i);
   assert.match(text, /48 hours/);
 });
 test("advance tiers prioritize actual iPhones and smartphones over supplier source", () => {

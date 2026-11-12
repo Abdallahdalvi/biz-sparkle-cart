@@ -20,11 +20,15 @@ export const DELIVERY_GUIDE_STEPS = [
   },
   {
     title: "A light parcel alone does not mean a scam",
-    body: "Phone parcels can be compact. If a delivery agent raises a concern, or you feel unsure, ask them to wait while you call us or request a WhatsApp video call. Share your order number and show the parcel and label so we can help verify it. If you cannot verify it or reach us, do not pay or accept under pressure.",
+    body: "Phone parcels can be compact; weight alone does not tell you what is inside. Match the parcel and payment details to your order. If the details do not match or the seal is damaged, contact support before accepting it. Do not pay or accept under pressure.",
   },
   {
-    title: "Open and inspect with an unboxing video",
-    body: "The courier may not permit open-box inspection before payment. Follow the courier’s handover rules. After accepting the parcel, record one continuous video showing the unopened package, label, seals, opening and contents. You can open and check your order; our store takes responsibility for reviewing and resolving eligible wrong-item, missing-item, damage or defect issues under our replacement policy. Report any issue within 48 hours and keep the packaging.",
+    title: "Record your unboxing or video-call us while unpacking",
+    body: "The courier may not permit open-box inspection before payment. Follow the courier’s handover rules. After accepting the parcel and completing the handover, record one continuous unboxing video, or arrange a WhatsApp video call with our team while you unpack. Start with the unopened package and clearly show the shipping label, seals, opening, phone and included items. If our team is unavailable, record the video before opening the parcel.",
+  },
+  {
+    title: "Keep evidence and report any issue",
+    body: "If you find a wrong item, missing item, damage or defect, report it within 48 hours with your order number and unboxing video, or details of the video call. Keep the packaging and any photos so we can assess your claim and resolve eligible issues under our replacement policy.",
   },
   {
     title: "Pay only the confirmed balance",

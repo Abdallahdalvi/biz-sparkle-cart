@@ -25,7 +25,7 @@ export function DeliveryGuide({
   onAcknowledged: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const acknowledgementKey = `aghanims-delivery-guide-v1:${orderId}`;
+  const acknowledgementKey = `aghanims-delivery-guide-v2:${orderId}`;
   useEffect(() => {
     try {
       const acknowledged = localStorage.getItem(acknowledgementKey) === "read";
@@ -55,7 +55,7 @@ export function DeliveryGuide({
             Before your parcel arrives
           </h2>
           <p className="mt-1 text-sm text-amber-950">
-            Save our number and read the delivery checks. Call us if anything feels wrong.
+            Read the delivery checks. Record your unboxing or video-call us while unpacking.
           </p>
         </div>
         <DialogTrigger asChild>
@@ -90,19 +90,19 @@ export function DeliveryGuide({
           </a>
           <a
             href={whatsappChatUrl(
-              `Hi Aghanims, I am receiving order ${orderNumber} and need urgent help verifying the parcel. Can we have a WhatsApp video call?`,
+              `Hi Aghanims, I have received order ${orderNumber} and completed the courier handover. The parcel is still unopened. Can we arrange a WhatsApp video call while I unpack and check the contents? If you are unavailable, I will record a continuous unboxing video.`,
             )}
             target="_blank"
             rel="noopener noreferrer"
             className="flex min-h-12 items-center justify-center gap-2 rounded bg-[#128C7E] px-3 py-3 text-sm font-bold text-white"
           >
             <MessageCircle className="h-4 w-4" />
-            Request a video call
+            Video call while unpacking
           </a>
         </div>
         <p className="text-xs text-on-surface-variant">
-          Call us as soon as you are unsure. If a call is not answered, message us and verify the
-          parcel before accepting it.
+          Video calls are for unpacking after the courier handover. If our team is unavailable,
+          record a continuous unboxing video so you have evidence if there is an issue.
         </p>
         <ol className="space-y-4">
           {DELIVERY_GUIDE_STEPS.map((step, index) => (
