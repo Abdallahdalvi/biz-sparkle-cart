@@ -22,6 +22,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as PIdRouteImport } from './routes/p.$id'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalShippingRouteImport } from './routes/legal.shipping'
 import { Route as LegalReturnsRouteImport } from './routes/legal.returns'
@@ -101,6 +102,11 @@ const IndexRoute = IndexRouteImport.update({
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PIdRoute = PIdRouteImport.update({
+  id: '/p/$id',
+  path: '/p/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalTermsRoute = LegalTermsRouteImport.update({
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/legal/returns': typeof LegalReturnsRoute
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/p/$id': typeof PIdRoute
   '/product/$slug': typeof ProductSlugRoute
   '/order/thank-you/$orderId': typeof OrderThankYouOrderIdRoute
   '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
@@ -236,6 +243,7 @@ export interface FileRoutesByTo {
   '/legal/returns': typeof LegalReturnsRoute
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/p/$id': typeof PIdRoute
   '/product/$slug': typeof ProductSlugRoute
   '/order/thank-you/$orderId': typeof OrderThankYouOrderIdRoute
   '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/legal/returns': typeof LegalReturnsRoute
   '/legal/shipping': typeof LegalShippingRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/p/$id': typeof PIdRoute
   '/product/$slug': typeof ProductSlugRoute
   '/order/thank-you/$orderId': typeof OrderThankYouOrderIdRoute
   '/api/public/webhooks/cashfree': typeof ApiPublicWebhooksCashfreeRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/legal/returns'
     | '/legal/shipping'
     | '/legal/terms'
+    | '/p/$id'
     | '/product/$slug'
     | '/order/thank-you/$orderId'
     | '/api/public/webhooks/cashfree'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/legal/returns'
     | '/legal/shipping'
     | '/legal/terms'
+    | '/p/$id'
     | '/product/$slug'
     | '/order/thank-you/$orderId'
     | '/api/public/webhooks/cashfree'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/legal/returns'
     | '/legal/shipping'
     | '/legal/terms'
+    | '/p/$id'
     | '/product/$slug'
     | '/order/thank-you/$orderId'
     | '/api/public/webhooks/cashfree'
@@ -384,6 +396,7 @@ export interface RootRouteChildren {
   LegalReturnsRoute: typeof LegalReturnsRoute
   LegalShippingRoute: typeof LegalShippingRoute
   LegalTermsRoute: typeof LegalTermsRoute
+  PIdRoute: typeof PIdRoute
   ProductSlugRoute: typeof ProductSlugRoute
   OrderThankYouOrderIdRoute: typeof OrderThankYouOrderIdRoute
   ApiPublicWebhooksCashfreeRoute: typeof ApiPublicWebhooksCashfreeRoute
@@ -480,6 +493,13 @@ declare module '@tanstack/react-router' {
       path: '/product/$slug'
       fullPath: '/product/$slug'
       preLoaderRoute: typeof ProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$id': {
+      id: '/p/$id'
+      path: '/p/$id'
+      fullPath: '/p/$id'
+      preLoaderRoute: typeof PIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal/terms': {
@@ -639,6 +659,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalReturnsRoute: LegalReturnsRoute,
   LegalShippingRoute: LegalShippingRoute,
   LegalTermsRoute: LegalTermsRoute,
+  PIdRoute: PIdRoute,
   ProductSlugRoute: ProductSlugRoute,
   OrderThankYouOrderIdRoute: OrderThankYouOrderIdRoute,
   ApiPublicWebhooksCashfreeRoute: ApiPublicWebhooksCashfreeRoute,
