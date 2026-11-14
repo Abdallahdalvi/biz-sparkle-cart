@@ -334,7 +334,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   reviews_heading: {
     store_name: "Aghanims Phones and Gadgets",
     rating: 5.0,
-    total_reviews: 30,
+    total_reviews: 47,
   },
   reviews: LATEST_GOOGLE_TEXT_REVIEWS,
   cod_charge_amount: 99,
