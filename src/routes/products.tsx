@@ -1,22 +1,24 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, type SearchSchemaInput } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
+import { PhoneTypeFilters } from "@/components/PhoneTypeFilters";
 import { CATEGORIES, getAllProducts, getStorefrontCms, type Category } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
 import { trackCommerceEvent } from "@/lib/tracking";
 import { rankProducts } from "@/lib/product-ranking";
 import {
-  isSmartphone,
   matchesQuickShopCategory,
-  type QuickShopCategory,
+  validPhoneType,
+  type PhoneType,
 } from "@/lib/quick-shop-categories";
 
 const PAGE_SIZE = 30;
 
 export const Route = createFileRoute("/products")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: { q?: string; type?: PhoneType | "all" } & SearchSchemaInput) => ({
     q: typeof search.q === "string" ? search.q : "",
+    type: validPhoneType(search.type),
   }),
   loader: async () => {
     const all = await getAllProducts();
@@ -78,7 +80,7 @@ function Catalog() {
 
   // Filtering States
   const [cat, setCat] = useState<Category | "all">("all");
-  const [quickCategory, setQuickCategory] = useState<QuickShopCategory | "all">("all");
+  const [quickCategory, setQuickCategory] = useState<PhoneType | "all">(searchParams.type);
   const [formFactor, setFormFactor] = useState<string>("all");
   const [availability, setAvailability] = useState<string>("all");
   const [brand, setBrand] = useState<string>("all");
@@ -89,6 +91,18 @@ function Catalog() {
   const trackedSearches = useRef(new Set<string>());
 
   useEffect(() => setSearchTerm(searchParams.q), [searchParams.q]);
+  useEffect(() => {
+    setQuickCategory(searchParams.type);
+    setPage(1);
+  }, [searchParams.type]);
+
+  const selectPhoneType = (value: PhoneType | "all") => {
+    setQuickCategory(value);
+    setCat("all");
+    setFormFactor("all");
+    setPage(1);
+    void navigate({ search: (previous) => ({ ...previous, type: value }) });
+  };
 
   const formFactors = [
     "all",
@@ -119,7 +133,7 @@ function Catalog() {
       ),
     [all],
   );
-  const quickCategories: { key: QuickShopCategory; label: string; count: number }[] = [
+  const quickCategories = [
     {
       key: "blackberry",
       label: "BlackBerry",
@@ -139,37 +153,6 @@ function Catalog() {
       key: "motorola",
       label: "Motorola",
       count: all.filter((product) => matchesQuickShopCategory(product, "motorola")).length,
-    },
-    {
-      key: "vintage_collection",
-      label: "Vintage Collection",
-      count: all.filter((product) => matchesQuickShopCategory(product, "vintage_collection"))
-        .length,
-    },
-    {
-      key: "smartphones",
-      label: "Smartphones",
-      count: all.filter((product) => isSmartphone(product)).length,
-    },
-    {
-      key: "qwerty",
-      label: "QWERTY",
-      count: all.filter((product) => matchesQuickShopCategory(product, "qwerty")).length,
-    },
-    {
-      key: "t9",
-      label: "T9 Keypad",
-      count: all.filter((product) => matchesQuickShopCategory(product, "t9")).length,
-    },
-    {
-      key: "flip",
-      label: "Flip Phones",
-      count: all.filter((product) => matchesQuickShopCategory(product, "flip")).length,
-    },
-    {
-      key: "slider",
-      label: "Slider Phones",
-      count: all.filter((product) => matchesQuickShopCategory(product, "slider")).length,
     },
   ];
 
@@ -321,6 +304,7 @@ function Catalog() {
                 setCat(c.id);
                 setQuickCategory("all");
                 setPage(1);
+                void navigate({ search: (previous) => ({ ...previous, type: "all" }) });
               }}
               className={
                 "px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-colors " +
@@ -335,21 +319,32 @@ function Catalog() {
         </div>
 
         <section aria-label="Shop popular categories" className="mb-7">
-          <h2 className="mb-3 text-sm font-bold text-primary">Shop by category</h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
+          <h2 className="mb-3 text-sm font-bold text-primary">Shop by phone type</h2>
+          <PhoneTypeFilters products={all} value={quickCategory} onChange={selectPhoneType} />
+          <h3 className="mb-3 mt-5 text-sm font-bold text-primary">Brand</h3>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              aria-pressed={brand === "all"}
+              onClick={() => {
+                setBrand("all");
+                setPage(1);
+              }}
+              className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold ${brand === "all" ? "border-primary bg-primary text-on-primary" : "border-outline-variant bg-white text-primary"}`}
+            >
+              All Brands
+            </button>
             {quickCategories.map((item) => (
               <button
                 key={item.key}
                 type="button"
-                aria-pressed={quickCategory === item.key}
+                aria-pressed={brand === item.label}
                 onClick={() => {
-                  setQuickCategory((current) => (current === item.key ? "all" : item.key));
-                  setCat("all");
-                  setBrand("all");
+                  setBrand((current) => (current === item.label ? "all" : item.label));
                   setPage(1);
                 }}
                 className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
-                  quickCategory === item.key
+                  brand === item.label
                     ? "border-primary bg-primary text-on-primary"
                     : "border-outline-variant bg-white text-primary hover:border-primary"
                 }`}
@@ -533,7 +528,7 @@ function Catalog() {
                 setSortBy("recommended");
                 setSearchTerm("");
                 setPage(1);
-                void navigate({ search: { q: "" } });
+                void navigate({ search: { q: "", type: "all" } });
               }}
               className="bg-primary text-on-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm inline-block mt-2"
             >

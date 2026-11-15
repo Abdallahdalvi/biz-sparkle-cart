@@ -957,6 +957,28 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
   ],
   ["Shop by category", "श्रेणी के अनुसार खरीदें", "प्रकारानुसार खरेदी करा", "تسوق حسب الفئة"],
   [
+    "Shop by phone type",
+    "फ़ोन के प्रकार से खरीदें",
+    "फोनच्या प्रकारानुसार खरेदी करा",
+    "تسوق حسب نوع الهاتف",
+  ],
+  [
+    "Filter by phone type",
+    "फ़ोन के प्रकार से फ़िल्टर करें",
+    "फोनच्या प्रकारानुसार फिल्टर करा",
+    "تصفية حسب نوع الهاتف",
+  ],
+  ["All Phones", "सभी फ़ोन", "सर्व फोन", "جميع الهواتف"],
+  ["QWERTY Phones", "QWERTY फ़ोन", "QWERTY फोन", "هواتف QWERTY"],
+  ["Keypad Phones", "कीपैड फ़ोन", "कीपॅड फोन", "هواتف بأزرار"],
+  ["Mini Phones", "मिनी फ़ोन", "मिनी फोन", "هواتف صغيرة"],
+  [
+    "No phones in this category yet. Choose another phone type.",
+    "इस श्रेणी में अभी कोई फ़ोन नहीं है। दूसरा प्रकार चुनें।",
+    "या प्रकारात अद्याप फोन नाहीत. दुसरा प्रकार निवडा.",
+    "لا توجد هواتف في هذه الفئة حاليًا. اختر نوعًا آخر.",
+  ],
+  [
     "More filters and sorting",
     "और फ़िल्टर व क्रम",
     "अधिक फिल्टर व क्रमवारी",
@@ -1354,6 +1376,12 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
 ];
 
 export const STOREFRONT_TEMPLATES: Translation[] = [
+  [
+    "Showing {shown} of {total} phones",
+    "{total} में से {shown} फ़ोन दिख रहे हैं",
+    "{total} पैकी {shown} फोन दाखवत आहोत",
+    "عرض {shown} من أصل {total} هاتفًا",
+  ],
   [
     "{amount} advance required",
     "{amount} अग्रिम ज़रूरी है",

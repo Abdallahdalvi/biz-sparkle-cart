@@ -3,6 +3,12 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
+import { PhoneTypeFilters } from "@/components/PhoneTypeFilters";
+import {
+  matchesQuickShopCategory,
+  PHONE_TYPE_OPTIONS,
+  type PhoneType,
+} from "@/lib/quick-shop-categories";
 import { getAllProducts, getStorefrontCms, type Product, type StorefrontCms } from "@/lib/products";
 import {
   GOOGLE_ALL_REVIEWS_URL,
@@ -283,7 +289,10 @@ function Index() {
   };
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const [productSort, setProductSort] = useState<ProductSort>("recommended");
+  const [productSort, setProductSort] = useState<ProductSort | "price_asc" | "price_desc">(
+    "recommended",
+  );
+  const [phoneType, setPhoneType] = useState<PhoneType | "all">("all");
   const youtubeVideos = (
     channelVideos.length
       ? channelVideos
@@ -312,12 +321,22 @@ function Index() {
     ? cms.whatsapp_channel_url
     : "/legal/contact";
   const heroTitleFontSize = Math.min(76, Math.max(36, Number(cms.hero_title_font_size) || 52));
-  const homepageProducts = rankProducts(
-    all.filter((product) => product.category === "phones"),
-    productSort,
+  const filteredHomepageProducts = all.filter(
+    (product) =>
+      product.category === "phones" &&
+      (phoneType === "all" || matchesQuickShopCategory(product, phoneType)),
+  );
+  const rankedHomepageProducts = rankProducts(
+    filteredHomepageProducts,
+    productSort === "price_asc" || productSort === "price_desc" ? "recommended" : productSort,
     rankingSeed,
     rankingTime,
-  ).slice(0, HOME_PRODUCT_LIMIT);
+  );
+  if (productSort === "price_asc")
+    rankedHomepageProducts.sort((a, b) => a.pricePaise - b.pricePaise);
+  if (productSort === "price_desc")
+    rankedHomepageProducts.sort((a, b) => b.pricePaise - a.pricePaise);
+  const homepageProducts = rankedHomepageProducts.slice(0, HOME_PRODUCT_LIMIT);
 
   return (
     <SiteShell>
@@ -475,11 +494,13 @@ function Index() {
                 </p>
               </div>
               <h2 className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl md:text-4xl">
-                {productSort === "newest"
-                  ? "Newly added phones"
-                  : productSort === "popular"
-                    ? "Most popular phones"
-                    : "Phones worth exploring"}
+                {phoneType !== "all"
+                  ? PHONE_TYPE_OPTIONS.find((option) => option.key === phoneType)?.label
+                  : productSort === "newest"
+                    ? "Newly added phones"
+                    : productSort === "popular"
+                      ? "Most popular phones"
+                      : "Phones worth exploring"}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-on-surface-variant sm:text-base">
                 {productSort === "newest"
@@ -489,34 +510,44 @@ function Index() {
             </div>
           </div>
 
-          <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Browse phones">
-            {(
-              [
-                ["recommended", "Recommended"],
-                ["newest", "Newly Added"],
-                ["popular", "Most Popular"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={productSort === value}
-                onClick={() => setProductSort(value)}
-                className={`min-h-11 border px-4 py-2 text-sm font-bold transition-colors ${productSort === value ? "border-primary bg-primary text-on-primary" : "border-outline-variant bg-white text-primary hover:border-primary"}`}
+          <div className="mb-5 space-y-3">
+            <h3 className="text-sm font-bold text-primary">Shop by phone type</h3>
+            <PhoneTypeFilters products={all} value={phoneType} onChange={setPhoneType} />
+          </div>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-on-surface-variant" aria-live="polite" aria-atomic="true">
+              Showing {homepageProducts.length} of {filteredHomepageProducts.length} phones
+            </p>
+            <label className="flex items-center gap-2 text-xs font-bold text-primary">
+              <span>Sort By</span>
+              <select
+                value={productSort}
+                onChange={(event) => setProductSort(event.target.value as typeof productSort)}
+                className="min-h-11 max-w-full border border-outline-variant bg-white px-3 text-sm"
               >
-                {label}
-              </button>
-            ))}
+                <option value="recommended">Recommended</option>
+                <option value="newest">Newly Added</option>
+                <option value="popular">Most Popular</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </label>
           </div>
           <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
             {homepageProducts.map((product) => (
               <ProductCard key={product.slug} product={product} />
             ))}
           </div>
+          {homepageProducts.length === 0 && (
+            <p className="py-10 text-center text-sm text-on-surface-variant">
+              No phones in this category yet. Choose another phone type.
+            </p>
+          )}
 
           <div className="mt-8 flex justify-center">
             <Link
               to="/products"
+              search={{ q: "", type: phoneType }}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-on-primary shadow-sm transition-opacity hover:opacity-90 sm:w-auto sm:min-h-11 sm:bg-white sm:px-5 sm:py-3 sm:text-xs sm:text-primary sm:ring-1 sm:ring-primary sm:hover:bg-primary sm:hover:text-on-primary"
             >
               View all products
