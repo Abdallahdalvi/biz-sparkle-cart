@@ -1,10 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { inventoryTotal, selectedStock } from "../src/lib/inventory.ts";
+import { inventoryTotal, resolveVariantId, selectedStock } from "../src/lib/inventory.ts";
 const variants = [
   { id: "black", label: "Black", stock: 10 },
   { id: "white", label: "White", stock: 1 },
 ];
+
+test("default selection skips sold-out variants and replaces stale product variant IDs", () => {
+  const colours = [{ id: "sold", label: "Red", stock: 0 }, ...variants];
+  assert.equal(resolveVariantId(colours), "black");
+  assert.equal(resolveVariantId(colours, "previous-phone-id"), "black");
+  assert.equal(
+    selectedStock({ stock: 11, variants: colours }, resolveVariantId(colours, "previous-phone-id")),
+    10,
+  );
+  assert.equal(resolveVariantId(colours, "white"), "white");
+  assert.equal(resolveVariantId(colours, "sold"), "sold");
+  assert.equal(resolveVariantId([colours[0]]), "sold");
+  assert.equal(resolveVariantId(undefined, "previous-phone-id"), undefined);
+});
 test("colour totals use 10 black plus 1 white, not the total for each colour", () => {
   assert.equal(inventoryTotal(variants, 999), 11);
   assert.equal(selectedStock({ stock: 11, variants }, "white"), 1);

@@ -1,5 +1,10 @@
 export type StockVariant = { id: string; label: string; stock?: number };
 
+export function resolveVariantId(variants: StockVariant[] | undefined, selectedId?: string) {
+  if (variants?.some((variant) => variant.id === selectedId)) return selectedId;
+  return variants?.find((variant) => Number(variant.stock) > 0)?.id || variants?.[0]?.id;
+}
+
 export function inventoryTotal(variants: StockVariant[], stock: number) {
   const active = variants.filter((variant) => variant.label.trim());
   if (new Set(active.map((variant) => variant.label.trim().toLowerCase())).size !== active.length) {

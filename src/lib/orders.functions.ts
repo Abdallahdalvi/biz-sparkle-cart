@@ -204,6 +204,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     let subtotalPaise = 0;
     const codAdvancePaise = 0;
     let followUpAdvancePaise = 0;
+    let hasFollowUpCod = false;
     const orderItemsToInsert: Array<{
       name: string;
       variant_label: string | null;
@@ -265,8 +266,9 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       const categories = prod.categories as unknown as { slug: string } | { slug: string }[] | null;
       const categorySlug = Array.isArray(categories) ? categories[0]?.slug : categories?.slug;
       const followUpCod = categorySlug === "phones" || isFollowUpCod(prod.metadata);
+      hasFollowUpCod ||= followUpCod;
       const unitFollowUpAdvancePaise = followUpCod
-        ? followUpAdvanceForPrice(unitPricePaise)
+        ? 0
         : Math.min(unitPricePaise, Math.max(0, Number(prod.cod_advance_paise) || 0));
       followUpAdvancePaise += unitFollowUpAdvancePaise * item.qty;
 
@@ -329,6 +331,10 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     });
     subtotalPaise = amounts.subtotalPaise;
     const effectiveTotal = amounts.totalPaise;
+    // One advance for the complete order, regardless of phone count or variants.
+    followUpAdvancePaise = hasFollowUpCod
+      ? followUpAdvanceForPrice(effectiveTotal)
+      : Math.min(effectiveTotal, followUpAdvancePaise);
     const paymentAmountPaise = amounts.paymentAmountPaise;
     if (data.giftCard)
       orderItemsToInsert.push({

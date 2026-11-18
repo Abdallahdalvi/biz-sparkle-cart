@@ -20,7 +20,7 @@ import { absoluteSiteUrl } from "@/lib/site";
 import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-links";
 import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
 import { productConditionLabel, schemaItemCondition } from "@/lib/product-condition";
-import { selectedStock } from "@/lib/inventory";
+import { resolveVariantId, selectedStock } from "@/lib/inventory";
 import { CANCELLATION_FAQ } from "@/lib/cancellation-policy";
 import { REPLACEMENT_DELIVERY_FAQ } from "@/lib/replacement-policy";
 
@@ -162,14 +162,21 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductPage() {
-  const { product, related, cms } = Route.useLoaderData() as {
-    product: Product;
-    related: Product[];
-    cms: StorefrontCms;
-  };
-  const [variant, setVariant] = useState(
-    product.variants?.find((entry) => Number(entry.stock) > 0)?.id || product.variants?.[0]?.id,
-  );
+  const data = Route.useLoaderData();
+  return <ProductDetails key={data.product.slug} {...data} />;
+}
+
+function ProductDetails({
+  product,
+  related,
+  cms,
+}: {
+  product: Product;
+  related: Product[];
+  cms: StorefrontCms;
+}) {
+  const [selectedVariantId, setVariant] = useState<string | undefined>();
+  const variant = resolveVariantId(product.variants, selectedVariantId);
   const chosenVariant = product.variants?.find((entry) => entry.id === variant);
   const availableStock = selectedStock(product, variant);
   const [activeImg, setActiveImg] = useState(0);

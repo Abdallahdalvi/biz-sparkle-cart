@@ -9,16 +9,16 @@ import {
 
 test("follow-up advances include exact price boundaries and ignore model", () => {
   for (const [rupees, advance] of [
-    [1099, 100],
-    [6000, 100],
-    [6001, 200],
-    [12000, 200],
-    [12001, 300],
-    [25000, 300],
-    [25001, 500],
-    [100000, 500],
+    [1099, 199],
+    [9999, 199],
+    [9999.99, 199],
+    [10000, 299],
+    [19999, 299],
+    [19999.99, 299],
+    [20000, 499],
+    [100000, 499],
   ]) {
-    assert.equal(followUpAdvanceForPrice(rupees * 100), advance * 100);
+    assert.equal(followUpAdvanceForPrice(Math.round(rupees * 100)), advance * 100);
   }
   assert.equal(followUpAdvanceForPrice(0), 0);
   assert.equal(followUpAdvanceForPrice(-100), 0);

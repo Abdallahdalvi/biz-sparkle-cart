@@ -1,15 +1,6 @@
 export function followUpAdvanceForPrice(pricePaise: number) {
   if (!Number.isSafeInteger(pricePaise) || pricePaise <= 0) return 0;
-  return Math.min(
-    pricePaise,
-    pricePaise <= 600000
-      ? 10000
-      : pricePaise <= 1200000
-        ? 20000
-        : pricePaise <= 2500000
-          ? 30000
-          : 50000,
-  );
+  return Math.min(pricePaise, pricePaise < 1000000 ? 19900 : pricePaise < 2000000 ? 29900 : 49900);
 }
 
 export function isFollowUpCod(metadata: Record<string, unknown> | null | undefined) {
