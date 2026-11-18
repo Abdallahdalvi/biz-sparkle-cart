@@ -4,6 +4,7 @@ import { RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
 import { CANCELLATION_POLICY_SUMMARY } from "@/lib/cancellation-policy";
 import { useStorefrontLanguage } from "@/components/StorefrontLanguage";
 import { POLICY_LANGUAGE_SUMMARIES } from "@/lib/policy-language-summaries";
+import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
 
 export function LegalPage({
   title,
@@ -23,6 +24,9 @@ export function LegalPage({
           Legal
         </p>
         <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2">{title}</h1>
+        <p className="text-sm text-on-surface-variant mb-6">
+          {BIZ.name} is operated by <span translate="no">{BIZ.legalName}</span>, legal proprietor.
+        </p>
         {updated && (
           <p className="text-[11px] uppercase tracking-widest text-on-surface-variant mb-12">
             Last updated: {updated}
@@ -53,11 +57,11 @@ export function LegalPage({
   );
 }
 
-// Public legal identity stays deliberately neutral until verified business
-// details are supplied. Never publish placeholder KYC or tax information.
+// The proprietor name was supplied and approved for publication by the owner.
+// Never publish placeholder KYC or tax information.
 export const BIZ = {
   name: "Aghanims Phones and Gadgets",
-  legalName: "Aghanims Phones and Gadgets",
+  legalName: LEGAL_PROPRIETOR_NAME,
   address: "Business address pending verification",
   state: "India",
   gstin: "Not registered",

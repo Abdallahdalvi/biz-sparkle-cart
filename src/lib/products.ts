@@ -1,4 +1,5 @@
 import { followUpAdvanceForPrice, isFollowUpCod } from "@/lib/cod-follow-up";
+import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductEngagement } from "@/lib/product-ranking";
 import { inferProductBrand } from "@/lib/product-brand";
@@ -342,7 +343,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   prepaid_discount_amount: 150,
   prepaid_discount_type: "flat",
   biz_name: "Aghanims Phones and Gadgets",
-  biz_legal_name: "",
+  biz_legal_name: LEGAL_PROPRIETOR_NAME,
   biz_address: "",
   biz_state: "Maharashtra",
   biz_gstin: "",

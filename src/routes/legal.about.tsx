@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getStorefrontCms, type StorefrontCms } from "@/lib/products";
+import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
 
 export const Route = createFileRoute("/legal/about")({
   loader: async () => {
@@ -43,6 +44,11 @@ function AboutPage() {
           </h1>
           <p className="text-lg font-medium text-on-surface-variant mt-4 max-w-2xl leading-relaxed">
             {cms.about_subtitle}
+          </p>
+          <p className="mt-4 text-sm text-on-surface-variant">
+            Aghanims Phones and Gadgets is operated by{" "}
+            <span translate="no">{cms.biz_legal_name || LEGAL_PROPRIETOR_NAME}</span>, legal
+            proprietor.
           </p>
         </div>
 

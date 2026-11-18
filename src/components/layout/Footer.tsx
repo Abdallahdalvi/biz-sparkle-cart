@@ -17,6 +17,7 @@ export function Footer() {
   const [copy, setCopy] = useState({
     copyright: BIZ.footerCopyright,
     tagline: BIZ.footerTagline,
+    legalName: BIZ.legalName,
   });
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export function Footer() {
         setCopy({
           copyright: cms.footer_copyright || BIZ.footerCopyright,
           tagline: cms.footer_tagline || BIZ.footerTagline,
+          legalName: cms.biz_legal_name || BIZ.legalName,
         });
       }
     });
@@ -60,6 +62,9 @@ export function Footer() {
             </button>
           </div>
         </div>
+        <p className="text-center text-xs text-on-surface-variant">
+          {BIZ.name} · Legal proprietor: <span translate="no">{copy.legalName}</span>
+        </p>
         <div className="border-t border-outline-variant/20 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
           <p>
             {copy.copyright} {copy.tagline}
