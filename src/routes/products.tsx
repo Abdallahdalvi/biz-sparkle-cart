@@ -43,33 +43,38 @@ export const Route = createFileRoute("/products")({
       { property: "og:url", content: absoluteSiteUrl("/products") },
     ],
     links: [{ rel: "canonical", href: absoluteSiteUrl("/products") }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "CollectionPage",
-          name: `${SITE_NAME} Products`,
-          description: "Browse QWERTY, keypad, flip and rugged phones online in India.",
-          url: absoluteSiteUrl("/products"),
-          mainEntity: {
-            "@type": "ItemList",
-            name: "Phones and Gadgets",
-            itemListElement: rankProducts(
-              loaderData?.all || [],
-              "recommended",
-              loaderData?.rankingSeed,
-              loaderData?.rankingTime,
-            ).map((product, index) => ({
-              "@type": "ListItem",
-              position: index + 1,
-              name: product.name,
-              url: absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`),
-            })),
-          },
-        }),
-      },
-    ],
+    scripts:
+      match.search.q || match.search.type
+        ? []
+        : [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                name: `${SITE_NAME} Products`,
+                description: "Browse QWERTY, keypad, flip and rugged phones online in India.",
+                url: absoluteSiteUrl("/products"),
+                mainEntity: {
+                  "@type": "ItemList",
+                  name: "Phones and Gadgets",
+                  itemListElement: rankProducts(
+                    loaderData?.all || [],
+                    "recommended",
+                    loaderData?.rankingSeed,
+                    loaderData?.rankingTime,
+                  )
+                    .slice(0, PAGE_SIZE)
+                    .map((product, index) => ({
+                      "@type": "ListItem",
+                      position: index + 1,
+                      name: product.name,
+                      url: absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`),
+                    })),
+                },
+              }).replace(/</g, "\\u003c"),
+            },
+          ],
   }),
   component: Catalog,
 });

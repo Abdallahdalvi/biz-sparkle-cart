@@ -17,11 +17,12 @@ export const Route = createFileRoute("/legal/contact")({
   },
   head: () => ({
     meta: [
+      { property: "og:url", content: `${SITE_URL}/legal/contact` },
       { title: "Contact Us — Aghanims Phones and Gadgets" },
       {
         name: "description",
         content:
-          "Get in touch with Aghanims Support via WhatsApp, contact form, email, or visit our shop location.",
+          "Contact Aghanims Phones and Gadgets by WhatsApp, email, or the contact form for product, SIM compatibility, and order support.",
       },
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/legal/contact` }],

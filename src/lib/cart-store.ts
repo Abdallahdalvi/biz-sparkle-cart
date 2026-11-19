@@ -14,6 +14,7 @@ export interface CartItem {
 
 interface CartState {
   ownerKey: string;
+  hydrated: boolean;
   items: CartItem[];
   setOwner: (userId?: string | null) => void;
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
@@ -94,21 +95,23 @@ function updateItems(
   updater: (state: CartState) => CartItem[],
 ) {
   set((state) => {
-    const items = updater(state);
+    const current = state.hydrated ? state : { ...state, items: readCart(state.ownerKey) };
+    const items = updater(current);
     writeCart(state.ownerKey, items);
-    return { items };
+    return { items, hydrated: true };
   });
 }
 
 export const useCart = create<CartState>()((set, get) => ({
   ownerKey: GUEST_OWNER,
-  items: readCart(GUEST_OWNER),
+  hydrated: false,
+  items: [],
   setOwner: (userId) =>
     set((state) => {
       const nextOwner = ownerKey(userId);
-      if (nextOwner === state.ownerKey) return {};
-      writeCart(state.ownerKey, state.items);
-      return { ownerKey: nextOwner, items: readCart(nextOwner) };
+      if (state.hydrated && nextOwner === state.ownerKey) return {};
+      if (state.hydrated) writeCart(state.ownerKey, state.items);
+      return { ownerKey: nextOwner, items: readCart(nextOwner), hydrated: true };
     }),
   add: (item, qty = 1) =>
     updateItems(set, (state) => {
