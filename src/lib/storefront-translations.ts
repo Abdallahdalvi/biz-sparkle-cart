@@ -1147,6 +1147,25 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
   ],
   ["Shop with confidence", "भरोसे के साथ खरीदें", "विश्वासाने खरेदी करा", "تسوق بثقة"],
   [
+    "Watch product videos on Instagram",
+    "Instagram पर उत्पादों के वीडियो देखें",
+    "Instagram वर उत्पादनांचे व्हिडिओ पाहा",
+    "شاهد فيديوهات المنتجات على Instagram",
+  ],
+  [
+    "Watch videos on YouTube",
+    "YouTube पर वीडियो देखें",
+    "YouTube वर व्हिडिओ पाहा",
+    "شاهد الفيديوهات على YouTube",
+  ],
+  [
+    "Follow us on Facebook",
+    "Facebook पर हमें फ़ॉलो करें",
+    "Facebook वर आम्हाला फॉलो करा",
+    "تابعنا على Facebook",
+  ],
+  ["Chat on WhatsApp", "WhatsApp पर चैट करें", "WhatsApp वर चॅट करा", "راسلنا على WhatsApp"],
+  [
     "Follow WhatsApp channel",
     "WhatsApp चैनल फ़ॉलो करें",
     "WhatsApp चॅनेल फॉलो करा",

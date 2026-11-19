@@ -1,6 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import React, { useState } from "react";
-import { Facebook, Instagram, MessageCircle, ShieldCheck, Star, Youtube } from "lucide-react";
+import {
+  ArrowUpRight,
+  Facebook,
+  Instagram,
+  MessageCircle,
+  ShieldCheck,
+  Star,
+  Youtube,
+} from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import {
   getAllProducts,
@@ -217,10 +225,30 @@ function ProductDetails({
     : OFFICIAL_SOCIAL_LINKS.whatsappChannel;
   const productFaqs = getProductFaqs(product, STORE_TRUST_FAQS, LEGACY_GENERIC_FAQ_QUESTIONS);
   const socialLinks = [
-    { label: "Instagram", href: OFFICIAL_SOCIAL_LINKS.instagram, Icon: Instagram },
-    { label: "Facebook", href: OFFICIAL_SOCIAL_LINKS.facebook, Icon: Facebook },
-    { label: "YouTube", href: OFFICIAL_SOCIAL_LINKS.youtube, Icon: Youtube },
-    { label: "WhatsApp", href: whatsappChat, Icon: MessageCircle },
+    {
+      label: "Watch product videos on Instagram",
+      href: OFFICIAL_SOCIAL_LINKS.instagram,
+      Icon: Instagram,
+      color: "bg-linear-to-r from-[#9e2168] via-[#b51856] to-[#a94016]",
+    },
+    {
+      label: "Follow WhatsApp channel",
+      href: whatsappChannel,
+      Icon: MessageCircle,
+      color: "bg-[#06764e]",
+    },
+    {
+      label: "Watch videos on YouTube",
+      href: OFFICIAL_SOCIAL_LINKS.youtube,
+      Icon: Youtube,
+      color: "bg-[#b91c1c]",
+    },
+    {
+      label: "Follow us on Facebook",
+      href: OFFICIAL_SOCIAL_LINKS.facebook,
+      Icon: Facebook,
+      color: "bg-[#1955b6]",
+    },
   ];
   const showPreviousImage = () =>
     setActiveImg((current) => (current - 1 + product.images.length) % product.images.length);
@@ -707,7 +735,27 @@ function ProductDetails({
           </div>
         </div>
 
-        {/* Larger review and social sections follow the compact product summary. */}
+        <section
+          aria-label="Product videos and social media"
+          className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          {socialLinks.map(({ label, href, Icon, color }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex min-h-16 items-center gap-3 rounded-lg px-4 py-3 text-sm leading-snug font-bold text-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary ${color}`}
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-md bg-white/15">
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <span className="grow">{label}</span>
+              <ArrowUpRight className="size-4 shrink-0" aria-hidden="true" />
+            </a>
+          ))}
+        </section>
+
         <section
           aria-label="Product details and support"
           className="mt-10 grid items-start gap-6 border-t border-outline-variant/30 pt-8 lg:grid-cols-2"
@@ -784,30 +832,15 @@ function ProductDetails({
                 </p>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {socialLinks.map(({ label, href, Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Open Aghanims Phones and Gadgets on ${label}`}
-                  className="flex min-h-11 items-center justify-center gap-2 border border-emerald-200 bg-white px-3 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-emerald-100"
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {label}
-                </a>
-              ))}
-            </div>
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <a
-                href={whatsappChannel}
+                href={whatsappChat}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-11 items-center justify-center gap-2 bg-[#128C7E] px-4 py-2 text-[11px] font-bold text-white transition-opacity hover:opacity-90"
+                className="flex min-h-11 items-center justify-center gap-2 border border-emerald-200 bg-white px-4 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-emerald-100"
               >
                 <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                FOLLOW WHATSAPP CHANNEL
+                Chat on WhatsApp
               </a>
               <a
                 href={GOOGLE_ALL_REVIEWS_URL}
