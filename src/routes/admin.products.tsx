@@ -1,4 +1,4 @@
-import { followUpAdvanceForPrice, isFollowUpCod } from "@/lib/cod-follow-up";
+import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
 import { createFileRoute } from "@tanstack/react-router";
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -161,7 +161,12 @@ function ProductMediaEditor({
 
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Images</p>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Images</p>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Add three distinct photos with at least 720 pixels on the shorter side.
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <label className="cursor-pointer bg-emerald-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-emerald-800 hover:bg-emerald-100">
               {uploading === "images" ? "Uploading…" : "Bulk upload images"}
@@ -727,11 +732,7 @@ function AdminProducts() {
                       COD Advance
                     </p>
                     <p className="font-bold text-amber-800">
-                      {isFollowUpCod(r.metadata)
-                        ? `${formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation`
-                        : r.cod_advance_paise > 0
-                          ? formatINR(r.cod_advance_paise)
-                          : "Full COD"}
+                      {formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation
                     </p>
                   </div>
                   <div className="rounded bg-surface-container-low p-3">
@@ -865,19 +866,9 @@ function AdminProducts() {
                     </td>
                     <td className="p-4">
                       <p className="font-bold text-amber-800">
-                        {isFollowUpCod(r.metadata)
-                          ? `${formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation`
-                          : r.cod_advance_paise > 0
-                            ? formatINR(r.cod_advance_paise)
-                            : "Full COD"}
+                        {formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation
                       </p>
-                      <p className="text-[10px] text-on-surface-variant">
-                        {isFollowUpCod(r.metadata)
-                          ? "₹0 at checkout"
-                          : r.cod_advance_paise > 0
-                            ? "Paid online first"
-                            : "No advance"}
-                      </p>
+                      <p className="text-[10px] text-on-surface-variant">₹0 at checkout</p>
                     </td>
                     <td className="p-4 font-bold">{r.stock}</td>
                     <td className="p-4 text-xs text-on-surface-variant space-y-1">
@@ -1025,10 +1016,10 @@ function NewProductForm({
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        const fd = new FormData(e.currentTarget);
+        const fd = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+        const publish = fd.get("visibility") !== "hidden";
         setBusy(true);
         const priceRupees = Number(fd.get("price"));
-        const codAdvanceRupees = Number(fd.get("cod_advance") || 0);
         const compareRupees = Number(fd.get("compare_at") || 0);
         const costRupees = Number(fd.get("cost_price") || priceRupees * 0.7);
         const gstRate = Number(fd.get("gst_rate") || 18);
@@ -1047,7 +1038,7 @@ function NewProductForm({
           delivery_estimate: String(fd.get("delivery_estimate") ?? "").trim(),
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
-          images: images.filter((i) => i.trim() !== ""),
+          images: [...new Set(images.map((url) => url.trim()).filter(Boolean))],
           videos: videos.filter((video) => video.url.trim() !== ""),
           faqs: faqs.filter((f) => f.question && f.answer),
         };
@@ -1065,17 +1056,16 @@ function NewProductForm({
               tagline: String(fd.get("tagline") ?? ""),
               description: String(fd.get("description") ?? ""),
               price_paise: Math.round(priceRupees * 100),
-              cod_advance_paise: Math.round(codAdvanceRupees * 100),
               compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
               stock: Number(fd.get("stock") ?? 0),
               category_id: (fd.get("category") as string) || null,
-              is_active: true,
+              is_active: publish,
               metadata: metadata,
             },
           });
 
           setBusy(false);
-          toast.success("Product successfully created with Specs, Variants, FAQs, and Images!");
+          toast.success(publish ? "Product published." : "Product saved as hidden.");
           onDone();
         } catch (error) {
           setBusy(false);
@@ -1278,21 +1268,11 @@ function NewProductForm({
         </div>
         <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-              Checkout Advance (₹)
-            </label>
-            <input
-              name="cod_advance"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={0}
-              placeholder="e.g. 299"
-              className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
-            />
-            <p className="mt-1 text-[10px] text-on-surface-variant">
-              Phone checkout stays at ₹0. The follow-up advance is calculated automatically from the
-              selling price.
+            <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+              COD Advance
+            </p>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Calculated from the order total and collected after confirmation.
             </p>
           </div>
           <div>
@@ -1522,7 +1502,16 @@ function NewProductForm({
           disabled={busy}
           className="bg-primary text-on-primary px-8 py-3 text-xs font-bold uppercase tracking-widest disabled:opacity-50 shadow-sm hover:opacity-90 transition-opacity"
         >
-          {busy ? "Saving to Database…" : "Save Product & Publish"}
+          {busy ? "Saving…" : "Save and publish"}
+        </button>
+        <button
+          type="submit"
+          name="visibility"
+          value="hidden"
+          disabled={busy}
+          className="border border-outline px-8 py-3 text-xs font-bold uppercase tracking-widest disabled:opacity-50"
+        >
+          Save as hidden
         </button>
         <button
           type="button"
@@ -1574,7 +1563,6 @@ function EditProductForm({
         const fd = new FormData(e.currentTarget);
         setBusy(true);
         const priceRupees = Number(fd.get("price"));
-        const codAdvanceRupees = Number(fd.get("cod_advance") || 0);
         const compareRupees = Number(fd.get("compare_at") || 0);
         const costRupees = Number(fd.get("cost_price") || priceRupees * 0.7);
         const gstRate = Number(fd.get("gst_rate") || 18);
@@ -1597,7 +1585,7 @@ function EditProductForm({
           delivery_estimate: String(fd.get("delivery_estimate") ?? "").trim(),
           specs: specs.filter((s) => s.label && s.value),
           variants: variants.filter((v) => v.label),
-          images: images.filter((i) => i.trim() !== ""),
+          images: [...new Set(images.map((url) => url.trim()).filter(Boolean))],
           videos: videos.filter((video) => video.url.trim() !== ""),
           faqs: faqs.filter((f) => f.question && f.answer),
         };
@@ -1616,7 +1604,6 @@ function EditProductForm({
               tagline: String(fd.get("tagline") ?? ""),
               description: String(fd.get("description") ?? ""),
               price_paise: Math.round(priceRupees * 100),
-              cod_advance_paise: Math.round(codAdvanceRupees * 100),
               compare_at_paise: compareRupees > 0 ? Math.round(compareRupees * 100) : null,
               stock: Number(fd.get("stock") ?? 0),
               category_id: (fd.get("category") as string) || null,
@@ -1876,21 +1863,11 @@ function EditProductForm({
         </div>
         <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
-              Checkout Advance (₹)
-            </label>
-            <input
-              name="cod_advance"
-              defaultValue={prod.cod_advance_paise / 100}
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="e.g. 299"
-              className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
-            />
-            <p className="mt-1 text-[10px] text-on-surface-variant">
-              Phone checkout stays at ₹0. The follow-up advance is calculated automatically from the
-              selling price.
+            <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+              COD Advance
+            </p>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Calculated from the order total and collected after confirmation.
             </p>
           </div>
           <div>

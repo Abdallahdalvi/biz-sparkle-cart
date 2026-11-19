@@ -201,18 +201,6 @@ function Checkout() {
 
   const productsBySlug = new Map(products.map((product) => [product.slug, product]));
   const codAdvancePaise = 0;
-  const legacyAdvancePaise = items.reduce((sum, item) => {
-    const product = productsBySlug.get(item.slug);
-    return (
-      sum +
-      Math.min(
-        item.pricePaise,
-        product?.codAdvanceAfterConfirmation ? 0 : product?.codAdvancePaise || 0,
-      ) *
-        item.qty
-    );
-  }, 0);
-
   const amounts = calculateGiftOrderAmounts({
     merchandisePaise: total,
     prepaidDiscountPaise,
@@ -221,11 +209,7 @@ function Checkout() {
     hasGiftCard: giftEnabled,
   });
   const effectiveTotal = amounts.totalPaise;
-  const followUpAdvancePaise = items.some(
-    (item) => productsBySlug.get(item.slug)?.codAdvanceAfterConfirmation,
-  )
-    ? followUpAdvanceForPrice(effectiveTotal)
-    : Math.min(effectiveTotal, legacyAdvancePaise);
+  const followUpAdvancePaise = followUpAdvanceForPrice(effectiveTotal);
 
   const paymentAmountPaise = payMode === "cod" ? codAdvancePaise : effectiveTotal;
   const deliveryEstimateItems = items

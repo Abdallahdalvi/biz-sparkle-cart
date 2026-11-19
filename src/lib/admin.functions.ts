@@ -4,28 +4,6 @@ import { inventoryTotal, type StockVariant } from "@/lib/inventory";
 
 type VariantInput = StockVariant;
 
-async function productCodSettings(
-  db: typeof import("@/integrations/supabase/client.server").supabaseAdmin,
-  categoryId: string | null,
-  metadata: Record<string, unknown>,
-  advance: number,
-) {
-  if (categoryId) {
-    const { data, error } = await db
-      .from("categories")
-      .select("slug")
-      .eq("id", categoryId)
-      .single();
-    if (error) throw new Error("Could not verify the product category.");
-    if (data.slug === "phones")
-      return {
-        cod_advance_paise: 0,
-        metadata: { ...metadata, cod_advance_collection: "after_confirmation" },
-      };
-  }
-  return { cod_advance_paise: advance, metadata };
-}
-
 async function syncProductVariants(
   supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin,
   productId: string,
@@ -63,6 +41,17 @@ async function syncProductVariants(
   }
 }
 
+function requirePublishableProduct(pricePaise: number, metadata: { images?: unknown } | null) {
+  if (pricePaise <= 0) {
+    throw new Error("Set a selling price above ₹0 before publishing this product");
+  }
+  const images = Array.isArray(metadata?.images) ? metadata.images : [];
+  const unique = new Set(
+    images.flatMap((url) => (typeof url === "string" && url.trim() ? [url.trim()] : [])),
+  );
+  if (unique.size < 3) throw new Error("Add three distinct product photos before publishing");
+}
+
 export const createProduct = createServerFn({ method: "POST" })
   .validator((input) =>
     z
@@ -73,7 +62,6 @@ export const createProduct = createServerFn({ method: "POST" })
         tagline: z.string().default(""),
         description: z.string().default(""),
         price_paise: z.number(),
-        cod_advance_paise: z.number().int().min(0),
         compare_at_paise: z.number().nullable(),
         stock: z.number(),
         category_id: z.string().nullable(),
@@ -85,16 +73,7 @@ export const createProduct = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireSupabaseAuth } = await import("@/lib/auth.server");
     await requireSupabaseAuth(data.token, "admin");
-    if (data.is_active && data.price_paise <= 0) {
-      throw new Error("Set a selling price above ₹0 before publishing this product");
-    }
-    if (data.cod_advance_paise > data.price_paise) {
-      throw new Error("COD advance cannot exceed the product selling price");
-    }
-    if (data.cod_advance_paise > 0 && data.cod_advance_paise < 100) {
-      throw new Error("COD advance must be at least ₹1 or exactly ₹0 for full COD");
-    }
-
+    if (data.is_active) requirePublishableProduct(data.price_paise, data.metadata);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prod, error } = await supabaseAdmin
       .from("products")
@@ -104,12 +83,8 @@ export const createProduct = createServerFn({ method: "POST" })
         tagline: data.tagline,
         description: data.description,
         price_paise: data.price_paise,
-        ...(await productCodSettings(
-          supabaseAdmin,
-          data.category_id,
-          data.metadata,
-          data.cod_advance_paise,
-        )),
+        cod_advance_paise: 0,
+        metadata: { ...data.metadata, cod_advance_collection: "after_confirmation" },
         compare_at_paise: data.compare_at_paise,
         stock: inventoryTotal(data.metadata?.variants || [], data.stock),
         category_id: data.category_id,
@@ -147,7 +122,6 @@ export const updateProduct = createServerFn({ method: "POST" })
         tagline: z.string().default(""),
         description: z.string().default(""),
         price_paise: z.number(),
-        cod_advance_paise: z.number().int().min(0),
         compare_at_paise: z.number().nullable(),
         stock: z.number(),
         category_id: z.string().nullable(),
@@ -162,13 +136,6 @@ export const updateProduct = createServerFn({ method: "POST" })
     if (data.is_active && data.price_paise <= 0) {
       throw new Error("Set a selling price above ₹0 before publishing this product");
     }
-    if (data.cod_advance_paise > data.price_paise) {
-      throw new Error("COD advance cannot exceed the product selling price");
-    }
-    if (data.cod_advance_paise > 0 && data.cod_advance_paise < 100) {
-      throw new Error("COD advance must be at least ₹1 or exactly ₹0 for full COD");
-    }
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload = {
       slug: data.slug,
@@ -176,12 +143,8 @@ export const updateProduct = createServerFn({ method: "POST" })
       tagline: data.tagline,
       description: data.description,
       price_paise: data.price_paise,
-      ...(await productCodSettings(
-        supabaseAdmin,
-        data.category_id,
-        data.metadata,
-        data.cod_advance_paise,
-      )),
+      cod_advance_paise: 0,
+      metadata: { ...data.metadata, cod_advance_collection: "after_confirmation" },
       compare_at_paise: data.compare_at_paise,
       stock: inventoryTotal(data.metadata?.variants || [], data.stock),
       category_id: data.category_id,
@@ -238,17 +201,17 @@ export const updateProductStatus = createServerFn({ method: "POST" })
     if (data.is_active && !data.id.startsWith("static-")) {
       const { data: product, error: priceError } = await supabaseAdmin
         .from("products")
-        .select("price_paise")
+        .select("price_paise, metadata")
         .eq("id", data.id)
         .single();
       if (priceError) throw new Error(`Could not check selling price: ${priceError.message}`);
-      if (!product || product.price_paise <= 0)
-        throw new Error("Set a selling price above ₹0 before publishing this product");
+      requirePublishableProduct(product.price_paise, product.metadata);
     }
 
     if (data.id.startsWith("static-") && data.staticRow) {
-      if (data.is_active && data.staticRow.price_paise <= 0)
-        throw new Error("Set a selling price above ₹0 before publishing this product");
+      if (data.is_active) {
+        requirePublishableProduct(data.staticRow.price_paise, data.staticRow.metadata);
+      }
       const { error } = await supabaseAdmin.from("products").insert({
         slug: data.staticRow.slug,
         name: data.staticRow.name,

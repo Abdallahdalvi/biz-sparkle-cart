@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { followUpAdvanceForPrice, isFollowUpCod } from "@/lib/cod-follow-up";
+import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
 import { checkoutDiscount, couponDiscountForMerchandise, validateCoupon } from "@/lib/coupons";
 import {
   calculateGiftOrderAmounts,
@@ -203,8 +203,6 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     // Securely fetch prices and details for each item
     let subtotalPaise = 0;
     const codAdvancePaise = 0;
-    let followUpAdvancePaise = 0;
-    let hasFollowUpCod = false;
     const orderItemsToInsert: Array<{
       name: string;
       variant_label: string | null;
@@ -219,9 +217,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     for (const item of normalizedItems.values()) {
       const { data: prod, error: prodErr } = await supabaseAdmin
         .from("products")
-        .select(
-          "id, name, price_paise, cod_advance_paise, metadata, stock, is_active, categories(slug)",
-        )
+        .select("id, name, price_paise, metadata, stock, is_active")
         .eq("slug", item.slug)
         .single();
       if (prodErr || !prod) throw new Error(`Product not found: ${item.slug}`);
@@ -263,15 +259,6 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       }
 
       subtotalPaise += unitPricePaise * item.qty;
-      const categories = prod.categories as unknown as { slug: string } | { slug: string }[] | null;
-      const categorySlug = Array.isArray(categories) ? categories[0]?.slug : categories?.slug;
-      const followUpCod = categorySlug === "phones" || isFollowUpCod(prod.metadata);
-      hasFollowUpCod ||= followUpCod;
-      const unitFollowUpAdvancePaise = followUpCod
-        ? 0
-        : Math.min(unitPricePaise, Math.max(0, Number(prod.cod_advance_paise) || 0));
-      followUpAdvancePaise += unitFollowUpAdvancePaise * item.qty;
-
       // Determine image url
       let imageUrl = "";
       if (prod.metadata?.images?.length > 0) {
@@ -282,7 +269,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
         name: prod.name,
         variant_label: variantLabel,
         unit_price_paise: unitPricePaise,
-        cod_advance_paise: unitFollowUpAdvancePaise,
+        cod_advance_paise: 0,
         qty: item.qty,
         image_url: imageUrl,
         product_id: prod.id,
@@ -332,9 +319,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     subtotalPaise = amounts.subtotalPaise;
     const effectiveTotal = amounts.totalPaise;
     // One advance for the complete order, regardless of phone count or variants.
-    followUpAdvancePaise = hasFollowUpCod
-      ? followUpAdvanceForPrice(effectiveTotal)
-      : Math.min(effectiveTotal, followUpAdvancePaise);
+    const followUpAdvancePaise = followUpAdvanceForPrice(effectiveTotal);
     const paymentAmountPaise = amounts.paymentAmountPaise;
     if (data.giftCard)
       orderItemsToInsert.push({

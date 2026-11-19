@@ -6,6 +6,7 @@ export type AdminProductFilters = {
   category: string;
   status: "all" | "active" | "hidden" | "draft";
   availability: "all" | "in_stock" | "out_of_stock";
+  gallery: "all" | "needs_photos";
   sort: "store_order" | "price_asc" | "price_desc" | "name" | "stock_asc";
 };
 
@@ -15,6 +16,7 @@ export const DEFAULT_ADMIN_PRODUCT_FILTERS: AdminProductFilters = {
   category: "all",
   status: "all",
   availability: "all",
+  gallery: "all",
   sort: "store_order",
 };
 
@@ -32,6 +34,7 @@ type FilterableProduct = {
     badge?: string;
     specs?: { label: string; value: string }[];
     variants?: { label: string }[];
+    images?: string[];
   };
 };
 
@@ -61,6 +64,11 @@ export function filterAdminProducts<T extends FilterableProduct>(
       return false;
     if (filters.availability === "in_stock" && product.stock <= 0) return false;
     if (filters.availability === "out_of_stock" && product.stock > 0) return false;
+    if (
+      filters.gallery === "needs_photos" &&
+      new Set((product.metadata?.images || []).map((url) => url.trim()).filter(Boolean)).size >= 3
+    )
+      return false;
     const text = [
       product.name,
       product.slug,

@@ -113,6 +113,22 @@ export function ProductFilters({
             <option value="out_of_stock">Out of stock</option>
           </select>
         </label>
+        <label className="text-xs font-bold">
+          Gallery
+          <select
+            value={filters.gallery}
+            onChange={(event) =>
+              onChange({
+                ...filters,
+                gallery: event.target.value as AdminProductFilters["gallery"],
+              })
+            }
+            className={fieldClass}
+          >
+            <option value="all">All galleries</option>
+            <option value="needs_photos">Fewer than three images</option>
+          </select>
+        </label>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-3">
         <p role="status" className="text-xs text-on-surface-variant">

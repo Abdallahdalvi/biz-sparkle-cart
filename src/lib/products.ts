@@ -1,4 +1,4 @@
-import { followUpAdvanceForPrice, isFollowUpCod } from "@/lib/cod-follow-up";
+import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
 import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductEngagement } from "@/lib/product-ranking";
@@ -434,15 +434,9 @@ export async function getAllProducts(): Promise<Product[]> {
       tagline: row.tagline || "",
       category: (row.categories?.slug || "phones") as Category,
       pricePaise: row.price_paise,
-      codAdvancePaise:
-        row.categories?.slug === "phones" || isFollowUpCod(row.metadata)
-          ? 0
-          : Number(row.cod_advance_paise) || 0,
-      codAdvanceAfterConfirmation: row.categories?.slug === "phones" || isFollowUpCod(row.metadata),
-      followUpCodAdvancePaise:
-        row.categories?.slug === "phones" || isFollowUpCod(row.metadata)
-          ? followUpAdvanceForPrice(row.price_paise)
-          : 0,
+      codAdvancePaise: 0,
+      codAdvanceAfterConfirmation: true,
+      followUpCodAdvancePaise: followUpAdvanceForPrice(row.price_paise),
       compareAtPaise: row.compare_at_paise,
       badge: row.metadata?.badge || undefined,
       images: row.metadata?.images?.length
