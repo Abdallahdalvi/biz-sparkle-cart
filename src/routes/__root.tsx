@@ -109,8 +109,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: SITE_NAME },
       { property: "og:url", content: SITE_URL },
       { property: "og:image", content: SITE_SOCIAL_IMAGE_URL },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
+      { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: `${SITE_NAME} — Hard-to-find phones and gadgets` },
       {

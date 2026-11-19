@@ -1,3 +1,4 @@
+import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getStorefrontCms, type StorefrontCms } from "@/lib/products";
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/legal/about")({
   },
   head: () => ({
     meta: [
+      { property: "og:url", content: absoluteSiteUrl("/legal/about") },
       { title: "About Aghanims Phones and Gadgets" },
       {
         name: "description",
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/legal/about")({
         content: "A boutique technology store curating niche, tactile hardware.",
       },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/legal/about") }],
   }),
   component: AboutPage,
 });

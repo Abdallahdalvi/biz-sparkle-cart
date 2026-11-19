@@ -6,6 +6,7 @@ import { openTrackingPreferences } from "@/lib/tracking";
 
 const LEGAL = [
   { to: "/legal/contact", label: "Contact Us" },
+  { to: "/sim-compatibility", label: "SIM compatibility" },
   { to: "/legal/terms", label: "Terms & Conditions" },
   { to: "/legal/privacy", label: "Privacy Policy" },
   { to: "/legal/shipping", label: "Shipping & Delivery Policy" },

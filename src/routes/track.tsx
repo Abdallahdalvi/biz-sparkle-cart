@@ -11,6 +11,7 @@ export const Route = createFileRoute("/track")({
   }),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex, follow" },
       { title: "Track Your Order — Aghanims Phones and Gadgets" },
       {
         name: "description",
@@ -106,10 +107,14 @@ function TrackPage() {
               </h3>
               <form onSubmit={handleSearch} className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2">
+                  <label
+                    htmlFor="tracking-reference"
+                    className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-2"
+                  >
                     Order ID or Tracking AWB
                   </label>
                   <input
+                    id="tracking-reference"
                     type="text"
                     value={orderId}
                     onChange={(e) => setOrderId(e.target.value)}

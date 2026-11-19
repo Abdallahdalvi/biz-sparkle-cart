@@ -12,6 +12,7 @@ export const Route = createFileRoute("/compare")({
   },
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex, follow" },
       { title: "Device Comparison Engine — Aghanims Phones and Gadgets" },
       {
         name: "description",

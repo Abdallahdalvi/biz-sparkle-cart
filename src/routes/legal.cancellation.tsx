@@ -1,3 +1,4 @@
+import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import {
@@ -9,12 +10,14 @@ import {
 export const Route = createFileRoute("/legal/cancellation")({
   head: () => ({
     meta: [
+      { property: "og:url", content: absoluteSiteUrl("/legal/cancellation") },
       { title: "Cancellation Policy — Aghanims Phones and Gadgets" },
       {
         name: "description",
         content: "How to cancel an Aghanims Phones and Gadgets order before dispatch.",
       },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/legal/cancellation") }],
   }),
   component: () => (
     <LegalPage title="Cancellation Policy" updated={CANCELLATION_EFFECTIVE_DATE}>

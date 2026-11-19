@@ -1,3 +1,4 @@
+import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/legal/returns")({
   loader: () => getStorefrontCms(),
   head: () => ({
     meta: [
+      { property: "og:url", content: absoluteSiteUrl("/legal/returns") },
       { title: "Return & Refund Policy — Aghanims Phones and Gadgets" },
       {
         name: "description",
@@ -17,6 +19,7 @@ export const Route = createFileRoute("/legal/returns")({
           "Aghanims Phones and Gadgets 48-hour delivery damage, defect, replacement, and refund policy.",
       },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/legal/returns") }],
   }),
   component: ReturnsPolicy,
 });

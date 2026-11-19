@@ -61,6 +61,7 @@ function CartPage() {
                   <div className="flex items-center justify-between gap-3 sm:justify-start">
                     <div className="flex items-center border border-outline">
                       <button
+                        aria-label={`Decrease quantity for ${i.name}`}
                         onClick={() => setQty(i.slug, i.qty - 1, i.variantId)}
                         className="px-3 py-2 font-bold"
                       >
@@ -68,6 +69,7 @@ function CartPage() {
                       </button>
                       <span className="w-10 text-center text-sm font-bold">{i.qty}</span>
                       <button
+                        aria-label={`Increase quantity for ${i.name}`}
                         onClick={() => setQty(i.slug, i.qty + 1, i.variantId)}
                         className="px-3 py-2 font-bold"
                       >

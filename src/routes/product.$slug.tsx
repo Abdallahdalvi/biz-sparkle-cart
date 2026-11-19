@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Facebook, Instagram, MessageCircle, ShieldCheck, Star, Youtube } from "lucide-react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import {
-  getProductBySlug,
   getAllProducts,
   getStorefrontCms,
   STORE_TRUST_FAQS,
@@ -16,7 +15,8 @@ import { toast } from "sonner";
 import { trackCommerceEvent, trackLead } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
 import { submitContactMessage } from "@/lib/operations.functions";
-import { absoluteSiteUrl } from "@/lib/site";
+import { absoluteSiteUrl, productImageUrls, SITE_NAME } from "@/lib/site";
+import { getProductFaqs, productSummary, shortenSnippet } from "@/lib/product-content";
 import { OFFICIAL_SOCIAL_LINKS, OFFICIAL_WHATSAPP_PHONE } from "@/lib/social-links";
 import { GOOGLE_ALL_REVIEWS_URL } from "@/lib/google-reviews";
 import { productConditionLabel, schemaItemCondition } from "@/lib/product-condition";
@@ -54,50 +54,55 @@ function isDirectVideo(url: string) {
   return /\.(?:mp4|webm|ogg)(?:[?#].*)?$/i.test(url);
 }
 
-function absoluteMediaUrl(url: string | undefined) {
-  const value = url?.trim();
-  if (!value) return absoluteSiteUrl("/logo.png");
-
-  try {
-    return new URL(value).toString();
-  } catch {
-    return absoluteSiteUrl(value.startsWith("/") ? value : `/${value}`);
-  }
-}
-
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
-    const product = await getProductBySlug(params.slug);
-    if (!product) throw notFound();
     const [all, cms] = await Promise.all([getAllProducts(), getStorefrontCms()]);
-    const related = all.filter((p) => p.slug !== product.slug).slice(0, 3);
+    const product = all.find((item) => item.slug === params.slug);
+    if (!product) throw notFound();
+    const related = all
+      .filter((item) => item.slug !== product.slug && item.category === product.category)
+      .sort(
+        (a, b) =>
+          Number(b.stock > 0) - Number(a.stock > 0) ||
+          Number(b.brand === product.brand) - Number(a.brand === product.brand),
+      )
+      .slice(0, 3);
     return { product, related, cms };
   },
   head: ({ loaderData }) => {
     const p = loaderData?.product;
-    if (!p) return { meta: [{ title: "Product — Aghanims Phones and Gadgets" }] };
+    if (!p)
+      return { meta: [{ title: "Product not found" }, { name: "robots", content: "noindex" }] };
     const productUrl = absoluteSiteUrl(`/product/${encodeURIComponent(p.slug)}`);
-    const imageUrls = p.images.map(absoluteMediaUrl);
-    const primaryImageUrl = imageUrls[0] || absoluteSiteUrl("/logo.png");
+    const images = productImageUrls(p.images);
+    const image = images[0];
+    const summary = productSummary(p);
+    const description = shortenSnippet(summary);
+    const title = `${p.name} | ${SITE_NAME}`;
+    const itemCondition = schemaItemCondition(p.condition);
+    const availability = p.stock > 0 ? "InStock" : "OutOfStock";
+    const price = (p.pricePaise / 100).toFixed(2);
     return {
       meta: [
-        { title: `${p.name} — Aghanims Phones and Gadgets` },
-        {
-          name: "description",
-          content: `${p.name}. ${p.tagline}. ${formatINR(p.pricePaise)}. ${p.description.slice(0, 120)}`,
-        },
-        { property: "og:title", content: `${p.name} — Aghanims Phones and Gadgets` },
-        { property: "og:description", content: p.tagline },
-        { property: "og:image", content: primaryImageUrl },
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:type", content: "product" },
+        { property: "og:description", content: description },
         { property: "og:url", content: productUrl },
-        { property: "product:price:amount", content: (p.pricePaise / 100).toFixed(2) },
+        { property: "product:price:amount", content: price },
         { property: "product:price:currency", content: "INR" },
-        {
-          property: "product:availability",
-          content: p.stock > 0 ? "in stock" : "out of stock",
-        },
-        { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:image", content: primaryImageUrl },
+        { property: "product:availability", content: p.stock > 0 ? "in stock" : "out of stock" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        ...(image
+          ? [
+              { property: "og:image", content: image },
+              { property: "og:image:alt", content: p.name },
+              { name: "twitter:image", content: image },
+              { name: "twitter:image:alt", content: p.name },
+            ]
+          : []),
       ],
       links: [{ rel: "canonical", href: productUrl }],
       scripts: [
@@ -105,37 +110,46 @@ export const Route = createFileRoute("/product/$slug")({
           type: "application/ld+json",
           children: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Product",
-            name: p.name,
-            description: p.description,
-            image: imageUrls,
-            sku: p.slug,
-            url: productUrl,
-            brand: { "@type": "Brand", name: p.brand },
-            category:
-              p.category === "phones"
-                ? {
-                    "@type": "CategoryCode",
-                    inCodeSet:
-                      "https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt",
-                    codeValue: "267",
-                  }
-                : p.category,
-            itemCondition: schemaItemCondition(p.condition),
-            offers: {
-              "@type": "Offer",
-              url: productUrl,
-              priceCurrency: "INR",
-              price: (p.pricePaise / 100).toFixed(2),
-              availability:
-                p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-              itemCondition: schemaItemCondition(p.condition),
-              seller: {
-                "@type": "Organization",
-                name: "Aghanims Phones and Gadgets",
+            "@graph": [
+              {
+                "@type": "Product",
+                "@id": `${productUrl}#product`,
+                name: p.name,
+                description: summary,
+                ...(images.length ? { image: images } : {}),
+                sku: p.slug,
+                url: productUrl,
+                brand: { "@type": "Brand", name: p.brand },
+                itemCondition,
+                offers: {
+                  "@type": "Offer",
+                  url: productUrl,
+                  priceCurrency: "INR",
+                  price,
+                  availability: `https://schema.org/${availability}`,
+                  itemCondition,
+                  seller: {
+                    "@type": "Organization",
+                    "@id": absoluteSiteUrl("/#organization"),
+                    name: SITE_NAME,
+                  },
+                },
               },
-            },
-          }),
+              {
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "Home", item: absoluteSiteUrl("/") },
+                  {
+                    "@type": "ListItem",
+                    position: 2,
+                    name: "Products",
+                    item: absoluteSiteUrl("/products"),
+                  },
+                  { "@type": "ListItem", position: 3, name: p.name, item: productUrl },
+                ],
+              },
+            ],
+          }).replace(/</g, "\\u003c"),
         },
       ],
     };
@@ -180,7 +194,6 @@ function ProductDetails({
   const chosenVariant = product.variants?.find((entry) => entry.id === variant);
   const availableStock = selectedStock(product, variant);
   const [activeImg, setActiveImg] = useState(0);
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const touchStartX = React.useRef<number | null>(null);
 
   const [waitlistEmail, setWaitlistEmail] = useState("");
@@ -202,14 +215,7 @@ function ProductDetails({
   )
     ? cms.whatsapp_channel_url
     : OFFICIAL_SOCIAL_LINKS.whatsappChannel;
-  const productFaqs = [
-    ...STORE_TRUST_FAQS,
-    ...(product.faqs || []).filter(
-      (faq) =>
-        !LEGACY_GENERIC_FAQ_QUESTIONS.has(faq.question) &&
-        !STORE_TRUST_FAQS.some((trustFaq) => trustFaq.question === faq.question),
-    ),
-  ];
+  const productFaqs = getProductFaqs(product, STORE_TRUST_FAQS, LEGACY_GENERIC_FAQ_QUESTIONS);
   const socialLinks = [
     { label: "Instagram", href: OFFICIAL_SOCIAL_LINKS.instagram, Icon: Instagram },
     { label: "Facebook", href: OFFICIAL_SOCIAL_LINKS.facebook, Icon: Facebook },
@@ -664,7 +670,7 @@ function ProductDetails({
 
             <div className="rounded border border-outline-variant/40 bg-white p-5">
               <h2 className="mb-2 text-lg font-bold text-primary">About this product</h2>
-              <p className="text-on-surface-variant leading-relaxed">{product.description}</p>
+              <p className="text-on-surface-variant leading-relaxed">{productSummary(product)}</p>
             </div>
             <div className="space-y-6">
               {product.category === "phones" && (
@@ -906,26 +912,33 @@ function ProductDetails({
               Frequently Asked Questions About {product.name}
             </h2>
             <div className="space-y-4">
-              {productFaqs.map((faq, i) => (
-                <div
-                  key={i}
-                  className="border border-outline-variant/40 bg-surface-container-low/50 overflow-hidden transition-all"
+              {productFaqs.map((faq, index) => (
+                <details
+                  key={faq.question}
+                  open={index === 0 ? true : undefined}
+                  className="group border border-outline-variant/40 bg-surface-container-low/50"
                 >
-                  <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full py-4 px-6 text-left font-bold text-sm sm:text-base text-primary flex justify-between items-center gap-4 hover:bg-surface-container-low transition-colors"
-                  >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-left text-sm font-bold text-primary hover:bg-surface-container-low sm:px-6 sm:text-base">
                     <span>{faq.question}</span>
-                    <span className="material-symbols-outlined text-xl text-primary/70 flex-shrink-0 transition-transform duration-300">
-                      {openFaq === i ? "expand_less" : "expand_more"}
+                    <span
+                      aria-hidden="true"
+                      className="material-symbols-outlined shrink-0 text-xl text-primary/70 group-open:rotate-180"
+                    >
+                      expand_more
                     </span>
-                  </button>
-                  {openFaq === i && (
-                    <div className="px-6 pb-5 pt-1 text-on-surface-variant text-sm leading-relaxed border-t border-outline-variant/20 bg-white">
-                      {faq.answer}
-                    </div>
-                  )}
-                </div>
+                  </summary>
+                  <div className="border-t border-outline-variant/20 bg-white px-4 py-4 text-sm leading-relaxed text-on-surface-variant sm:px-6">
+                    <p>{faq.answer}</p>
+                    {index === 0 && product.category === "phones" && (
+                      <Link
+                        to="/sim-compatibility"
+                        className="mt-2 inline-block font-semibold text-primary underline underline-offset-2"
+                      >
+                        Read the India SIM compatibility guide
+                      </Link>
+                    )}
+                  </div>
+                </details>
               ))}
             </div>
           </div>

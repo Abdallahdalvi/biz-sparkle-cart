@@ -1,3 +1,4 @@
+import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
@@ -8,6 +9,7 @@ export const Route = createFileRoute("/legal/shipping")({
   loader: () => getStorefrontCms(),
   head: () => ({
     meta: [
+      { property: "og:url", content: absoluteSiteUrl("/legal/shipping") },
       { title: "Shipping & Delivery — Aghanims Phones and Gadgets" },
       {
         name: "description",
@@ -15,6 +17,7 @@ export const Route = createFileRoute("/legal/shipping")({
           "Shipping zones, delivery timelines, and tracking for Aghanims Phones and Gadgets orders.",
       },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/legal/shipping") }],
   }),
   component: ShippingPolicy,
 });

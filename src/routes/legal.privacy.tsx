@@ -1,15 +1,18 @@
+import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/legal/privacy")({
   head: () => ({
     meta: [
+      { property: "og:url", content: absoluteSiteUrl("/legal/privacy") },
       { title: "Privacy Policy — Aghanims Phones and Gadgets" },
       {
         name: "description",
         content: "How Aghanims Phones and Gadgets collects, uses, and protects your personal data.",
       },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/legal/privacy") }],
   }),
   component: () => (
     <LegalPage title="Privacy Policy" updated="August 2026">

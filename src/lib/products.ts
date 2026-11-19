@@ -3,6 +3,7 @@ import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductEngagement } from "@/lib/product-ranking";
 import { inferProductBrand } from "@/lib/product-brand";
+import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/site";
 import { productCondition, type ProductCondition } from "@/lib/product-condition";
 import { REPLACEMENT_DELIVERY_FAQ } from "@/lib/replacement-policy";
 import { ACCESSORY_WARRANTY_FAQ, RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
@@ -32,12 +33,9 @@ export interface Product {
   faqs?: { question: string; answer: string }[];
   stock: number;
   createdAt?: string;
+  updatedAt?: string;
   engagement?: ProductEngagement;
   heroSlot?: number;
-  costPricePaise?: number;
-  gstRate?: number;
-  wholesaleGstRate?: number;
-  packagingCostPaise?: number;
   formFactor?: string;
   deliveryEstimate?: string;
   condition?: ProductCondition;
@@ -423,6 +421,7 @@ export async function getAllProducts(): Promise<Product[]> {
       id: row.id,
       slug: row.slug,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
       engagement: engagement.get(row.slug),
       name: row.name,
       brand: row.metadata?.brand || inferProductBrand(row.name),
@@ -439,18 +438,19 @@ export async function getAllProducts(): Promise<Product[]> {
       followUpCodAdvancePaise: followUpAdvanceForPrice(row.price_paise),
       compareAtPaise: row.compare_at_paise,
       badge: row.metadata?.badge || undefined,
-      images: row.metadata?.images?.length
-        ? row.metadata.images
-        : [
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuAN4IWZ0o1xacmmTaAaeV4gJ2JM37nCA4Vu9FMZfWJ6CWZ9FReqzNA1zUw6b0z8fcVQRPejT-QofOpAaJlfeyZecXQpvnPZozhZdiZEDOj_qYqjYW64yxxY868yjxmBThtOdw-4pzxzc42bvkJogioVcwVPkGQS6ry7BHc3bO3PdOrAO0BS-A9PtmtRSFRGsIExVtxY8Knwi18rphz2LtaWGl0UbhG2lpi0gT9sXZRW0-4tpyNY7rWZZMvKc--gTZ9bjlCWX_yVWtpO",
-          ],
+      images: validatedProductImages(row.metadata?.images),
       videos: Array.isArray(row.metadata?.videos)
         ? row.metadata.videos.filter(
             (video: { title?: unknown; url?: unknown }) => typeof video?.url === "string",
           )
         : [],
       description: row.description || "",
-      specs: row.metadata?.specs || [],
+      specs: Array.isArray(row.metadata?.specs)
+        ? row.metadata.specs.filter(
+            (spec: { label?: unknown; value?: unknown } | null) =>
+              typeof spec?.label === "string" && typeof spec.value === "string",
+          )
+        : [],
       variants: row.product_variants?.length
         ? row.product_variants.map((variant: { id: string; label: string; stock: number }) => ({
             id: variant.id,
@@ -458,22 +458,14 @@ export async function getAllProducts(): Promise<Product[]> {
             stock: variant.stock,
           }))
         : undefined,
-      faqs: row.metadata?.faqs?.length ? row.metadata.faqs : DEFAULT_STOREFRONT_CMS.faqs,
+      faqs: Array.isArray(row.metadata?.faqs)
+        ? row.metadata.faqs.filter(
+            (faq: { question?: unknown; answer?: unknown } | null) =>
+              typeof faq?.question === "string" && typeof faq.answer === "string",
+          )
+        : [],
       stock: row.stock,
       heroSlot: row.metadata?.hero_slot ? Number(row.metadata.hero_slot) : undefined,
-      costPricePaise:
-        row.metadata?.cost_price_paise !== undefined
-          ? Number(row.metadata.cost_price_paise)
-          : Math.round(row.price_paise * 0.7),
-      gstRate: row.metadata?.gst_rate !== undefined ? Number(row.metadata.gst_rate) : 18,
-      wholesaleGstRate:
-        row.metadata?.wholesale_gst_rate !== undefined
-          ? Number(row.metadata.wholesale_gst_rate)
-          : 18,
-      packagingCostPaise:
-        row.metadata?.packaging_cost_paise !== undefined
-          ? Number(row.metadata.packaging_cost_paise)
-          : 5000,
       formFactor: row.metadata?.form_factor || row.metadata?.formFactor || undefined,
       deliveryEstimate:
         typeof row.metadata?.delivery_estimate === "string" && row.metadata.delivery_estimate.trim()
@@ -496,9 +488,17 @@ export async function getAllProducts(): Promise<Product[]> {
   }
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const all = await getAllProducts();
-  return all.find((p) => p.slug === slug);
+function validatedProductImages(value: unknown) {
+  const images = Array.isArray(value)
+    ? [
+        ...new Set(
+          value.flatMap((image) =>
+            typeof image === "string" && image.trim() ? [image.trim()] : [],
+          ),
+        ),
+      ]
+    : [];
+  return images.length ? images : [PRODUCT_IMAGE_PLACEHOLDER];
 }
 
 const LEGACY_REVIEW_SUMMARY_REPLACEMENTS = new Map<string, string>([

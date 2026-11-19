@@ -16,18 +16,19 @@ import {
 const PAGE_SIZE = 30;
 
 export const Route = createFileRoute("/products")({
-  validateSearch: (search: { q?: string; type?: PhoneType | "all" } & SearchSchemaInput) => ({
-    q: typeof search.q === "string" ? search.q : "",
-    type: validPhoneType(search.type),
-  }),
+  validateSearch: (search: { q?: string; type?: PhoneType | "all" } & SearchSchemaInput) => {
+    const q = typeof search.q === "string" ? search.q.trim() : "";
+    const type = validPhoneType(search.type);
+    return { q: q || undefined, type: type === "all" ? undefined : type };
+  },
   loader: async () => {
-    const all = await getAllProducts();
-    const cms = await getStorefrontCms();
+    const [all, cms] = await Promise.all([getAllProducts(), getStorefrontCms()]);
     return { all, cms, rankingSeed: crypto.randomUUID(), rankingTime: Date.now() };
   },
-  head: ({ loaderData }) => ({
+  head: ({ loaderData, match }) => ({
     meta: [
-      { title: "Products — Aghanims Phones and Gadgets" },
+      { title: "Shop Keypad, Flip and Vintage Phones in India | Aghanims" },
+      ...(match.search.q ? [{ name: "robots", content: "noindex, follow" }] : []),
       {
         name: "description",
         content:
@@ -80,19 +81,19 @@ function Catalog() {
 
   // Filtering States
   const [cat, setCat] = useState<Category | "all">("all");
-  const [quickCategory, setQuickCategory] = useState<PhoneType | "all">(searchParams.type);
+  const [quickCategory, setQuickCategory] = useState<PhoneType | "all">(searchParams.type ?? "all");
   const [formFactor, setFormFactor] = useState<string>("all");
   const [availability, setAvailability] = useState<string>("all");
   const [brand, setBrand] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("recommended");
-  const [searchTerm, setSearchTerm] = useState(searchParams.q);
+  const [searchTerm, setSearchTerm] = useState(searchParams.q ?? "");
   const [page, setPage] = useState(1);
   const trackedSearches = useRef(new Set<string>());
 
-  useEffect(() => setSearchTerm(searchParams.q), [searchParams.q]);
+  useEffect(() => setSearchTerm(searchParams.q ?? ""), [searchParams.q]);
   useEffect(() => {
-    setQuickCategory(searchParams.type);
+    setQuickCategory(searchParams.type ?? "all");
     setPage(1);
   }, [searchParams.type]);
 
@@ -101,7 +102,9 @@ function Catalog() {
     setCat("all");
     setFormFactor("all");
     setPage(1);
-    void navigate({ search: (previous) => ({ ...previous, type: value }) });
+    void navigate({
+      search: (previous) => ({ ...previous, type: value === "all" ? undefined : value }),
+    });
   };
 
   const formFactors = [
@@ -304,7 +307,7 @@ function Catalog() {
                 setCat(c.id);
                 setQuickCategory("all");
                 setPage(1);
-                void navigate({ search: (previous) => ({ ...previous, type: "all" }) });
+                void navigate({ search: (previous) => ({ ...previous, type: undefined }) });
               }}
               className={
                 "px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-colors " +
@@ -362,13 +365,18 @@ function Catalog() {
           onSubmit={(event) => {
             event.preventDefault();
             setPage(1);
-            void navigate({ search: (previous) => ({ ...previous, q: searchTerm.trim() }) });
+            void navigate({
+              search: (previous) => ({ ...previous, q: searchTerm.trim() || undefined }),
+            });
           }}
         >
           <label className="block min-w-0 flex-1">
             <span className="sr-only">Search products</span>
             <span className="relative block">
-              <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-on-surface-variant">
+              <span
+                aria-hidden="true"
+                className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-on-surface-variant"
+              >
                 search
               </span>
               <input
@@ -528,7 +536,7 @@ function Catalog() {
                 setSortBy("recommended");
                 setSearchTerm("");
                 setPage(1);
-                void navigate({ search: { q: "", type: "all" } });
+                void navigate({ search: {} });
               }}
               className="bg-primary text-on-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-sm inline-block mt-2"
             >

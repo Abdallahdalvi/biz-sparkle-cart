@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrackRouteImport } from './routes/track'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SimCompatibilityRouteImport } from './routes/sim-compatibility'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as MetaCatalogDotxmlRouteImport } from './routes/meta-catalog[.]xml'
 import { Route as CompareRouteImport } from './routes/compare'
@@ -47,6 +48,11 @@ const TrackRoute = TrackRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimCompatibilityRoute = SimCompatibilityRouteImport.update({
+  id: '/sim-compatibility',
+  path: '/sim-compatibility',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsRoute = ProductsRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/meta-catalog.xml': typeof MetaCatalogDotxmlRoute
   '/products': typeof ProductsRoute
+  '/sim-compatibility': typeof SimCompatibilityRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/meta-catalog.xml': typeof MetaCatalogDotxmlRoute
   '/products': typeof ProductsRoute
+  '/sim-compatibility': typeof SimCompatibilityRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/meta-catalog.xml': typeof MetaCatalogDotxmlRoute
   '/products': typeof ProductsRoute
+  '/sim-compatibility': typeof SimCompatibilityRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/track': typeof TrackRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/meta-catalog.xml'
     | '/products'
+    | '/sim-compatibility'
     | '/sitemap.xml'
     | '/track'
     | '/account/orders'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/meta-catalog.xml'
     | '/products'
+    | '/sim-compatibility'
     | '/sitemap.xml'
     | '/track'
     | '/account/orders'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/meta-catalog.xml'
     | '/products'
+    | '/sim-compatibility'
     | '/sitemap.xml'
     | '/track'
     | '/account/orders'
@@ -387,6 +399,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   MetaCatalogDotxmlRoute: typeof MetaCatalogDotxmlRoute
   ProductsRoute: typeof ProductsRoute
+  SimCompatibilityRoute: typeof SimCompatibilityRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TrackRoute: typeof TrackRoute
   LegalAboutRoute: typeof LegalAboutRoute
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sim-compatibility': {
+      id: '/sim-compatibility'
+      path: '/sim-compatibility'
+      fullPath: '/sim-compatibility'
+      preLoaderRoute: typeof SimCompatibilityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/products': {
@@ -650,6 +670,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   MetaCatalogDotxmlRoute: MetaCatalogDotxmlRoute,
   ProductsRoute: ProductsRoute,
+  SimCompatibilityRoute: SimCompatibilityRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TrackRoute: TrackRoute,
   LegalAboutRoute: LegalAboutRoute,

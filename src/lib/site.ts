@@ -9,3 +9,23 @@ export const META_CATALOG_URL = `${SITE_URL}/meta-catalog.xml`;
 export function absoluteSiteUrl(path: string) {
   return new URL(path, SITE_URL).toString();
 }
+
+export const PRODUCT_IMAGE_PLACEHOLDER = "/logo.png";
+
+export function productImageUrls(images: string[]) {
+  return [
+    ...new Set(
+      images.flatMap((image) => {
+        if (!image || image === PRODUCT_IMAGE_PLACEHOLDER) return [];
+        try {
+          const url = new URL(image, SITE_URL);
+          return /^(?:https?):$/.test(url.protocol) && url.pathname !== PRODUCT_IMAGE_PLACEHOLDER
+            ? [url.toString()]
+            : [];
+        } catch {
+          return [];
+        }
+      }),
+    ),
+  ];
+}

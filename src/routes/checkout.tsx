@@ -36,7 +36,12 @@ export const Route = createFileRoute("/checkout")({
       getCheckoutCapabilities(),
       getAllProducts(),
     ]);
-    return { cms, capabilities, products };
+    const estimates = Object.fromEntries(
+      products.flatMap(({ slug, deliveryEstimate }) =>
+        deliveryEstimate ? [[slug, deliveryEstimate]] : [],
+      ),
+    );
+    return { cms, capabilities, estimates };
   },
   head: () => ({
     meta: [
@@ -61,7 +66,7 @@ function readBrowserCookie(name: string) {
 }
 
 function Checkout() {
-  const { cms, capabilities, products } = Route.useLoaderData();
+  const { cms, capabilities, estimates } = Route.useLoaderData();
   const search = Route.useSearch();
   const items = useCart((s) => s.items);
   const total = useCart((s) => s.totalPaise());
@@ -199,7 +204,6 @@ function Checkout() {
     activeCoupon ? couponDiscountForMerchandise(activeCoupon.amountPaise, total) : undefined,
   );
 
-  const productsBySlug = new Map(products.map((product) => [product.slug, product]));
   const codAdvancePaise = 0;
   const amounts = calculateGiftOrderAmounts({
     merchandisePaise: total,
@@ -215,7 +219,7 @@ function Checkout() {
   const deliveryEstimateItems = items
     .map((item) => ({
       name: item.name,
-      estimate: productsBySlug.get(item.slug)?.deliveryEstimate,
+      estimate: estimates[item.slug],
     }))
     .filter((item): item is { name: string; estimate: string } => Boolean(item.estimate));
 

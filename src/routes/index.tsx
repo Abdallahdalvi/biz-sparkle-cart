@@ -204,7 +204,7 @@ export const Route = createFileRoute("/")({
         { property: "og:url", content: SITE_URL },
         { name: "twitter:image", content: SITE_SOCIAL_IMAGE_URL },
       ],
-      links: [{ rel: "canonical", href: SITE_URL }],
+      links: [{ rel: "canonical", href: `${SITE_URL}/` }],
       scripts: [
         {
           type: "application/ld+json",
@@ -547,7 +547,7 @@ function Index() {
           <div className="mt-8 flex justify-center">
             <Link
               to="/products"
-              search={{ q: "", type: phoneType }}
+              search={{ type: phoneType }}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-sm font-bold uppercase tracking-wide text-on-primary shadow-sm transition-opacity hover:opacity-90 sm:w-auto sm:min-h-11 sm:bg-white sm:px-5 sm:py-3 sm:text-xs sm:text-primary sm:ring-1 sm:ring-primary sm:hover:bg-primary sm:hover:text-on-primary"
             >
               View all products

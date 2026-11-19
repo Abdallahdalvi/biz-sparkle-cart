@@ -1,3 +1,4 @@
+import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
 import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
@@ -7,6 +8,7 @@ import { CANCELLATION_POLICY_SUMMARY } from "@/lib/cancellation-policy";
 export const Route = createFileRoute("/legal/terms")({
   head: () => ({
     meta: [
+      { property: "og:url", content: absoluteSiteUrl("/legal/terms") },
       { title: "Terms & Conditions — Aghanims Phones and Gadgets" },
       {
         name: "description",
@@ -14,6 +16,7 @@ export const Route = createFileRoute("/legal/terms")({
           "Terms & Conditions governing the use of Aghanims Phones and Gadgets and purchases made on our store.",
       },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/legal/terms") }],
   }),
   component: () => (
     <LegalPage title="Terms & Conditions" updated="12 November 2026">

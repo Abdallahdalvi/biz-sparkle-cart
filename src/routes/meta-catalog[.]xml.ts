@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { getAllProducts, inferProductBrand, type Product } from "@/lib/products";
-import { absoluteSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import {
+  absoluteSiteUrl,
+  productImageUrls,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/site";
+import { productSummary } from "@/lib/product-content";
 import { merchantProductCondition } from "@/lib/product-condition";
 
 function xml(value: unknown) {
@@ -11,19 +18,6 @@ function xml(value: unknown) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
-}
-
-function absoluteImageUrl(image: string | undefined) {
-  const fallback = absoluteSiteUrl("/logo.png");
-  const value = image?.trim();
-
-  if (!value) return fallback;
-
-  try {
-    return new URL(value).toString();
-  } catch {
-    return absoluteSiteUrl(value.startsWith("/") ? value : `/${value}`);
-  }
 }
 
 function googleProductCategory(product: Product) {
@@ -38,26 +32,26 @@ export const Route = createFileRoute("/meta-catalog.xml")({
     handlers: {
       GET: async () => {
         const products = await getAllProducts();
-        const items = products.map((product) => {
+        const items = products.flatMap((product) => {
+          const images = productImageUrls(product.images);
+          if (!images.length || product.pricePaise <= 0) return [];
           const productCategory = googleProductCategory(product);
-          const additionalImages = product.images
+          const additionalImages = images
             .slice(1, 11)
-            .filter((image) => image.trim())
             .map(
-              (image) =>
-                `      <g:additional_image_link>${xml(absoluteImageUrl(image))}</g:additional_image_link>`,
+              (image) => `      <g:additional_image_link>${xml(image)}</g:additional_image_link>`,
             );
 
           return [
             "    <item>",
             `      <g:id>${xml(product.slug)}</g:id>`,
             `      <g:title>${xml(product.name)}</g:title>`,
-            `      <g:description>${xml(product.description || product.tagline)}</g:description>`,
+            `      <g:description>${xml(productSummary(product))}</g:description>`,
             `      <g:availability>${product.stock > 0 ? "in stock" : "out of stock"}</g:availability>`,
             `      <g:condition>${merchantProductCondition(product.condition)}</g:condition>`,
             `      <g:price>${(product.pricePaise / 100).toFixed(2)} INR</g:price>`,
             `      <g:link>${xml(absoluteSiteUrl(`/product/${encodeURIComponent(product.slug)}`))}</g:link>`,
-            `      <g:image_link>${xml(absoluteImageUrl(product.images[0]))}</g:image_link>`,
+            `      <g:image_link>${xml(images[0])}</g:image_link>`,
             ...additionalImages,
             `      <g:brand>${xml(product.brand || inferProductBrand(product.name))}</g:brand>`,
             productCategory
