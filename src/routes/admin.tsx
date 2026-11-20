@@ -118,12 +118,8 @@ function AdminLayout() {
         <div className="max-w-xl mx-auto py-32 text-center">
           <h1 className="text-3xl font-bold text-primary mb-4">Access denied</h1>
           <p className="text-on-surface-variant mb-6">
-            Your account isn't an admin. Run this in your Supabase SQL editor to promote it:
+            This area requires an authorised store administrator account.
           </p>
-          <pre className="bg-white shopify-border p-4 text-left text-xs overflow-auto">
-            {`insert into electronic_shop.user_roles (user_id, role)
-values ('${user.id}', 'admin');`}
-          </pre>
         </div>
       </SiteShell>
     );

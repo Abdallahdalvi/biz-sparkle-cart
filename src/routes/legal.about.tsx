@@ -2,7 +2,7 @@ import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getStorefrontCms, type StorefrontCms } from "@/lib/products";
-import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
+import { LEGAL_BUSINESS_NAME } from "@/lib/business-identity";
 
 export const Route = createFileRoute("/legal/about")({
   loader: async () => {
@@ -50,8 +50,8 @@ function AboutPage() {
           </p>
           <p className="mt-4 text-sm text-on-surface-variant">
             Aghanims Phones and Gadgets is operated by{" "}
-            <span translate="no">{cms.biz_legal_name || LEGAL_PROPRIETOR_NAME}</span>, legal
-            proprietor.
+            <span translate="no">{cms.biz_legal_name || LEGAL_BUSINESS_NAME}</span>, registered with
+            limited liability.
           </p>
         </div>
 

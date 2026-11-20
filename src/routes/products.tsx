@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, type SearchSchemaInput } from "@tan
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
+import { useAuth } from "@/lib/use-auth";
 import { PhoneTypeFilters } from "@/components/PhoneTypeFilters";
 import { CATEGORIES, getAllProducts, getStorefrontCms, type Category } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
@@ -80,6 +81,7 @@ export const Route = createFileRoute("/products")({
 });
 
 function Catalog() {
+  const { isAdmin } = useAuth();
   const { all, cms, rankingSeed, rankingTime } = Route.useLoaderData();
   const searchParams = Route.useSearch();
   const navigate = useNavigate({ from: "/products" });
@@ -94,6 +96,7 @@ function Catalog() {
   const [sortBy, setSortBy] = useState<string>("recommended");
   const [searchTerm, setSearchTerm] = useState(searchParams.q ?? "");
   const [page, setPage] = useState(1);
+  const catalogResults = useRef<HTMLDivElement>(null);
   const trackedSearches = useRef(new Set<string>());
 
   useEffect(() => setSearchTerm(searchParams.q ?? ""), [searchParams.q]);
@@ -282,6 +285,11 @@ function Catalog() {
   }, [all, searchTerm]);
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
+  function changePage(next: number) {
+    setPage(Math.max(1, Math.min(next, totalPages)));
+    catalogResults.current?.focus({ preventScroll: true });
+    catalogResults.current?.scrollIntoView({ block: "start" });
+  }
   const pageProducts = filteredProducts.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
@@ -550,9 +558,15 @@ function Catalog() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+            <div
+              ref={catalogResults}
+              tabIndex={-1}
+              role="region"
+              aria-label={`Catalog results, page ${currentPage}`}
+              className="grid scroll-mt-32 grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4"
+            >
               {pageProducts.map((p) => (
-                <ProductCard key={p.slug} product={p} />
+                <ProductCard key={p.slug} product={p} canEdit={isAdmin} />
               ))}
             </div>
             {totalPages > 1 && (
@@ -563,7 +577,7 @@ function Catalog() {
                 <button
                   type="button"
                   disabled={currentPage === 1}
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                  onClick={() => changePage(currentPage - 1)}
                   className="border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   Previous
@@ -573,7 +587,7 @@ function Catalog() {
                     key={pageNumber}
                     type="button"
                     aria-current={pageNumber === currentPage ? "page" : undefined}
-                    onClick={() => setPage(pageNumber)}
+                    onClick={() => changePage(pageNumber)}
                     className={`h-9 min-w-9 border px-3 text-xs font-bold ${
                       pageNumber === currentPage
                         ? "border-primary bg-primary text-on-primary"
@@ -586,7 +600,7 @@ function Catalog() {
                 <button
                   type="button"
                   disabled={currentPage === totalPages}
-                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                  onClick={() => changePage(currentPage + 1)}
                   className="border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-primary disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   Next

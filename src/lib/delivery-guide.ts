@@ -30,7 +30,7 @@ export const DELIVERY_GUIDE_STEPS = [
   },
   {
     title: "Keep evidence and report any issue",
-    body: "If you find a wrong item, missing item, damage or defect, report it within 48 hours with your order number and unboxing video, or details of the video call. Keep the packaging and any photos so we can assess your claim and resolve eligible issues under our replacement policy.",
+    body: "Report a wrong or missing item, damage or defect with your order number and any available evidence. Eligible replacements are provided within 7 days of reporting.",
   },
   {
     title: "Pay only the confirmed balance",

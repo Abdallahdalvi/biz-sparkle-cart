@@ -261,97 +261,89 @@ function ContactPage() {
               </div>
             )}
 
-            {/* Official Business Details */}
-            {cms.business_profile_verified ? (
-              <div className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">support_agent</span>
-                    Customer Support
-                  </h3>
-                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                    <span className="block">
-                      <strong>Email:</strong>{" "}
-                      <a
-                        href={`mailto:${cms.biz_email || BIZ.email}`}
-                        className="text-primary hover:underline"
-                      >
-                        {cms.biz_email || BIZ.email}
-                      </a>
-                    </span>
-                    <span className="block">
-                      <strong>Phone:</strong> {cms.biz_phone || BIZ.phone}
-                    </span>
-                    <span className="block">
-                      <strong>Operating Hours:</strong> {cms.biz_hours || BIZ.hours}
-                    </span>
-                  </p>
-                </div>
-
-                <hr className="border-outline-variant/30" />
-
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">corporate_fare</span>
-                    Registered Office
-                  </h3>
-                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                    <span className="block font-medium text-on-surface">
-                      {cms.biz_legal_name || BIZ.legalName}
-                    </span>
-                    <span className="block">{cms.biz_address || BIZ.address}</span>
-                    <span className="block">
-                      <strong>GSTIN:</strong> {cms.biz_gstin || BIZ.gstin}
-                    </span>
-                  </p>
-                </div>
-
-                <hr className="border-outline-variant/30" />
-
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">gavel</span>
-                    Grievance Officer
-                  </h3>
-                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed mb-2">
-                    As required under Rule 5(9) of the IT Rules, 2011 and the Consumer Protection
-                    (E-Commerce) Rules, 2020:
-                  </p>
-                  <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
-                    <span className="block">
-                      <strong>Name:</strong> {cms.biz_grievance_officer || BIZ.grievanceOfficer}
-                    </span>
-                    <span className="block">
-                      <strong>Email:</strong>{" "}
-                      <a
-                        href={`mailto:${cms.biz_email || BIZ.email}`}
-                        className="text-primary hover:underline"
-                      >
-                        {cms.biz_email || BIZ.email}
-                      </a>
-                    </span>
-                    <span className="block">
-                      <strong>Phone:</strong> {cms.biz_phone || BIZ.phone}
-                    </span>
-                  </p>
-                  <p className="text-[11px] text-on-surface-variant/80 mt-3 italic">
-                    We acknowledge complaints within 48 hours and resolve them within 30 days.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-amber-50 border border-amber-200 p-8 rounded shadow-sm space-y-3">
-                <h2 className="text-xl font-bold text-amber-950 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-amber-700">domain_disabled</span>
-                  Business details pending verification
-                </h2>
-                <p className="text-sm text-amber-900/80 leading-relaxed">
-                  A registered office, legal entity name, GSTIN, and grievance-officer details are
-                  not published until they have been verified. Use WhatsApp or the contact form for
-                  support in the meantime.
+            <div className="bg-surface-container-lowest border border-outline-variant/40 p-8 rounded shadow-sm space-y-6">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">support_agent</span>
+                  Customer Support
+                </h3>
+                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
+                  <span className="block">
+                    <strong>Email:</strong>{" "}
+                    <a
+                      href={`mailto:${cms.biz_email || BIZ.email}`}
+                      className="text-primary hover:underline"
+                    >
+                      {cms.biz_email || BIZ.email}
+                    </a>
+                  </span>
+                  <span className="block">
+                    <strong>Phone:</strong> {cms.biz_phone || BIZ.phone}
+                  </span>
+                  <span className="block">
+                    <strong>Operating Hours:</strong> {cms.biz_hours || BIZ.hours}
+                  </span>
                 </p>
               </div>
-            )}
+
+              <hr className="border-outline-variant/30" />
+
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">corporate_fare</span>
+                  Registered Office
+                </h3>
+                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
+                  <span className="block font-medium text-on-surface">
+                    {cms.biz_legal_name || BIZ.legalName}
+                  </span>
+                  <span className="block">{cms.biz_address || BIZ.address}</span>
+                  <span className="block">
+                    LLPIN {BIZ.llpin} · Registered with limited liability
+                  </span>
+                </p>
+              </div>
+
+              <hr className="border-outline-variant/30" />
+
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">gavel</span>
+                  Grievance Officer
+                </h3>
+                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed mb-2">
+                  Consumer complaints and escalations under the Consumer Protection (E-Commerce)
+                  Rules, 2020.
+                </p>
+                <p className="text-xs text-on-surface-variant space-y-1 leading-relaxed">
+                  <span className="block">
+                    <strong>Name:</strong> {cms.biz_grievance_officer || BIZ.grievanceOfficer}
+                  </span>
+                  <span className="block">
+                    <strong>Email:</strong>{" "}
+                    <a
+                      href={`mailto:${cms.biz_email || BIZ.email}`}
+                      className="text-primary hover:underline"
+                    >
+                      {cms.biz_email || BIZ.email}
+                    </a>
+                  </span>
+                  <span className="block">
+                    <strong>Phone:</strong> {cms.biz_phone || BIZ.phone}
+                  </span>
+                </p>
+                <p className="text-[11px] text-on-surface-variant/80 mt-3 italic">
+                  We acknowledge complaints within 48 hours, send a copy of the recorded complaint
+                  and resolve complaints within one month.
+                </p>
+                <a
+                  href="https://consumerhelpline.gov.in/"
+                  className="mt-2 inline-block text-xs font-bold text-primary underline"
+                >
+                  National Consumer Helpline
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>

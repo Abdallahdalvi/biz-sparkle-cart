@@ -31,8 +31,9 @@ function ShippingPolicy() {
       </p>
       <h2>Where we ship</h2>
       <p>
-        We currently ship across India via Shiprocket and its courier partners (Bluedart, Delhivery,
-        DTDC, India Post, Xpressbees, etc.) depending on PIN-code serviceability.
+        We currently deliver only to serviceable addresses in India via Shiprocket and its courier
+        partners (Bluedart, Delhivery, DTDC, India Post, Xpressbees, etc.) depending on PIN-code
+        serviceability.
       </p>
       <h2>Processing time</h2>
       <p>
@@ -66,17 +67,17 @@ function ShippingPolicy() {
       </p>
       <h2>Undelivered / RTO</h2>
       <p>
-        If a package is returned due to incorrect address, repeated unavailability, or refusal,
-        we'll contact you to review the case. Re-delivery, cancellation, or any refund is not
-        automatic and may have outbound, return, payment-gateway, or handling costs deducted where
-        legally permitted.
+        If a package is returned due to an incorrect address, repeated unavailability or refusal,
+        we'll contact you about redelivery or cancellation. We disclose any lawful redelivery charge
+        before you agree to a new delivery. Refunds follow our{" "}
+        <a href="/legal/returns">Return &amp; Refund Policy</a> and applicable consumer law.
       </p>
       <h2>Damaged in transit</h2>
       <p>
         If your shipment arrives visibly damaged, please refuse delivery if possible and email{" "}
-        <PolicySupportEmail cms={cms} /> with photos/video within 48 hours of delivery. Approved
-        cases may receive a replacement, repair support, or refund where applicable.
-        Customer-damaged, used, modified, or incomplete products are not eligible.
+        <PolicySupportEmail cms={cms} /> with your order number and any available evidence. We
+        dispatch eligible replacements within seven calendar days of your first report. See the{" "}
+        <a href="/legal/returns">Return &amp; Refund Policy</a> for refunds and other remedies.
       </p>
       <h2>Questions</h2>
       <p>

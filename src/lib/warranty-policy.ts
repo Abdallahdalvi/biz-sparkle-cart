@@ -1,5 +1,7 @@
+import { REPLACEMENT_TIMELINE } from "./replacement-policy";
+
 export const ACCESSORY_WARRANTY_POLICY =
-  "The device battery and any charger supplied with the device have a one-month store warranty from the original delivery date for functional faults arising during normal use. Report the fault within that month with your order number and evidence of the issue. Claims are inspected before an appropriate repair or replacement is approved. This cover continues after the 48-hour delivery-issue window, but does not extend warranty cover to the entire phone. Customer misuse, physical or liquid damage, tampering and unauthorised repairs are excluded. Delivery fees for approved replacements follow our replacement delivery-fee policy, except where applicable law requires otherwise. Your statutory consumer rights remain unaffected.";
+  "The device battery and any included charger have a one-month store warranty from delivery for functional faults arising during normal use. Report the fault with your order number and any available evidence. This warranty covers the battery and charger. Damage caused by misuse, accidents, liquid, tampering or unauthorised repair is excluded from this warranty. Your statutory consumer rights remain unaffected.";
 
 export const ACCESSORY_WARRANTY_FAQ = {
   question: "Is there a warranty on the battery and charger?",
@@ -7,4 +9,5 @@ export const ACCESSORY_WARRANTY_FAQ = {
 };
 
 export const RETURNS_POLICY_SUMMARY =
-  "No change-of-mind returns are accepted. Report delivery damage, wrong items, missing accessories or device functional defects within 48 hours of delivery with clear photo/video proof and original packaging. The device battery and any charger supplied with it have a separate one-month warranty from original delivery for functional faults during normal use. After 48 hours, other store-level replacement, return or refund requests are not accepted except where required by applicable law. Customer misuse, physical or liquid damage, tampering and unauthorised repairs are excluded from warranty cover. Your statutory consumer rights remain unaffected.";
+  "For delivery damage, wrong or missing items, or a functional defect, contact support with your order number and any available evidence. " +
+  REPLACEMENT_TIMELINE;

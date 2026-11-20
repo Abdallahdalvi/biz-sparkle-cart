@@ -14,6 +14,9 @@ const NAV = [
 
 export function Header() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const productSlug = useRouterState({
+    select: (s) => s.matches.find((match) => match.routeId === "/product/$slug")?.params.slug,
+  });
   const items = useCart((s) => s.items);
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,10 +42,15 @@ export function Header() {
           </p>
           <LanguageSelector />
         </div>
-        <p>
-          Credit/Debit Cards <span aria-hidden="true">·</span> UPI <span aria-hidden="true">·</span>{" "}
-          Net Banking
-        </p>
+        {mounted && isAdmin && (
+          <Link
+            to={productSlug ? "/admin/products" : "/admin/cms"}
+            search={productSlug ? { edit: productSlug } : {}}
+            className="rounded bg-slate-950 px-2 py-0.5 font-bold text-white"
+          >
+            {productSlug ? "Edit this product" : "Edit storefront"}
+          </Link>
+        )}
       </div>
       <nav aria-label="Main navigation">
         <div className="flex justify-between items-center w-full px-4 md:px-10 max-w-[1280px] mx-auto h-16 box-border">

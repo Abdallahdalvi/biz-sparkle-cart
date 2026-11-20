@@ -39,7 +39,9 @@ export function getProductSources(metadata: unknown): ProductSource[] {
         ? "Vintage Mobile Arena"
         : host === "zoneofdeals.com"
           ? "Zone of Deals"
-          : host;
+          : host === "unigadgetz.in"
+            ? "UniGadgetz"
+            : host;
     sources.push({ url: url.href, label, primary: url.href === primary });
   }
   return sources;

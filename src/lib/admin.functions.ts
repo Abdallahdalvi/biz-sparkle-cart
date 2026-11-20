@@ -41,7 +41,11 @@ async function syncProductVariants(
   }
 }
 
-function requirePublishableProduct(pricePaise: number, metadata: { images?: unknown } | null) {
+function requirePublishableProduct(
+  pricePaise: number,
+  metadata: { images?: unknown; supplier_import?: { source?: string }; specs?: unknown } | null,
+  stock?: number,
+) {
   if (pricePaise <= 0) {
     throw new Error("Set a selling price above ₹0 before publishing this product");
   }
@@ -50,6 +54,23 @@ function requirePublishableProduct(pricePaise: number, metadata: { images?: unkn
     images.flatMap((url) => (typeof url === "string" && url.trim() ? [url.trim()] : [])),
   );
   if (unique.size < 3) throw new Error("Add three distinct product photos before publishing");
+  if (metadata?.supplier_import?.source === "unigadgetz") {
+    if (stock !== undefined && stock <= 0) {
+      throw new Error("Confirm available stock and enter its quantity before publishing");
+    }
+    const specs = Array.isArray(metadata.specs) ? metadata.specs : [];
+    for (const label of ["Country of origin", "Importer name", "Importer address"]) {
+      if (
+        !specs.some(
+          (spec) => spec?.label === label && typeof spec.value === "string" && spec.value.trim(),
+        )
+      ) {
+        throw new Error(
+          `Verify and add ${label.toLowerCase()} in Specifications before publishing`,
+        );
+      }
+    }
+  }
 }
 
 export const createProduct = createServerFn({ method: "POST" })
@@ -73,7 +94,7 @@ export const createProduct = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireSupabaseAuth } = await import("@/lib/auth.server");
     await requireSupabaseAuth(data.token, "admin");
-    if (data.is_active) requirePublishableProduct(data.price_paise, data.metadata);
+    if (data.is_active) requirePublishableProduct(data.price_paise, data.metadata, data.stock);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prod, error } = await supabaseAdmin
       .from("products")
@@ -135,6 +156,9 @@ export const updateProduct = createServerFn({ method: "POST" })
     await requireSupabaseAuth(data.token, "admin");
     if (data.is_active && data.price_paise <= 0) {
       throw new Error("Set a selling price above ₹0 before publishing this product");
+    }
+    if (data.is_active && data.metadata?.supplier_import?.source === "unigadgetz") {
+      requirePublishableProduct(data.price_paise, data.metadata);
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload = {
@@ -201,16 +225,20 @@ export const updateProductStatus = createServerFn({ method: "POST" })
     if (data.is_active && !data.id.startsWith("static-")) {
       const { data: product, error: priceError } = await supabaseAdmin
         .from("products")
-        .select("price_paise, metadata")
+        .select("price_paise, metadata, stock")
         .eq("id", data.id)
         .single();
       if (priceError) throw new Error(`Could not check selling price: ${priceError.message}`);
-      requirePublishableProduct(product.price_paise, product.metadata);
+      requirePublishableProduct(product.price_paise, product.metadata, product.stock);
     }
 
     if (data.id.startsWith("static-") && data.staticRow) {
       if (data.is_active) {
-        requirePublishableProduct(data.staticRow.price_paise, data.staticRow.metadata);
+        requirePublishableProduct(
+          data.staticRow.price_paise,
+          data.staticRow.metadata,
+          data.staticRow.stock,
+        );
       }
       const { error } = await supabaseAdmin.from("products").insert({
         slug: data.staticRow.slug,

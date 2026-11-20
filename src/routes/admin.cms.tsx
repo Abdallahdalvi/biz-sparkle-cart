@@ -585,7 +585,7 @@ function AdminCmsPage() {
                     type="text"
                     value={cms.biz_gstin || ""}
                     onChange={(e) => setCms({ ...cms, biz_gstin: e.target.value })}
-                    placeholder="Leave blank if not registered"
+                    placeholder="Enter a verified GSTIN, if applicable"
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -1940,7 +1940,7 @@ function AdminCmsPage() {
                     rows={4}
                     value={cms.legal_returns_text || ""}
                     onChange={(e) => setCms({ ...cms, legal_returns_text: e.target.value })}
-                    placeholder="No change-of-mind returns. Delivery damage/defect claims must be reported within 48 hours..."
+                    placeholder="Report a delivery issue with your order number..."
                     className="w-full bg-surface-container-low border border-outline-variant/40 p-3 text-sm font-medium focus:border-primary focus:outline-none leading-relaxed"
                   />
                 </div>

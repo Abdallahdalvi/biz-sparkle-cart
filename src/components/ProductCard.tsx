@@ -3,7 +3,7 @@ import type { Product } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { recordProductEngagement } from "@/lib/product-engagement";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, canEdit }: { product: Product; canEdit?: boolean }) {
   const discountPercent =
     product.compareAtPaise && product.compareAtPaise > product.pricePaise
       ? Math.round(((product.compareAtPaise - product.pricePaise) / product.compareAtPaise) * 100)
@@ -22,7 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article
       onClick={(event) => {
-        if ((event.target as HTMLElement).closest("a"))
+        if ((event.target as HTMLElement).closest('a[href^="/product/"]'))
           recordProductEngagement(product.slug, "click");
       }}
       className="group flex h-full min-w-0 flex-col overflow-hidden border border-outline-variant/70 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_14px_32px_rgba(15,23,42,0.10)]"
@@ -104,6 +104,16 @@ export function ProductCard({ product }: { product: Product }) {
             arrow_forward
           </span>
         </Link>
+        {canEdit && (
+          <Link
+            to="/admin/products"
+            search={{ edit: product.slug }}
+            aria-label={`Edit ${product.name}`}
+            className="mt-2 flex min-h-10 items-center justify-center rounded border border-primary/30 px-2 py-2 text-xs font-bold text-primary hover:bg-primary/5"
+          >
+            Edit product
+          </Link>
+        )}
       </div>
     </article>
   );

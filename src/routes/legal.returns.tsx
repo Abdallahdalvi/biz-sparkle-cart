@@ -1,7 +1,7 @@
 import { absoluteSiteUrl } from "@/lib/site";
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, BIZ } from "@/components/legal/LegalPage";
-import { REPLACEMENT_DELIVERY_POLICY } from "@/lib/replacement-policy";
+import { REPLACEMENT_DELIVERY_POLICY, REPLACEMENT_TIMELINE } from "@/lib/replacement-policy";
 import { ACCESSORY_WARRANTY_POLICY } from "@/lib/warranty-policy";
 import { CUSTOMER_CANCELLATION_POLICY, STORE_CANCELLATION_POLICY } from "@/lib/cancellation-policy";
 import { getStorefrontCms } from "@/lib/products";
@@ -15,8 +15,7 @@ export const Route = createFileRoute("/legal/returns")({
       { title: "Return & Refund Policy — Aghanims Phones and Gadgets" },
       {
         name: "description",
-        content:
-          "Aghanims Phones and Gadgets 48-hour delivery damage, defect, replacement, and refund policy.",
+        content: "Return, refund and seven-day replacement policy for Aghanims Phones and Gadgets.",
       },
     ],
     links: [{ rel: "canonical", href: absoluteSiteUrl("/legal/returns") }],
@@ -27,60 +26,32 @@ export const Route = createFileRoute("/legal/returns")({
 function ReturnsPolicy() {
   const cms = Route.useLoaderData();
   return (
-    <LegalPage title="Return & Refund Policy" updated="16 October 2026">
+    <LegalPage title="Return & Refund Policy" updated="20 November 2026">
       <p className="text-lg font-medium text-on-surface leading-relaxed border-b border-outline-variant/30 pb-6 mb-8">
         {BIZ.legalReturnsText}
       </p>
       <h2>No change-of-mind returns</h2>
       <p>
         We do not accept returns because a customer changed their mind, ordered the wrong model,
-        found a different price elsewhere, or no longer wants the product after delivery.
+        found a different price elsewhere, or no longer wants the product after delivery, except
+        where applicable law provides a right to return.
       </p>
-      <h2>48-hour delivery issue window</h2>
-      <p>
-        Damage-on-arrival, wrong-item, missing-accessory, or functional-defect claims must be
-        reported within <strong>48 hours of delivery</strong>. Requests raised after 48 hours are
-        not eligible for replacement, return, or refund except for eligible battery/charger claims
-        under the one-month warranty below or where required by applicable law.
-      </p>
-      <h2>Non-returnable items</h2>
-      <ul>
-        <li>Used, opened, incomplete, or customer-damaged products.</li>
-        <li>Products with scratches, liquid damage, impact damage, burns, dents, or tampering.</li>
-        <li>Items repaired, modified, rooted, flashed, unlocked, or altered after delivery.</li>
-        <li>
-          Products returned without original box, accessories, labels, invoice, or IMEI match.
-        </li>
-        <li>Software, gift cards, personalised items, and final-sale/limited-drop items.</li>
-      </ul>
-      <p>
-        These return exclusions do not remove cover for an eligible battery or charger fault arising
-        during normal use within its one-month warranty.
-      </p>
-      <h2>How to raise a 48-hour claim</h2>
+      <h2>Report a problem with your order</h2>
       <ol className="list-decimal pl-6 text-on-surface-variant space-y-1">
         <li>
-          Contact <PolicySupportEmail cms={cms} /> with your order ID within 48 hours of delivery.
+          Contact <PolicySupportEmail cms={cms} /> with your order ID and describe the issue.
         </li>
         <li>
-          Attach clear unboxing photos/video showing the packaging, label, product, and issue.
+          Send any photos or video you have. Keep the packaging and accessories where possible.
         </li>
         <li>
-          Keep the original box, courier packaging, invoice, labels, and all accessories intact.
-        </li>
-        <li>
-          Do not use, repair, modify, or further damage the product while the claim is reviewed.
-        </li>
-        <li>
-          If approved, we will arrange the appropriate resolution: replacement, repair support, or
-          refund where applicable.
+          Follow our return instructions so we can inspect the item and arrange the appropriate
+          remedy.
         </li>
       </ol>
-      <h2>Inspection before approval</h2>
       <p>
-        Every claim is subject to verification. A pickup, replacement, or refund approval is not
-        automatic. If inspection shows customer misuse, missing parts, tampering, unauthorised
-        repair, or a mismatch with the shipped product/IMEI, the claim will be rejected.
+        We assess the available evidence. An unboxing video or original packaging is welcome if
+        available. Opening or inspecting an item does not by itself make a claim ineligible.
       </p>
       <h2>Refunds</h2>
       <p>
@@ -98,32 +69,10 @@ function ReturnsPolicy() {
         earlier agreed terms are not changed. The ₹50 customer cancellation deduction does not apply
         to refunds required in full by law.
       </p>
-      <h2>Replacements</h2>
-      <p>
-        Replacement is available only for approved 48-hour delivery damage, wrong-item,
-        missing-accessory, or functional-defect claims. After 48 hours from delivery, no replacement
-        is provided except for eligible battery/charger warranty claims or where required by
-        applicable law.
-      </p>
-      <h2>Who pays replacement delivery fees?</h2>
-      <p>
-        This replacement delivery-fee policy applies to orders placed on or after 15 October 2026.
-        Terms agreed for earlier orders are not changed.
-      </p>
-      <p className="border border-amber-300 bg-amber-50 p-4 font-medium">
-        {REPLACEMENT_DELIVERY_POLICY}
-      </p>
-      <ol className="list-decimal pl-6 text-on-surface-variant space-y-1">
-        <li>Report the issue and obtain approval before sending anything back.</li>
-        <li>Our team will confirm the return instructions and replacement delivery fee.</li>
-        <li>
-          After inspection and approval, agree to and pay the quoted replacement delivery fee before
-          dispatch, unless a legal exception applies.
-        </li>
-        <li>
-          Replacement approval does not automatically approve a refund or waive delivery fees.
-        </li>
-      </ol>
+      <h2>Replacement within seven days</h2>
+      <p>{REPLACEMENT_TIMELINE}</p>
+      <h2>Return and replacement shipping</h2>
+      <p>{REPLACEMENT_DELIVERY_POLICY}</p>
       <h2>One-month battery & charger warranty</h2>
       <p>{ACCESSORY_WARRANTY_POLICY}</p>
       <p>
@@ -132,9 +81,9 @@ function ReturnsPolicy() {
       </p>
       <h2>Manufacturer warranty</h2>
       <p>
-        Any manufacturer warranty, if applicable to a specific product, is separate from this
-        store-level 48-hour delivery issue policy. Warranty coverage does not apply to customer
-        misuse, physical damage, liquid damage, tampering, or unauthorised repair.
+        Any manufacturer warranty, if applicable to a specific product, is separate from this store
+        replacement policy. Warranty coverage does not apply to customer misuse, physical damage,
+        liquid damage, tampering, or unauthorised repair.
       </p>
       <h2>Contact</h2>
       <p>

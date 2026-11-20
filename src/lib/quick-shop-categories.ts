@@ -9,6 +9,7 @@ export type QuickShopCategory =
   | "t9"
   | "flip"
   | "slider"
+  | "rugged"
   | "mini";
 
 export const PHONE_TYPE_OPTIONS = [
@@ -18,6 +19,7 @@ export const PHONE_TYPE_OPTIONS = [
   { key: "mini", label: "Mini Phones", icon: "phone_android" },
   { key: "t9", label: "Keypad Phones", icon: "dialpad" },
   { key: "smartphones", label: "Smartphones", icon: "smartphone" },
+  { key: "rugged", label: "Rugged Phones", icon: "shield" },
 ] as const;
 export type PhoneType = (typeof PHONE_TYPE_OPTIONS)[number]["key"];
 export function validPhoneType(value: unknown): PhoneType | "all" {
@@ -71,14 +73,8 @@ export function isMiniPhone(product: QuickShopProduct) {
 }
 
 export function isStorefrontSmartphone(product: QuickShopProduct) {
-  if (
-    product.category !== "phones" ||
-    isMiniPhone(product) ||
-    isQwertyPhone(product) ||
-    isFlipPhone(product) ||
-    isSliderPhone(product)
-  )
-    return false;
+  if (product.category !== "phones") return false;
+  if (isSmartphone(product)) return true;
   // Some imported legacy models have generic or incorrect form-factor metadata.
   if (/\bnokia\s+(?:5233|808)\b/i.test(product.name)) return true;
   if (
@@ -96,7 +92,7 @@ export function isStorefrontSmartphone(product: QuickShopProduct) {
 export function isSmartphone(product: QuickShopProduct) {
   if (product.category !== "phones") return false;
   const operatingSystem = product.specs
-    .filter((spec) => /^(os|operating system|software)$/i.test(spec.label))
+    .filter((spec) => /^(os|operating system|software|platform)$/i.test(spec.label))
     .map((spec) => spec.value)
     .join(" ");
 
@@ -108,8 +104,9 @@ export function isSmartphone(product: QuickShopProduct) {
     return true;
   }
 
-  const formFactor = product.formFactor?.toLocaleLowerCase() || "";
+  const formFactor = product.formFactor?.toLowerCase() || "";
   if (/symbian/i.test(operatingSystem)) return formFactor.includes("touchscreen");
+  if (/\bandroid\b/i.test(formFactor) || /\bgalaxy\s+z\s+flip\d*/i.test(product.name)) return true;
 
   return (
     (formFactor === "touchscreen" || formFactor === "compact iphone") &&
@@ -132,16 +129,29 @@ export function matchesQuickShopCategory(product: QuickShopProduct, category: Qu
   if (category === "smartphones") return isStorefrontSmartphone(product);
   if (category === "mini") return isMiniPhone(product);
   if (product.category !== "phones") return false;
+  if (category === "rugged") {
+    return (
+      /\brugged\b|\b(?:blackview\s+bv|oukitel\s+wp)\d|\bulefone\s+(?:power\s+)?armor\b|\b(?:unihertz|8849)\s+tank\b|\bcat\s+s\d{2}\b|\bsonim\s+xp\d|\bgalaxy\s+xcover\b|\bnokia\s+800\s+tough\b/i.test(
+        `${product.name} ${product.formFactor || ""}`,
+      ) ||
+      product.specs.some(
+        ({ label, value }) =>
+          /^(?:rugged|durability|protection|ip rating|ingress protection)$/i.test(label) &&
+          /\brugged\b|\byes\b|\bip69k?\b|\bmil-std-810/i.test(value),
+      )
+    );
+  }
   if (category === "qwerty") return isQwertyPhone(product);
   if (category === "flip") return isFlipPhone(product);
   if (category === "slider") return isSliderPhone(product);
   if (category === "t9") {
     return (
-      !isMiniPhone(product) &&
-      !isQwertyPhone(product) &&
-      !isFlipPhone(product) &&
-      !isSliderPhone(product) &&
-      !isStorefrontSmartphone(product)
+      /\b(?:t9|keypad|numeric keypad)\b/i.test(`${product.formFactor || ""} ${product.name}`) ||
+      (!isMiniPhone(product) &&
+        !isQwertyPhone(product) &&
+        !isFlipPhone(product) &&
+        !isSliderPhone(product) &&
+        !isStorefrontSmartphone(product))
     );
   }
   return false;

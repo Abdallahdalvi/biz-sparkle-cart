@@ -4,7 +4,7 @@ import { RETURNS_POLICY_SUMMARY } from "@/lib/warranty-policy";
 import { CANCELLATION_POLICY_SUMMARY } from "@/lib/cancellation-policy";
 import { useStorefrontLanguage } from "@/components/StorefrontLanguage";
 import { POLICY_LANGUAGE_SUMMARIES } from "@/lib/policy-language-summaries";
-import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
+import { BUSINESS_LLPIN, LEGAL_BUSINESS_NAME, REGISTERED_OFFICE } from "@/lib/business-identity";
 
 export function LegalPage({
   title,
@@ -25,7 +25,8 @@ export function LegalPage({
         </p>
         <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2">{title}</h1>
         <p className="text-sm text-on-surface-variant mb-6">
-          {BIZ.name} is operated by <span translate="no">{BIZ.legalName}</span>, legal proprietor.
+          {BIZ.name} is operated by <span translate="no">{BIZ.legalName}</span> · LLPIN {BIZ.llpin}{" "}
+          · Registered with limited liability.
         </p>
         {updated && (
           <p className="text-[11px] uppercase tracking-widest text-on-surface-variant mb-12">
@@ -57,18 +58,16 @@ export function LegalPage({
   );
 }
 
-// The proprietor name was supplied and approved for publication by the owner.
-// Never publish placeholder KYC or tax information.
 export const BIZ = {
   name: "Aghanims Phones and Gadgets",
-  legalName: LEGAL_PROPRIETOR_NAME,
-  address: "Business address pending verification",
+  legalName: LEGAL_BUSINESS_NAME,
+  llpin: BUSINESS_LLPIN,
+  address: REGISTERED_OFFICE,
   state: "India",
-  gstin: "Not registered",
-  email: "",
-  phone: "",
+  email: "support@aghanimsgroup.in",
+  phone: "+919372168726",
   hours: "",
-  grievanceOfficer: "To be appointed",
+  grievanceOfficer: "Abdallah Dalvi",
   legalTermsText:
     'These Terms & Conditions ("Terms") govern access to and use of the Aghanims Phones and Gadgets website and purchases made through the store. By using the site, you agree to these Terms. Prices are shown in Indian Rupees (INR). An order is accepted when it is confirmed for fulfilment.',
   legalPrivacyText:

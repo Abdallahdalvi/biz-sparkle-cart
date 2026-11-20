@@ -30,10 +30,10 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>2. Products & Pricing</h2>
       <p>
-        All prices are in Indian Rupees (INR) and are inclusive of applicable GST unless stated
-        otherwise. We reserve the right to revise prices, withdraw or modify product listings at any
-        time without prior notice. Products may occasionally be mispriced; in such cases we may
-        cancel the order and issue a full refund.
+        All prices are in Indian Rupees (INR). The checkout shows the order total and any applicable
+        charges before you confirm. We reserve the right to revise prices, withdraw or modify
+        product listings at any time without prior notice. Products may occasionally be mispriced;
+        in such cases we may cancel the order and issue a full refund.
       </p>
       <h2>3. Orders & Acceptance</h2>
       <p>
@@ -57,11 +57,9 @@ export const Route = createFileRoute("/legal/terms")({
         Terms.
       </p>
       <p>
-        No change-of-mind returns are accepted. Delivery damage, wrong-item, missing-accessory, or
-        functional-defect claims must be raised within 48 hours of delivery with photo/video proof
-        and original packaging. Products damaged, used, modified, repaired, tampered with, or made
-        incomplete by the customer are not eligible for replacement or refund, subject to applicable
-        law.
+        Report defects, damage and incorrect or incomplete deliveries to support. Eligible
+        replacements are dispatched within seven calendar days of reporting. Mandatory consumer
+        rights and remedies apply.
       </p>
       <p>{REPLACEMENT_DELIVERY_POLICY}</p>
       <p>{ACCESSORY_WARRANTY_POLICY}</p>
@@ -85,8 +83,9 @@ export const Route = createFileRoute("/legal/terms")({
       </p>
       <h2>9. Governing Law & Jurisdiction</h2>
       <p>
-        These Terms are governed by the laws of India. Any dispute shall be subject to the exclusive
-        jurisdiction of the competent courts of {BIZ.state}.
+        Indian law governs these Terms. You may bring a complaint before any consumer commission or
+        other forum with jurisdiction under applicable law. Mandatory protections and remedies
+        available to you apply.
       </p>
       <h2>10. Changes</h2>
       <p>

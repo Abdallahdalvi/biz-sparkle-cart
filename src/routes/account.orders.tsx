@@ -287,7 +287,7 @@ function Orders() {
                       B2C Retail Customer
                     </span>
                     <p className="text-xs text-on-surface-variant pt-1">
-                      No GSTIN provided. Standard retail bill generated.
+                      Standard retail bill generated.
                     </p>
                   </div>
                 )}

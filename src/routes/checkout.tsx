@@ -241,20 +241,6 @@ function Checkout() {
           </div>
         )}
 
-        {payMode === "prepaid" &&
-          capabilities.onlinePaymentsConfigured &&
-          capabilities.onlinePaymentEnvironment === "sandbox" && (
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded mb-8 flex items-start gap-3 text-xs text-amber-950">
-              <span className="material-symbols-outlined text-amber-700 text-xl">science</span>
-              <div>
-                <p className="font-bold uppercase tracking-wider">Cashfree sandbox is active</p>
-                <p className="text-amber-900/80 mt-1">
-                  Checkout is connected to Cashfree test mode. No real payment will be collected.
-                </p>
-              </div>
-            </div>
-          )}
-
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -518,8 +504,9 @@ function Checkout() {
                   {payMode === "cod" && (
                     <p className="text-xs leading-relaxed text-on-surface-variant">
                       With COD, the recipient pays the remaining balance, including the ₹299
-                      gift-wrapping and greeting-card fee, on delivery. Choose prepaid if you do not
-                      want the recipient to pay.
+                      gift-wrapping and greeting-card fee, on delivery.{" "}
+                      {capabilities.onlinePaymentsConfigured &&
+                        " Choose prepaid if you do not want the recipient to pay."}
                     </p>
                   )}
                 </div>
@@ -529,49 +516,45 @@ function Checkout() {
               <legend className="px-2 text-[11px] font-bold uppercase tracking-widest">
                 Payment Mode
               </legend>
-              <label
-                className={`flex items-start gap-3 p-4 border rounded transition-colors ${capabilities.onlinePaymentsConfigured ? "cursor-pointer" : "cursor-not-allowed opacity-60"} ${payMode === "prepaid" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
-              >
-                <input
-                  type="radio"
-                  name="pay"
-                  checked={payMode === "prepaid"}
-                  disabled={!capabilities.onlinePaymentsConfigured}
-                  onChange={() => setPayMode("prepaid")}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-sm text-primary">
-                      Online payment (UPI / Cards / Net Banking)
-                    </p>
-                    {capabilities.onlinePaymentsConfigured &&
-                      !activeCoupon &&
-                      cms.prepaid_discount_type !== "none" &&
-                      cms.prepaid_discount_amount > 0 && (
-                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                          {cms.prepaid_discount_type === "flat"
-                            ? `₹${cms.prepaid_discount_amount} OFF`
-                            : `${cms.prepaid_discount_amount}% OFF`}
-                        </span>
-                      )}
-                  </div>
-                  <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
-                    {!capabilities.onlinePaymentsConfigured
-                      ? "Available after business verification"
-                      : activeCoupon
+              {capabilities.onlinePaymentsConfigured && (
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded border p-4 transition-colors ${payMode === "prepaid" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
+                >
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={payMode === "prepaid"}
+                    onChange={() => setPayMode("prepaid")}
+                    className="mt-1"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-sm text-primary">
+                        Online payment (UPI / Cards / Net Banking)
+                      </p>
+                      {!activeCoupon &&
+                        cms.prepaid_discount_type !== "none" &&
+                        cms.prepaid_discount_amount > 0 && (
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                            {cms.prepaid_discount_type === "flat"
+                              ? `₹${cms.prepaid_discount_amount} OFF`
+                              : `${cms.prepaid_discount_amount}% OFF`}
+                          </span>
+                        )}
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant uppercase tracking-widest mt-1">
+                      {activeCoupon
                         ? "Your coupon replaces the prepaid discount"
                         : cms.prepaid_discount_type === "none" || cms.prepaid_discount_amount === 0
                           ? "Secure online payment"
                           : `Instant ${cms.prepaid_discount_type === "flat" ? `₹${cms.prepaid_discount_amount}` : `${cms.prepaid_discount_amount}%`} Discount on Prepaid Orders`}
-                  </p>
-                  {capabilities.onlinePaymentsConfigured && (
-                    <p className="text-[10px] text-blue-700 font-bold uppercase tracking-widest mt-1">
+                    </p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">
                       Secure checkout powered by Cashfree
                     </p>
-                  )}
-                </div>
-              </label>
+                  </div>
+                </label>
+              )}
               <label
                 className={`flex items-start gap-3 p-4 border rounded transition-colors cursor-pointer ${payMode === "cod" ? "border-primary bg-primary/5" : "border-outline-variant/40 bg-white"}`}
               >

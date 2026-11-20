@@ -10,7 +10,11 @@ import {
 } from "@/lib/gift-card";
 
 function onlinePaymentsConfigured() {
-  return Boolean(process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY);
+  return (
+    process.env.CASHFREE_CHECKOUT_ENABLED === "true" &&
+    process.env.CASHFREE_ENVIRONMENT?.toLowerCase() === "production" &&
+    Boolean(process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY)
+  );
 }
 
 export const getCheckoutCapabilities = createServerFn({ method: "GET" }).handler(async () => ({

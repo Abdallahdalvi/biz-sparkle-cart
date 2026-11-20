@@ -64,7 +64,10 @@ export function Footer() {
           </div>
         </div>
         <p className="text-center text-xs text-on-surface-variant">
-          {BIZ.name} · Legal proprietor: <span translate="no">{copy.legalName}</span>
+          {BIZ.name} · <span translate="no">{copy.legalName}</span> · LLPIN {BIZ.llpin} · Registered
+          with limited liability
+          <br />
+          {BIZ.address}
         </p>
         <div className="border-t border-outline-variant/20 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
           <p>

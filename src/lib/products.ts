@@ -1,5 +1,5 @@
 import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
-import { LEGAL_PROPRIETOR_NAME } from "@/lib/business-identity";
+import { LEGAL_BUSINESS_NAME } from "@/lib/business-identity";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductEngagement } from "@/lib/product-ranking";
 import { inferProductBrand } from "@/lib/product-brand";
@@ -147,12 +147,12 @@ export const STORE_TRUST_FAQS: StorefrontCms["faqs"] = [
   {
     question: "Are online payments secure?",
     answer:
-      "Prepaid checkout payments are processed by Cashfree. For COD, we contact you after order confirmation to arrange the advance. Aghanims Phones and Gadgets does not receive or store your full card, UPI PIN, bank password, or OTP.",
+      "Available payment methods are shown at checkout. For COD, our support team contacts you after order confirmation about the advance. We never ask for your card number, UPI PIN, bank password or OTP by phone or message.",
   },
   {
     question: "What if the product arrives damaged, incorrect, or defective?",
     answer:
-      "Contact our support team within 48 hours of delivery with your order number and photos or video of the issue. We will help you with the next steps. Full details are in our Return & Refund Policy.",
+      "Contact support with your order number and any available evidence. Eligible replacements are provided within 7 days of reporting. See our Return & Refund Policy.",
   },
 ];
 
@@ -316,8 +316,8 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
     },
     {
       icon: "currency_exchange",
-      title: "48-HOUR DOA SUPPORT",
-      description: "Damage or defect claims must be reported within 48 hours of delivery.",
+      title: "REPLACEMENT WITHIN 7 DAYS",
+      description: "Eligible replacements are provided within 7 days of reporting.",
     },
     {
       icon: "video_camera_front",
@@ -341,7 +341,7 @@ export const DEFAULT_STOREFRONT_CMS: StorefrontCms = {
   prepaid_discount_amount: 150,
   prepaid_discount_type: "flat",
   biz_name: "Aghanims Phones and Gadgets",
-  biz_legal_name: LEGAL_PROPRIETOR_NAME,
+  biz_legal_name: LEGAL_BUSINESS_NAME,
   biz_address: "",
   biz_state: "Maharashtra",
   biz_gstin: "",
@@ -686,7 +686,17 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     about_values: dbCms.about_values || DEFAULT_STOREFRONT_CMS.about_values,
     about_image: dbCms.about_image || DEFAULT_STOREFRONT_CMS.about_image,
     videos: dbCms.videos?.length ? dbCms.videos : DEFAULT_STOREFRONT_CMS.videos,
-    pointers: dbCms.pointers?.length ? dbCms.pointers : DEFAULT_STOREFRONT_CMS.pointers,
+    pointers: dbCms.pointers?.length
+      ? dbCms.pointers.map((pointer) =>
+          /48[ -]*hour|\bdoa\b/i.test(pointer.title + " " + pointer.description)
+            ? {
+                ...pointer,
+                title: "REPLACEMENT WITHIN 7 DAYS",
+                description: "Eligible replacements are provided within 7 days of reporting.",
+              }
+            : pointer,
+        )
+      : DEFAULT_STOREFRONT_CMS.pointers,
     reviews_heading: dbCms.reviews_heading || DEFAULT_STOREFRONT_CMS.reviews_heading,
     reviews: isLegacyGoogleReviewSet(dbCms.reviews)
       ? DEFAULT_STOREFRONT_CMS.reviews
@@ -703,7 +713,7 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     prepaid_discount_type:
       dbCms.prepaid_discount_type || DEFAULT_STOREFRONT_CMS.prepaid_discount_type,
     biz_name: dbCms.biz_name || DEFAULT_STOREFRONT_CMS.biz_name,
-    biz_legal_name: dbCms.biz_legal_name || DEFAULT_STOREFRONT_CMS.biz_legal_name,
+    biz_legal_name: LEGAL_BUSINESS_NAME,
     biz_address: dbCms.biz_address || DEFAULT_STOREFRONT_CMS.biz_address,
     biz_state: dbCms.biz_state || DEFAULT_STOREFRONT_CMS.biz_state,
     biz_gstin: dbCms.biz_gstin || DEFAULT_STOREFRONT_CMS.biz_gstin,
@@ -720,7 +730,7 @@ export async function getStorefrontCms(): Promise<StorefrontCms> {
     legal_terms_text: dbCms.legal_terms_text || DEFAULT_STOREFRONT_CMS.legal_terms_text,
     legal_privacy_text: dbCms.legal_privacy_text || DEFAULT_STOREFRONT_CMS.legal_privacy_text,
     legal_shipping_text: dbCms.legal_shipping_text || DEFAULT_STOREFRONT_CMS.legal_shipping_text,
-    legal_returns_text: dbCms.legal_returns_text || DEFAULT_STOREFRONT_CMS.legal_returns_text,
+    legal_returns_text: RETURNS_POLICY_SUMMARY,
     legal_cancellation_text:
       dbCms.legal_cancellation_text || DEFAULT_STOREFRONT_CMS.legal_cancellation_text,
     footer_tagline: dbCms.footer_tagline || DEFAULT_STOREFRONT_CMS.footer_tagline,

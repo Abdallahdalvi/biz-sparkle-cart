@@ -1,6 +1,13 @@
 import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
 import { createFileRoute } from "@tanstack/react-router";
-import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatINR } from "@/lib/format";
 import { toast } from "sonner";
@@ -16,6 +23,7 @@ import {
   hasAdminProductFilters,
 } from "@/lib/admin-product-filters";
 import { ProductSources } from "@/components/admin/ProductSources";
+import { supplierRetailPrice } from "@/lib/supplier-pricing";
 import {
   createProduct,
   updateProduct,
@@ -38,6 +46,8 @@ interface ProductMetadata {
   images?: string[];
   videos?: Array<{ title: string; url: string }>;
   faqs?: Array<{ question: string; answer: string }>;
+  supplier_import?: { source?: string; source_price_paise?: number; [key: string]: unknown };
+  supplier_price_paise?: number;
   [key: string]: unknown;
 }
 
@@ -395,6 +405,9 @@ function ProductMediaEditor({
 }
 
 export const Route = createFileRoute("/admin/products")({
+  validateSearch: (search: Record<string, unknown>): { edit?: string } => ({
+    edit: typeof search.edit === "string" && search.edit.length <= 160 ? search.edit : undefined,
+  }),
   component: AdminProducts,
 });
 
@@ -403,6 +416,13 @@ function AdminProducts() {
   const [cats, setCats] = useState<Category[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Row | null>(null);
+  const { edit } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const currentEditor = edit && rows ? rows.find((row) => row.slug === edit) : editingProduct;
+  const closeEditor = useCallback(() => {
+    setEditingProduct(null);
+    if (edit) void navigate({ search: {}, replace: true });
+  }, [edit, navigate]);
   const updateStatusFn = useServerFn(updateProductStatus);
   const deleteProdFn = useServerFn(deleteProduct);
   const updateOrderFn = useServerFn(updateProductOrder);
@@ -472,10 +492,10 @@ function AdminProducts() {
   }, []);
 
   useEffect(() => {
-    if (!editingProduct) return;
+    if (!currentEditor) return;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setEditingProduct(null);
+      if (event.key === "Escape") closeEditor();
     };
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
@@ -483,7 +503,7 @@ function AdminProducts() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [editingProduct]);
+  }, [currentEditor, closeEditor]);
 
   async function toggle(r: Row) {
     try {
@@ -619,14 +639,19 @@ function AdminProducts() {
         />
       )}
 
-      {editingProduct && (
+      {edit && rows && !currentEditor && (
+        <p role="alert" className="my-3 text-sm font-semibold">
+          Product not found.
+        </p>
+      )}
+      {currentEditor && (
         <div
           className="fixed inset-0 z-[100] bg-black/55 p-0 sm:p-4 md:p-8"
           role="dialog"
           aria-modal="true"
-          aria-label={`Edit ${editingProduct.name}`}
+          aria-label={`Edit ${currentEditor.name}`}
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setEditingProduct(null);
+            if (event.target === event.currentTarget) closeEditor();
           }}
         >
           <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:shopify-border">
@@ -635,11 +660,11 @@ function AdminProducts() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
                   Editing product
                 </p>
-                <h3 className="truncate text-base font-bold text-primary">{editingProduct.name}</h3>
+                <h3 className="truncate text-base font-bold text-primary">{currentEditor.name}</h3>
               </div>
               <button
                 type="button"
-                onClick={() => setEditingProduct(null)}
+                onClick={closeEditor}
                 className="flex min-h-10 shrink-0 items-center gap-1 border border-outline-variant/50 px-3 text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-low"
                 aria-label="Close product editor"
               >
@@ -649,13 +674,14 @@ function AdminProducts() {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 md:p-6">
               <EditProductForm
-                prod={editingProduct}
+                key={currentEditor.id}
+                prod={currentEditor}
                 cats={cats}
                 onDone={() => {
-                  setEditingProduct(null);
+                  closeEditor();
                   refresh();
                 }}
-                onCancel={() => setEditingProduct(null)}
+                onCancel={closeEditor}
               />
             </div>
           </div>
@@ -1538,9 +1564,27 @@ function EditProductForm({
 }) {
   const updateProdFn = useServerFn(updateProduct);
   const [busy, setBusy] = useState(false);
-  const [specs, setSpecs] = useState<{ label: string; value: string }[]>(
-    prod.metadata?.specs || [],
+  const [sellingPrice, setSellingPrice] = useState(String(prod.price_paise / 100));
+  const initialSupplierPrice =
+    prod.metadata?.supplier_price_paise ?? prod.metadata?.supplier_import?.source_price_paise;
+  const [supplierPrice, setSupplierPrice] = useState(
+    initialSupplierPrice ? String(initialSupplierPrice / 100) : "",
   );
+  const supplierPaise = Math.round(Number(supplierPrice) * 100);
+  const suggestedPrice = supplierRetailPrice(supplierPaise, 10);
+  const [specs, setSpecs] = useState<{ label: string; value: string }[]>(() => {
+    const existing = prod.metadata?.specs || [];
+    const disclosures =
+      prod.metadata?.supplier_import?.source === "unigadgetz"
+        ? ["Country of origin", "Importer name", "Importer address"]
+        : [];
+    return [
+      ...existing,
+      ...disclosures
+        .filter((label) => !existing.some((spec) => spec.label === label))
+        .map((label) => ({ label, value: "" })),
+    ];
+  });
   const [variants, setVariants] = useState<StockVariant[]>(
     (prod.metadata?.variants || []).map((variant) => ({
       ...variant,
@@ -1574,6 +1618,7 @@ function EditProductForm({
 
         const metadata = {
           ...productMetadata,
+          supplier_price_paise: suggestedPrice > 0 ? supplierPaise : undefined,
           condition: productCondition(fd.get("condition")),
           condition_grade: String(fd.get("condition_grade") ?? "").trim(),
           brand: String(fd.get("brand") ?? "").trim(),
@@ -1763,6 +1808,12 @@ function EditProductForm({
 
       <ProductConditionFields metadata={prod.metadata} />
       <ProductSources metadata={prod.metadata} />
+      {prod.metadata.supplier_import?.source === "unigadgetz" && !prod.is_active && (
+        <p className="rounded bg-amber-50 p-3 text-sm text-amber-950">
+          Confirm supplier stock and enter the quantity, country of origin, importer name and
+          importer address before publishing.
+        </p>
+      )}
       {/* Pricing & Stock & Advanced Financials */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 md:p-6 shopify-border">
         <div className="md:col-span-3">
@@ -1780,13 +1831,43 @@ function EditProductForm({
           </label>
           <input
             name="price"
-            defaultValue={prod.price_paise / 100}
+            value={sellingPrice}
+            onChange={(event) => setSellingPrice(event.target.value)}
             required
             type="number"
             step="0.01"
             placeholder="e.g. 18999"
             className="w-full border border-outline-variant/40 px-3 py-2 text-sm focus:border-primary"
           />
+        </div>
+        <div className="md:col-span-3 rounded border border-outline-variant/40 p-3">
+          <label htmlFor="supplier-price" className="block text-xs font-bold">
+            Supplier selling price (₹)
+          </label>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              id="supplier-price"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={supplierPrice}
+              onChange={(event) => setSupplierPrice(event.target.value)}
+              className="min-w-0 flex-1 border border-outline-variant/40 px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              disabled={!suggestedPrice}
+              onClick={() => setSellingPrice(String(suggestedPrice / 100))}
+              className="rounded bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-40"
+            >
+              Use supplier price + 10%
+            </button>
+          </div>
+          {suggestedPrice > 0 && (
+            <p className="mt-2 text-xs text-on-surface-variant">
+              {formatINR(suggestedPrice)} after rounding up to a ₹499 or ₹999 ending.
+            </p>
+          )}
         </div>
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">

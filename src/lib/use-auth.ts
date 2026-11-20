@@ -7,7 +7,7 @@ let cachedAdmin: { userId: string; isAdmin: boolean } | null = null;
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [admin, setAdmin] = useState<typeof cachedAdmin>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,22 +30,31 @@ export function useAuth() {
 
   useEffect(() => {
     if (!user) {
-      setIsAdmin(false);
+      setAdmin(null);
       cachedAdmin = null;
       return;
     }
     if (cachedAdmin?.userId === user.id) {
-      setIsAdmin(cachedAdmin.isAdmin);
+      setAdmin(cachedAdmin);
       return;
     }
+    let active = true;
     supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => {
-      const ok = Boolean(data);
-      cachedAdmin = { userId: user.id, isAdmin: ok };
-      setIsAdmin(ok);
+      if (!active) return;
+      cachedAdmin = { userId: user.id, isAdmin: data === true };
+      setAdmin(cachedAdmin);
     });
+    return () => {
+      active = false;
+    };
   }, [user]);
 
-  return { session, user, isAdmin, loading };
+  return {
+    session,
+    user,
+    isAdmin: !!user && admin?.userId === user.id && admin.isAdmin,
+    loading: loading || (!!user && admin?.userId !== user.id),
+  };
 }
 
 export async function signOut() {

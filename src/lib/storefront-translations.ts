@@ -41,10 +41,10 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
     "احجز COD بدفع ₹0 عند الطلب. سنتواصل خلال ساعة لترتيب الدفعة المقدمة التي تُخصم من الإجمالي، والباقي عند الاستلام.",
   ],
   [
-    "Prepaid checkout payments are processed by Cashfree. For COD, we contact you after order confirmation to arrange the advance. Aghanims Phones and Gadgets does not receive or store your full card, UPI PIN, bank password, or OTP.",
-    "प्रीपेड भुगतान Cashfree से होता है। COD अग्रिम के लिए हम संपर्क करते हैं। हम पूरा कार्ड विवरण, UPI PIN, बैंक पासवर्ड या OTP नहीं लेते या रखते।",
-    "प्रीपेड पेमेंट Cashfree द्वारे होते. COD आगाऊ रकमेसाठी आम्ही संपर्क करतो. आम्ही संपूर्ण कार्ड माहिती, UPI PIN, बँक पासवर्ड किंवा OTP घेत किंवा जतन करत नाही.",
-    "تُعالج المدفوعات المسبقة عبر Cashfree. نتواصل لترتيب دفعة COD المقدمة. لا نستلم أو نخزن بيانات البطاقة الكاملة أو رمز UPI أو كلمة مرور البنك أو OTP.",
+    "Available payment methods are shown at checkout. For COD, our support team contacts you after order confirmation about the advance. We never ask for your card number, UPI PIN, bank password or OTP by phone or message.",
+    "भुगतान विकल्प चेकआउट पर दिखते हैं। COD अग्रिम के लिए हमारी टीम ऑर्डर की पुष्टि के बाद संपर्क करती है। हम फ़ोन या संदेश पर कार्ड नंबर, UPI पिन, बैंक पासवर्ड या OTP नहीं माँगते।",
+    "पेमेंट पर्याय चेकआउटमध्ये दिसतात. COD च्या आगाऊ रकमेसाठी आमची टीम ऑर्डर निश्चित झाल्यावर संपर्क साधते. आम्ही फोन किंवा मेसेजवर कार्ड नंबर, UPI पिन, बँक पासवर्ड किंवा OTP मागत नाही.",
+    "تظهر طرق الدفع المتاحة عند إتمام الطلب. للدفع عند الاستلام، يتواصل الدعم معك بعد تأكيد الطلب بشأن الدفعة المقدمة. لا نطلب رقم البطاقة أو رمز UPI أو كلمة مرور البنك أو رمز التحقق عبر الهاتف أو الرسائل.",
   ],
   [
     "Applies to products only, with at least ₹1 payable online. Unused coupon value is forfeited. Retry an interrupted payment with the same cart and delivery details.",
@@ -96,12 +96,6 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
     "مؤهل لخصم ضريبة المدخلات (ITC)",
   ],
   ["B2C Retail Customer", "खुदरा ग्राहक", "किरकोळ ग्राहक", "عميل تجزئة"],
-  [
-    "No GSTIN provided. Standard retail bill generated.",
-    "GSTIN नहीं दिया गया। सामान्य खुदरा बिल बना है।",
-    "GSTIN दिलेला नाही. सामान्य किरकोळ बिल तयार केले आहे.",
-    "لم يُقدَّم GSTIN. تم إصدار فاتورة تجزئة عادية.",
-  ],
   ["This order was", "यह ऑर्डर", "ही ऑर्डर", "هذا الطلب"],
   ["Track Package ↗", "पार्सल ट्रैक करें ↗", "पार्सलचा मागोवा घ्या ↗", "تتبع الطرد ↗"],
   ["COD advance paid online", "COD का अग्रिम भुगतान", "COD आगाऊ पेमेंट", "الدفعة المقدمة المدفوعة"],
@@ -266,10 +260,10 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
   ["Phone:", "फ़ोन:", "फोन:", "الهاتف:"],
   ["Name:", "नाम:", "नाव:", "الاسم:"],
   [
-    "We acknowledge complaints within 48 hours and resolve them within 30 days.",
-    "शिकायत की पुष्टि 48 घंटे में और समाधान 30 दिन में करते हैं।",
-    "तक्रारीची दखल 48 तासांत आणि निवारण 30 दिवसांत करतो.",
-    "نقر باستلام الشكاوى خلال 48 ساعة ونعالجها خلال 30 يومًا.",
+    "We acknowledge complaints within 48 hours, send a copy of the recorded complaint and resolve complaints within one month.",
+    "हम 48 घंटे में शिकायत की पुष्टि करते हैं, दर्ज शिकायत की प्रति भेजते हैं और एक महीने में समाधान करते हैं।",
+    "आम्ही 48 तासांत तक्रारीची दखल घेतो, नोंदवलेल्या तक्रारीची प्रत पाठवतो आणि एका महिन्यात निवारण करतो.",
+    "نؤكد استلام الشكاوى خلال 48 ساعة ونرسل نسخة من الشكوى المسجلة ونعالجها خلال شهر.",
   ],
   [
     "Business details pending verification",
@@ -471,12 +465,6 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
     "संपूर्ण भारतात COD डिलिव्हरी (थोडी आगाऊ रक्कम).",
     "توصيل بالدفع عند الاستلام في أنحاء الهند مع دفعة مقدمة بسيطة.",
   ],
-  [
-    "Damage or defect claims must be reported within 48 hours of delivery.",
-    "नुकसान या खराबी की सूचना डिलीवरी के 48 घंटे में दें।",
-    "नुकसान किंवा दोषाची माहिती डिलिव्हरीनंतर 48 तासांत द्या.",
-    "يجب الإبلاغ عن التلف أو العيوب خلال 48 ساعة من الاستلام.",
-  ],
   ["LIVE DEMO", "लाइव डेमो", "थेट प्रात्यक्षिक", "عرض مباشر"],
   [
     "Live Demo Available via Video Call.",
@@ -502,12 +490,6 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
     "असली फ़ोन की स्थिति और काम का नया वीडियो माँगें या WhatsApp वीडियो कॉल का अनुरोध करें। हमारी टीम समय और उपलब्धता बताएगी।",
     "प्रत्यक्ष फोनची स्थिती व कार्ये दाखवणारा नवीन व्हिडिओ मागा किंवा WhatsApp व्हिडिओ कॉलची विनंती करा. आमची टीम वेळ व उपलब्धता कळवेल.",
     "اطلب فيديو حديثًا للهاتف الفعلي يوضح حالته ووظائفه أو مكالمة فيديو عبر WhatsApp. سيؤكد فريقنا التوفر والموعد.",
-  ],
-  [
-    "Covers functional faults in the device battery and included charger from original delivery. This is separate from 48-hour delivery-issue support and does not cover the entire phone. Replacement delivery fees apply, except where required by law.",
-    "डिलीवरी के बाद बैटरी और साथ मिले चार्जर की काम संबंधी खराबियाँ कवर हैं। यह 48 घंटे वाली सहायता से अलग है और पूरे फ़ोन पर लागू नहीं है। कानून में छूट न होने पर बदली की डिलीवरी का शुल्क लगेगा।",
-    "डिलिव्हरीनंतर बॅटरी आणि सोबतच्या चार्जरचे कार्यदोष यात येतात. हे 48 तासांच्या मदतीपेक्षा वेगळे असून संपूर्ण फोनसाठी नाही. कायद्यानुसार सूट नसल्यास बदलीच्या डिलिव्हरीचे शुल्क लागेल.",
-    "يغطي الأعطال الوظيفية للبطارية والشاحن المرفق من تاريخ الاستلام. وهو منفصل عن دعم مشكلات التوصيل خلال 48 ساعة ولا يشمل الهاتف بالكامل. تُطبق رسوم توصيل الاستبدال إلا حيث يقتضي القانون خلاف ذلك.",
   ],
   [
     "Enter your delivery PIN code during checkout. Serviceability, the available courier, and the delivery estimate are confirmed from Shiprocket when your order is prepared for dispatch.",
@@ -622,12 +604,6 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
     "कुरियर भुगतान से पहले बॉक्स खोलने की अनुमति न दे सकता है। उसके नियमों का पालन करें। पार्सल लेने के बाद खोलते समय लगातार वीडियो बनाएँ या टीम के साथ WhatsApp वीडियो कॉल करें। बंद पैकेज, लेबल, सील, खोलने की प्रक्रिया, फ़ोन और सामान साफ़ दिखाएँ। टीम उपलब्ध न हो तो खोलने से पहले वीडियो शुरू करें।",
     "कुरिअर पेमेंटपूर्वी बॉक्स उघडू देईलच असे नाही. त्याचे नियम पाळा. पार्सल घेतल्यानंतर उघडताना सलग व्हिडिओ करा किंवा टीमसोबत WhatsApp व्हिडिओ कॉल करा. बंद पॅकेज, लेबल, सील, उघडण्याची प्रक्रिया, फोन आणि सामान स्पष्ट दाखवा. टीम उपलब्ध नसेल तर उघडण्यापूर्वी व्हिडिओ सुरू करा.",
     "قد لا يسمح المندوب بفحص الصندوق قبل الدفع. اتبع قواعد التسليم. بعد تسلّم الطرد، صوّر فتحه بشكل متواصل أو رتّب مكالمة WhatsApp مع فريقنا أثناء الفتح. ابدأ بالطرد المغلق وأظهر الملصق والأختام والفتح والهاتف والملحقات بوضوح. إذا لم يتوفر الفريق، ابدأ التسجيل قبل الفتح.",
-  ],
-  [
-    "If you find a wrong item, missing item, damage or defect, report it within 48 hours with your order number and unboxing video, or details of the video call. Keep the packaging and any photos so we can assess your claim and resolve eligible issues under our replacement policy.",
-    "गलत या कम सामान, नुकसान या खराबी मिले तो 48 घंटे में ऑर्डर नंबर और अनबॉक्सिंग वीडियो या वीडियो कॉल का विवरण भेजें। पैकेजिंग और तस्वीरें रखें, ताकि हमारी बदली नीति के अनुसार दावे की जाँच हो सके।",
-    "चुकीची किंवा कमी वस्तू, नुकसान किंवा दोष आढळल्यास 48 तासांत ऑर्डर क्रमांक आणि अनबॉक्सिंग व्हिडिओ किंवा व्हिडिओ कॉलचा तपशील पाठवा. पॅकेजिंग आणि फोटो जपून ठेवा, म्हणजे बदली धोरणानुसार दावा तपासता येईल.",
-    "إذا وجدت منتجًا خاطئًا أو مفقودًا أو تلفًا أو عيبًا، أبلغ خلال 48 ساعة مع رقم الطلب وفيديو الفتح أو تفاصيل مكالمة الفيديو. احتفظ بالتغليف والصور لنقيّم مطالبتك ونعالج الحالات المؤهلة وفق سياسة الاستبدال.",
   ],
   [
     "Any advance you have paid is deducted from your total. Use your latest confirmed payment summary and pay only the remaining delivery balance. Never disclose your UPI PIN, banking OTP or card details, install an app at someone’s request, or make an extra transfer to release the parcel. Share a delivery OTP only when the correct parcel is physically being handed to you and you are ready to accept it.",
@@ -1082,12 +1058,8 @@ export const STOREFRONT_TRANSLATIONS: Translation[] = [
     "सुरक्षित पेमेंट आणि मागोवा घेता येणारी डिलिव्हरी",
     "دفع آمن وتوصيل قابل للتتبع",
   ],
-  [
-    "48-Hour DOA Support",
-    "डिलीवरी की समस्या पर 48 घंटे की सहायता",
-    "डिलिव्हरीतील समस्येसाठी 48 तासांची मदत",
-    "دعم مشكلات الوصول خلال 48 ساعة",
-  ],
+  ["Replacement Within 7 Days", "7 दिनों में बदली", "7 दिवसांत बदली", "الاستبدال خلال 7 أيام"],
+  ["Rugged Phones", "मज़बूत फ़ोन", "मजबूत फोन", "هواتف متينة"],
   ["Proof required", "प्रमाण ज़रूरी है", "पुरावा आवश्यक", "يلزم إثبات"],
   ["Google Reviews", "Google समीक्षाएँ", "Google पुनरावलोकने", "تقييمات Google"],
   [

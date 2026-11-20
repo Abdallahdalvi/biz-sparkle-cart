@@ -420,7 +420,7 @@ function ProductDetails({
                   cycle
                 </span>
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-tighter sm:tracking-widest text-primary leading-tight break-words">
-                  48-Hour DOA Support
+                  Replacement Within 7 Days
                 </p>
                 <p className="text-[9px] sm:text-[10px] text-on-surface-variant mt-0.5">
                   Proof required
@@ -706,9 +706,8 @@ function ProductDetails({
                   <strong>One-month battery & charger warranty</strong>
                   <p className="mt-1 text-xs leading-relaxed">
                     Covers functional faults in the device battery and included charger from
-                    original delivery. This is separate from 48-hour delivery-issue support and does
-                    not cover the entire phone. Replacement delivery fees apply, except where
-                    required by law.
+                    original delivery. This separate store warranty covers the battery and included
+                    charger. Your statutory consumer rights remain unaffected.
                   </p>
                   <Link
                     to="/legal/returns"
