@@ -1,7 +1,7 @@
 export function followUpAdvanceForPrice(pricePaise: number) {
   if (!Number.isSafeInteger(pricePaise) || pricePaise <= 0) return 0;
-  if (pricePaise < 1_100_000) return Math.min(pricePaise, 19_900);
-  if (pricePaise < 2_000_000) return 29_900;
+  if (pricePaise < 600_000) return Math.min(pricePaise, 19_900);
+  if (pricePaise < 1_400_000) return 29_900;
   return 49_900;
 }
 

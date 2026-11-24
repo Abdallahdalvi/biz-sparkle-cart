@@ -17,17 +17,12 @@ test("follow-up advances include exact price boundaries and ignore model", () =>
     [1099, 199],
     [5999, 199],
     [5999.99, 199],
-    [6000, 199],
-    [6999, 199],
-    [10999, 199],
-    [10999.99, 199],
-    [11000, 299],
-    [14999, 299],
-    [14999.99, 299],
-    [15000, 299],
-    [19999, 299],
-    [19999.99, 299],
-    [20000, 499],
+    [6000, 299],
+    [6999, 299],
+    [13999, 299],
+    [13999.99, 299],
+    [14000, 499],
+    [14999, 499],
     [100000, 499],
   ]) {
     assert.equal(followUpAdvanceForPrice(Math.round(rupees * 100)), advance * 100);
@@ -45,9 +40,9 @@ test("a manual override wins for a single product and one advance covers mixed c
   assert.equal(followUpAdvanceForOrder(379900, [0]), 0);
   assert.equal(followUpAdvanceForOrder(379900, [15000]), 15000);
   assert.equal(followUpAdvanceForOrder(379900, [600000]), 379900);
-  assert.equal(followUpAdvanceForOrder(1400000, [19900, undefined]), 29900);
+  assert.equal(followUpAdvanceForOrder(1400000, [19900, undefined]), 49900);
   assert.equal(followUpAdvanceForOrder(1400000, [50000, 14900]), 50000);
-  assert.equal(followUpAdvanceForOrder(1400000, [undefined, undefined]), 29900);
+  assert.equal(followUpAdvanceForOrder(1400000, [undefined, undefined]), 49900);
 });
 
 const order = {
