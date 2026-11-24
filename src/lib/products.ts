@@ -1,4 +1,4 @@
-import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
+import { codAdvanceOverride, followUpAdvanceForOrder } from "@/lib/cod-follow-up";
 import { LEGAL_BUSINESS_NAME } from "@/lib/business-identity";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductEngagement } from "@/lib/product-ranking";
@@ -22,6 +22,7 @@ export interface Product {
   pricePaise: number;
   codAdvancePaise: number;
   followUpCodAdvancePaise?: number;
+  codAdvanceOverridePaise?: number;
   codAdvanceAfterConfirmation?: boolean;
   compareAtPaise?: number | null;
   badge?: string;
@@ -435,7 +436,10 @@ export async function getAllProducts(): Promise<Product[]> {
       pricePaise: row.price_paise,
       codAdvancePaise: 0,
       codAdvanceAfterConfirmation: true,
-      followUpCodAdvancePaise: followUpAdvanceForPrice(row.price_paise),
+      codAdvanceOverridePaise: codAdvanceOverride(row.metadata?.cod_advance_override_paise),
+      followUpCodAdvancePaise: followUpAdvanceForOrder(row.price_paise, [
+        codAdvanceOverride(row.metadata?.cod_advance_override_paise),
+      ]),
       compareAtPaise: row.compare_at_paise,
       badge: row.metadata?.badge || undefined,
       images: validatedProductImages(row.metadata?.images),

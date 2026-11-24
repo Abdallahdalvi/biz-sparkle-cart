@@ -3,7 +3,15 @@ import type { Product } from "@/lib/products";
 import { formatINR } from "@/lib/format";
 import { recordProductEngagement } from "@/lib/product-engagement";
 
-export function ProductCard({ product, canEdit }: { product: Product; canEdit?: boolean }) {
+export function ProductCard({
+  product,
+  canEdit,
+  source,
+}: {
+  product: Product;
+  canEdit?: boolean;
+  source?: string | null;
+}) {
   const discountPercent =
     product.compareAtPaise && product.compareAtPaise > product.pricePaise
       ? Math.round(((product.compareAtPaise - product.pricePaise) / product.compareAtPaise) * 100)
@@ -112,6 +120,9 @@ export function ProductCard({ product, canEdit }: { product: Product; canEdit?: 
             className="mt-2 flex min-h-10 items-center justify-center rounded border border-primary/30 px-2 py-2 text-xs font-bold text-primary hover:bg-primary/5"
           >
             Edit product
+            {source !== undefined && (
+              <span className="ml-1 font-normal">· {source ?? "No source listed"}</span>
+            )}
           </Link>
         )}
       </div>

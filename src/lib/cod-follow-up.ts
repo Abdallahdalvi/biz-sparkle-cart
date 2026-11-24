@@ -1,10 +1,25 @@
 export function followUpAdvanceForPrice(pricePaise: number) {
   if (!Number.isSafeInteger(pricePaise) || pricePaise <= 0) return 0;
-  if (pricePaise < 600_000) return Math.min(pricePaise, 14_900);
-  if (pricePaise < 1_100_000) return 19_900;
-  if (pricePaise < 1_500_000) return 24_900;
+  if (pricePaise < 1_100_000) return Math.min(pricePaise, 19_900);
   if (pricePaise < 2_000_000) return 29_900;
   return 49_900;
+}
+
+export function codAdvanceOverride(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
+export function followUpAdvanceForOrder(
+  totalPaise: number,
+  overrides: ReadonlyArray<number | undefined>,
+) {
+  const automatic = followUpAdvanceForPrice(totalPaise);
+  if (!automatic || !overrides.length) return automatic;
+  const usesAutomatic = overrides.some((value) => value === undefined);
+  return Math.min(
+    totalPaise,
+    Math.max(usesAutomatic ? automatic : 0, ...overrides.map((value) => value ?? 0)),
+  );
 }
 
 export function isFollowUpCod(metadata: Record<string, unknown> | null | undefined) {

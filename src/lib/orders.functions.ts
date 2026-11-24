@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
+import { codAdvanceOverride, followUpAdvanceForOrder } from "@/lib/cod-follow-up";
 import { checkoutDiscount, couponDiscountForMerchandise, validateCoupon } from "@/lib/coupons";
 import {
   calculateGiftOrderAmounts,
@@ -207,6 +207,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     // Securely fetch prices and details for each item
     let subtotalPaise = 0;
     const codAdvancePaise = 0;
+    const advanceOverrides: Array<number | undefined> = [];
     const orderItemsToInsert: Array<{
       name: string;
       variant_label: string | null;
@@ -263,6 +264,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
       }
 
       subtotalPaise += unitPricePaise * item.qty;
+      advanceOverrides.push(codAdvanceOverride(prod.metadata?.cod_advance_override_paise));
       // Determine image url
       let imageUrl = "";
       if (prod.metadata?.images?.length > 0) {
@@ -323,7 +325,7 @@ export const createSecureOrder = createServerFn({ method: "POST" })
     subtotalPaise = amounts.subtotalPaise;
     const effectiveTotal = amounts.totalPaise;
     // One advance for the complete order, regardless of phone count or variants.
-    const followUpAdvancePaise = followUpAdvanceForPrice(effectiveTotal);
+    const followUpAdvancePaise = followUpAdvanceForOrder(effectiveTotal, advanceOverrides);
     const paymentAmountPaise = amounts.paymentAmountPaise;
     if (data.giftCard)
       orderItemsToInsert.push({

@@ -1,4 +1,4 @@
-import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
+import { codAdvanceOverride, followUpAdvanceForOrder } from "@/lib/cod-follow-up";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   type Dispatch,
@@ -48,6 +48,7 @@ interface ProductMetadata {
   faqs?: Array<{ question: string; answer: string }>;
   supplier_import?: { source?: string; source_price_paise?: number; [key: string]: unknown };
   supplier_price_paise?: number;
+  cod_advance_override_paise?: number;
   [key: string]: unknown;
 }
 
@@ -73,6 +74,37 @@ interface Category {
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
+}
+
+function advanceForProduct(product: Row) {
+  return followUpAdvanceForOrder(product.price_paise, [
+    codAdvanceOverride(product.metadata.cod_advance_override_paise),
+  ]);
+}
+
+function AdvanceOverrideField({ amount }: { amount?: number }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-bold">COD advance override (₹)</span>
+      <input
+        name="cod_advance_override"
+        type="number"
+        min="0"
+        step="0.01"
+        defaultValue={amount === undefined ? "" : amount / 100}
+        placeholder="Automatic"
+        className="w-full border border-outline-variant/40 px-3 py-2 text-sm"
+      />
+      <span className="mt-1 block text-xs text-on-surface-variant">
+        Leave blank for automatic pricing or enter 0 for no advance.
+      </span>
+    </label>
+  );
+}
+
+function readAdvanceOverride(form: FormData) {
+  const value = String(form.get("cod_advance_override") ?? "").trim();
+  return value === "" ? undefined : Math.round(Number(value) * 100);
 }
 
 type ProductVideo = { title: string; url: string };
@@ -730,7 +762,6 @@ function AdminProducts() {
                       {r.metadata?.images?.length || 0} images • {r.metadata?.videos?.length || 0}{" "}
                       videos
                     </p>
-                    <ProductSources metadata={r.metadata} compact />
                     {r.metadata?.badge && (
                       <span className="mt-2 inline-block rounded border border-primary bg-primary/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
                         {r.metadata.badge}
@@ -758,7 +789,7 @@ function AdminProducts() {
                       COD Advance
                     </p>
                     <p className="font-bold text-amber-800">
-                      {formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation
+                      {formatINR(advanceForProduct(r))} after confirmation
                     </p>
                   </div>
                   <div className="rounded bg-surface-container-low p-3">
@@ -822,6 +853,7 @@ function AdminProducts() {
                   >
                     Edit
                   </button>
+                  <ProductSources metadata={r.metadata} compact />
                   <button
                     onClick={() => remove(r)}
                     className="w-full rounded border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-destructive"
@@ -867,7 +899,6 @@ function AdminProducts() {
                             {r.metadata?.images?.length || 0} images •{" "}
                             {r.metadata?.videos?.length || 0} videos
                           </p>
-                          <ProductSources metadata={r.metadata} compact />
                         </div>
                       </div>
                     </td>
@@ -892,7 +923,7 @@ function AdminProducts() {
                     </td>
                     <td className="p-4">
                       <p className="font-bold text-amber-800">
-                        {formatINR(followUpAdvanceForPrice(r.price_paise))} after confirmation
+                        {formatINR(advanceForProduct(r))} after confirmation
                       </p>
                       <p className="text-[10px] text-on-surface-variant">₹0 at checkout</p>
                     </td>
@@ -960,6 +991,7 @@ function AdminProducts() {
                       >
                         Edit
                       </button>
+                      <ProductSources metadata={r.metadata} compact />
                       <button
                         onClick={() => remove(r)}
                         className="text-destructive text-[11px] uppercase tracking-widest font-bold hover:underline"
@@ -1058,6 +1090,7 @@ function NewProductForm({
           brand: String(fd.get("brand") ?? "").trim(),
           badge: String(fd.get("badge") ?? ""),
           cost_price_paise: Math.round(costRupees * 100),
+          cod_advance_override_paise: readAdvanceOverride(fd),
           gst_rate: gstRate,
           wholesale_gst_rate: wholesaleGstRate,
           packaging_cost_paise: Math.round(packagingRupees * 100),
@@ -1293,14 +1326,7 @@ function NewProductForm({
           />
         </div>
         <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
-              COD Advance
-            </p>
-            <p className="mt-1 text-xs text-on-surface-variant">
-              Calculated from the order total and collected after confirmation.
-            </p>
-          </div>
+          <AdvanceOverrideField />
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
               Packaging (₹)
@@ -1619,6 +1645,7 @@ function EditProductForm({
         const metadata = {
           ...productMetadata,
           supplier_price_paise: suggestedPrice > 0 ? supplierPaise : undefined,
+          cod_advance_override_paise: readAdvanceOverride(fd),
           condition: productCondition(fd.get("condition")),
           condition_grade: String(fd.get("condition_grade") ?? "").trim(),
           brand: String(fd.get("brand") ?? "").trim(),
@@ -1943,14 +1970,9 @@ function EditProductForm({
           />
         </div>
         <div className="grid grid-cols-1 gap-3 md:col-span-3 md:grid-cols-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
-              COD Advance
-            </p>
-            <p className="mt-1 text-xs text-on-surface-variant">
-              Calculated from the order total and collected after confirmation.
-            </p>
-          </div>
+          <AdvanceOverrideField
+            amount={codAdvanceOverride(prod.metadata.cod_advance_override_paise)}
+          />
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">
               Packaging (₹)

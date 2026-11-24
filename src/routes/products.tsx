@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProductCard } from "@/components/ProductCard";
 import { useAuth } from "@/lib/use-auth";
+import { useAdminProductSources } from "@/lib/use-admin-product-sources";
 import { PhoneTypeFilters } from "@/components/PhoneTypeFilters";
 import { CATEGORIES, getAllProducts, getStorefrontCms, type Category } from "@/lib/products";
 import { absoluteSiteUrl, SITE_NAME, SITE_SOCIAL_IMAGE_URL } from "@/lib/site";
@@ -81,7 +82,7 @@ export const Route = createFileRoute("/products")({
 });
 
 function Catalog() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, session } = useAuth();
   const { all, cms, rankingSeed, rankingTime } = Route.useLoaderData();
   const searchParams = Route.useSearch();
   const navigate = useNavigate({ from: "/products" });
@@ -293,6 +294,10 @@ function Catalog() {
   const pageProducts = filteredProducts.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
+  );
+  const sources = useAdminProductSources(
+    isAdmin ? session?.access_token : undefined,
+    pageProducts.map(({ slug }) => slug),
   );
 
   return (
@@ -566,7 +571,12 @@ function Catalog() {
               className="grid scroll-mt-32 grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4"
             >
               {pageProducts.map((p) => (
-                <ProductCard key={p.slug} product={p} canEdit={isAdmin} />
+                <ProductCard
+                  key={p.slug}
+                  product={p}
+                  canEdit={isAdmin}
+                  source={sources?.[p.slug]}
+                />
               ))}
             </div>
             {totalPages > 1 && (

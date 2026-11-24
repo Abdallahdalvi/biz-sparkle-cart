@@ -1,6 +1,37 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { inventoryTotal, type StockVariant } from "@/lib/inventory";
+import { codAdvanceOverride } from "@/lib/cod-follow-up";
+import { productSourceLabel } from "@/lib/product-sources";
+
+const productMetadataInput = z
+  .any()
+  .refine(
+    (metadata) =>
+      metadata?.cod_advance_override_paise === undefined ||
+      codAdvanceOverride(metadata.cod_advance_override_paise) !== undefined,
+    "COD advance must be a non-negative amount in paise",
+  );
+
+export const getAdminProductSourceLabels = createServerFn({ method: "POST" })
+  .validator((input) =>
+    z
+      .object({ token: z.string().min(1), slugs: z.array(z.string().max(160)).min(1).max(100) })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { requireSupabaseAuth } = await import("@/lib/auth.server");
+    await requireSupabaseAuth(data.token, "admin");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: products, error } = await supabaseAdmin
+      .from("products")
+      .select("slug, metadata")
+      .in("slug", data.slugs);
+    if (error) throw error;
+    return Object.fromEntries(
+      products.map(({ slug, metadata }) => [slug, productSourceLabel(metadata) ?? null]),
+    );
+  });
 
 type VariantInput = StockVariant;
 
@@ -87,7 +118,7 @@ export const createProduct = createServerFn({ method: "POST" })
         stock: z.number(),
         category_id: z.string().nullable(),
         is_active: z.boolean().default(true),
-        metadata: z.any(),
+        metadata: productMetadataInput,
       })
       .parse(input),
   )
@@ -147,7 +178,7 @@ export const updateProduct = createServerFn({ method: "POST" })
         stock: z.number(),
         category_id: z.string().nullable(),
         is_active: z.boolean(),
-        metadata: z.any(),
+        metadata: productMetadataInput,
       })
       .parse(input),
   )

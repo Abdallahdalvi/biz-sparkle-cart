@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { followUpAdvanceForPrice, recordedFollowUpAdvance } from "../src/lib/cod-follow-up.ts";
+import {
+  codAdvanceOverride,
+  followUpAdvanceForOrder,
+  followUpAdvanceForPrice,
+  recordedFollowUpAdvance,
+} from "../src/lib/cod-follow-up.ts";
 import { calculateGiftOrderAmounts } from "../src/lib/gift-card.ts";
 import {
   hasVerifiedOrderPayment,
@@ -9,16 +14,16 @@ import {
 
 test("follow-up advances include exact price boundaries and ignore model", () => {
   for (const [rupees, advance] of [
-    [1099, 149],
-    [5999, 149],
-    [5999.99, 149],
+    [1099, 199],
+    [5999, 199],
+    [5999.99, 199],
     [6000, 199],
     [6999, 199],
     [10999, 199],
     [10999.99, 199],
-    [11000, 249],
-    [14999, 249],
-    [14999.99, 249],
+    [11000, 299],
+    [14999, 299],
+    [14999.99, 299],
     [15000, 299],
     [19999, 299],
     [19999.99, 299],
@@ -31,6 +36,18 @@ test("follow-up advances include exact price boundaries and ignore model", () =>
   assert.equal(followUpAdvanceForPrice(-100), 0);
   assert.equal(followUpAdvanceForPrice(NaN), 0);
   assert.equal(followUpAdvanceForPrice(5000), 5000);
+});
+
+test("a manual override wins for a single product and one advance covers mixed carts", () => {
+  assert.equal(codAdvanceOverride(0), 0);
+  assert.equal(codAdvanceOverride("199"), undefined);
+  assert.equal(codAdvanceOverride(-100), undefined);
+  assert.equal(followUpAdvanceForOrder(379900, [0]), 0);
+  assert.equal(followUpAdvanceForOrder(379900, [15000]), 15000);
+  assert.equal(followUpAdvanceForOrder(379900, [600000]), 379900);
+  assert.equal(followUpAdvanceForOrder(1400000, [19900, undefined]), 29900);
+  assert.equal(followUpAdvanceForOrder(1400000, [50000, 14900]), 50000);
+  assert.equal(followUpAdvanceForOrder(1400000, [undefined, undefined]), 29900);
 });
 
 const order = {

@@ -7,6 +7,7 @@ import { formatINR } from "@/lib/format";
 import { GiftCardSummary } from "@/components/GiftCardSummary";
 import { giftCardHtml } from "@/lib/gift-card";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
 import {
   cancelShiprocketShipment,
@@ -129,6 +130,11 @@ export const Route = createFileRoute("/admin/orders")({
 function AdminOrders() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [filter, setFilter] = useState<string>("actionable");
+  const [orderSearch, setOrderSearch] = useState("");
+  const [quickAction, setQuickAction] = useState<{ kind: "cancel" | "edit"; order: Order } | null>(
+    null,
+  );
+  const [savingQuickAction, setSavingQuickAction] = useState(false);
   const [archivedOrderIds, setArchivedOrderIds] = useState<string[]>([]);
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -465,17 +471,7 @@ function AdminOrders() {
     }
   }
 
-  async function cancelOrder(order: Order) {
-    const paid = hasVerifiedOrderPayment(order);
-    const warning =
-      paid && !order.cashfree_payment_id && !order.razorpay_payment_id
-        ? "Cancel this order and restore stock? The recorded manual advance is not refunded automatically; arrange any refund separately under the cancellation policy."
-        : paid
-          ? "Cancel this order and stop fulfilment? This does not return the payment. Use Refund via Cashfree afterward."
-          : "Cancel this order and stop fulfilment? Reserved stock will be restored.";
-    if (!window.confirm(warning)) return;
-    const reason = window.prompt("Cancellation reason", "Cancelled by admin")?.trim();
-    if (!reason) return;
+  async function cancelOrder(order: Order, reason: string) {
     setOrderAction(`${order.id}:cancel-order`);
     try {
       const token = await getAdminToken();
@@ -483,6 +479,7 @@ function AdminOrders() {
       toast.success(
         result.stockRestored ? "Order cancelled and reserved stock restored" : "Order cancelled",
       );
+      setQuickAction(null);
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Order cancellation failed");
@@ -705,7 +702,7 @@ function AdminOrders() {
   const activeOrders = orders.filter((order) => !archivedSet.has(order.id));
   const unpaidAttempts = activeOrders.filter(isUnpaidPaymentAttempt);
   const actionableOrders = activeOrders.filter((order) => !isUnpaidPaymentAttempt(order));
-  const filteredOrders =
+  const statusOrders =
     filter === "archived"
       ? orders.filter((order) => archivedSet.has(order.id))
       : filter === "unpaid"
@@ -715,6 +712,19 @@ function AdminOrders() {
           : filter === "all"
             ? activeOrders
             : activeOrders.filter((order) => order.status === filter);
+  const search = orderSearch.trim().toLowerCase();
+  const filteredOrders = search
+    ? statusOrders.filter((order) =>
+        [
+          order.order_number,
+          order.email,
+          order.phone,
+          order.shipping_address?.first_name,
+          order.shipping_address?.last_name,
+          `${order.shipping_address?.first_name ?? ""} ${order.shipping_address?.last_name ?? ""}`,
+        ].some((value) => value?.toLowerCase().includes(search)),
+      )
+    : statusOrders;
   const selectableOrders = filteredOrders.filter(
     (order) => !isUnpaidPaymentAttempt(order) && !archivedSet.has(order.id),
   );
@@ -735,6 +745,125 @@ function AdminOrders() {
 
   return (
     <div className="space-y-6">
+      <input
+        type="search"
+        value={orderSearch}
+        onChange={(event) => setOrderSearch(event.target.value)}
+        aria-label="Find an order"
+        placeholder="Find by order number, name, email or phone"
+        className="w-full max-w-lg rounded border border-outline-variant/60 bg-white px-3 py-2 text-sm"
+      />
+      <Dialog
+        open={Boolean(quickAction)}
+        onOpenChange={(open) => {
+          if (!open && !savingQuickAction && !orderAction) setQuickAction(null);
+        }}
+      >
+        {quickAction && (
+          <DialogContent>
+            <DialogTitle>
+              {quickAction.kind === "cancel" ? "Cancel order" : "Edit order"} #
+              {quickAction.order.order_number}
+            </DialogTitle>
+            <DialogDescription>
+              {quickAction.kind === "edit"
+                ? "Update the fulfilment status or the internal seller note."
+                : hasVerifiedOrderPayment(quickAction.order)
+                  ? "Cancelling stops fulfilment. Arrange any refund separately using the applicable payment method."
+                  : "Cancelling stops fulfilment and restores any reserved stock."}
+            </DialogDescription>
+            <form
+              className="space-y-3"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const fields = new FormData(event.currentTarget);
+                if (quickAction.kind === "cancel") {
+                  await cancelOrder(quickAction.order, String(fields.get("reason") ?? "").trim());
+                  return;
+                }
+                const order = quickAction.order;
+                const note = String(fields.get("note") ?? "").trim();
+                const status = String(fields.get("status") ?? order.status);
+                setSavingQuickAction(true);
+                try {
+                  const token = await getAdminToken();
+                  if (note !== (sellerNotes[order.id] ?? "")) {
+                    await saveSellerNoteFn({ data: { token, orderId: order.id, note } });
+                    setSellerNotes((notes) => ({ ...notes, [order.id]: note }));
+                  }
+                  if (status !== order.status) {
+                    await updateOrderStatusFn({
+                      data: {
+                        token,
+                        orderId: order.id,
+                        status: status as (typeof STATUSES)[number],
+                      },
+                    });
+                  }
+                  setQuickAction(null);
+                  toast.success("Order updated");
+                  await load();
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Unable to update order");
+                } finally {
+                  setSavingQuickAction(false);
+                }
+              }}
+            >
+              {quickAction.kind === "cancel" ? (
+                <label className="block text-xs font-bold">
+                  Cancellation reason
+                  <input
+                    name="reason"
+                    required
+                    minLength={3}
+                    maxLength={100}
+                    defaultValue="Cancelled by admin"
+                    className="mt-1 w-full rounded border border-outline-variant/60 px-3 py-2 text-sm font-normal"
+                  />
+                </label>
+              ) : (
+                <>
+                  {!isUnpaidPaymentAttempt(quickAction.order) &&
+                    STATUSES.some((status) => status === quickAction.order.status) && (
+                      <label className="block text-xs font-bold">
+                        Status
+                        <select
+                          name="status"
+                          defaultValue={quickAction.order.status}
+                          className="mt-1 block w-full rounded border border-outline-variant/60 px-3 py-2 text-sm font-normal"
+                        >
+                          {STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                  <label className="block text-xs font-bold">
+                    Seller note (internal)
+                    <textarea
+                      name="note"
+                      rows={3}
+                      maxLength={3000}
+                      defaultValue={sellerNotes[quickAction.order.id] ?? ""}
+                      className="mt-1 block w-full rounded border border-outline-variant/60 px-3 py-2 text-sm font-normal"
+                    />
+                  </label>
+                </>
+              )}
+              <button
+                type="submit"
+                disabled={savingQuickAction || Boolean(orderAction)}
+                className={`min-h-10 rounded px-4 text-sm font-bold text-white disabled:opacity-50 ${quickAction.kind === "cancel" ? "bg-rose-700" : "bg-primary"}`}
+              >
+                {quickAction.kind === "cancel" ? "Confirm cancellation" : "Save changes"}
+              </button>
+            </form>
+          </DialogContent>
+        )}
+      </Dialog>
       {/* Bulk Actions Header */}
       {selectedIds.length > 0 && (
         <div className="bg-primary text-on-primary p-4 rounded shadow-sm flex flex-wrap items-center justify-between gap-4 animate-fadeIn">
@@ -975,16 +1104,27 @@ function AdminOrders() {
 
                   <div className="grid grid-cols-1 gap-2">
                     <button
+                      type="button"
+                      aria-expanded={isExpanded}
                       onClick={() => toggleOrderPanel(o)}
                       className="w-full border border-outline-variant/40 bg-white px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary shadow-sm"
                     >
-                      {isExpanded ? "Close Order Panel" : "Open Order Panel"}
+                      {isExpanded ? "Close order" : "View order"}
                     </button>
+                    {!archived && (
+                      <button
+                        type="button"
+                        onClick={() => setQuickAction({ kind: "edit", order: o })}
+                        className="w-full rounded border border-primary/30 px-3 py-2 text-xs font-bold text-primary"
+                      >
+                        Edit order
+                      </button>
+                    )}
                     {canCancel && (
                       <button
                         type="button"
                         disabled={Boolean(orderAction)}
-                        onClick={() => cancelOrder(o)}
+                        onClick={() => setQuickAction({ kind: "cancel", order: o })}
                         className="w-full border border-rose-300 bg-rose-50 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-rose-800 disabled:opacity-50"
                       >
                         {orderAction === `${o.id}:cancel-order` ? "Cancelling..." : "Cancel Order"}
@@ -1453,16 +1593,27 @@ function AdminOrders() {
                         </td>
                         <td className="p-4 text-right space-y-1.5">
                           <button
+                            type="button"
+                            aria-expanded={isExpanded}
                             onClick={() => toggleOrderPanel(o)}
                             className="border border-outline-variant/40 bg-white text-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-surface-container-lowest transition-colors shadow-sm"
                           >
-                            {isExpanded ? "Close Panel" : "Expand OMS ⚙️"}
+                            {isExpanded ? "Close order" : "View order"}
                           </button>
+                          {!archived && (
+                            <button
+                              type="button"
+                              onClick={() => setQuickAction({ kind: "edit", order: o })}
+                              className="block w-full rounded border border-primary/30 px-3 py-1.5 text-xs font-bold text-primary"
+                            >
+                              Edit order
+                            </button>
+                          )}
                           {canCancel && (
                             <button
                               type="button"
                               disabled={Boolean(orderAction)}
-                              onClick={() => cancelOrder(o)}
+                              onClick={() => setQuickAction({ kind: "cancel", order: o })}
                               className="border border-rose-300 bg-rose-50 text-rose-800 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest block w-full text-center hover:bg-rose-100 disabled:opacity-50"
                             >
                               {orderAction === `${o.id}:cancel-order`

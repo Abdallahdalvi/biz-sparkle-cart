@@ -4,6 +4,22 @@ export interface ProductSource {
   primary: boolean;
 }
 
+export function productSourceLabel(metadata: unknown) {
+  const supplier = (metadata as { supplier_import?: { source?: string } } | null)?.supplier_import;
+  const label = getProductSources(metadata)[0]?.label;
+  if (label) return label;
+  switch (supplier?.source) {
+    case "vintage":
+      return "Vintage Mobile Arena";
+    case "zone":
+      return "Zone of Deals";
+    case "unigadgetz":
+      return "UniGadgetz";
+    default:
+      return undefined;
+  }
+}
+
 function webUrl(value: unknown): URL | undefined {
   if (typeof value !== "string" || !value.trim()) return;
   try {

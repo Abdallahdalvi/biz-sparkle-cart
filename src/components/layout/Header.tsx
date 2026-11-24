@@ -3,6 +3,7 @@ import { useCart, useCartOwnerSync } from "@/lib/cart-store";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 import { LanguageSelector } from "@/components/StorefrontLanguage";
+import { useAdminProductSources } from "@/lib/use-admin-product-sources";
 
 const NAV = [
   { href: "/", route: "/", label: "Store" },
@@ -21,7 +22,11 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => setMounted(true), []);
-  const { user, isAdmin, loading } = useAuth();
+  const { user, session, isAdmin, loading } = useAuth();
+  const sources = useAdminProductSources(
+    isAdmin ? session?.access_token : undefined,
+    productSlug ? [productSlug] : [],
+  );
   useCartOwnerSync(user?.id, loading);
   const count = mounted && !loading ? items.reduce((a, i) => a + i.qty, 0) : 0;
 
@@ -43,13 +48,20 @@ export function Header() {
           <LanguageSelector />
         </div>
         {mounted && isAdmin && (
-          <Link
-            to={productSlug ? "/admin/products" : "/admin/cms"}
-            search={productSlug ? { edit: productSlug } : {}}
-            className="rounded bg-slate-950 px-2 py-0.5 font-bold text-white"
-          >
-            {productSlug ? "Edit this product" : "Edit storefront"}
-          </Link>
+          <div className="flex min-w-0 items-center gap-2">
+            <Link
+              to={productSlug ? "/admin/products" : "/admin/cms"}
+              search={productSlug ? { edit: productSlug } : {}}
+              className="rounded bg-slate-950 px-2 py-0.5 font-bold text-white"
+            >
+              {productSlug ? "Edit this product" : "Edit storefront"}
+            </Link>
+            {productSlug && sources && (
+              <span className="truncate text-[10px] font-bold">
+                {sources[productSlug] ?? "No source listed"}
+              </span>
+            )}
+          </div>
         )}
       </div>
       <nav aria-label="Main navigation">

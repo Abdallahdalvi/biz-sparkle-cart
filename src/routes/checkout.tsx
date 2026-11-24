@@ -1,5 +1,5 @@
 import { CodAdvanceNotice } from "@/components/CodAdvanceNotice";
-import { followUpAdvanceForPrice } from "@/lib/cod-follow-up";
+import { codAdvanceOverride, followUpAdvanceForOrder } from "@/lib/cod-follow-up";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { load as loadCashfree } from "@cashfreepayments/cashfree-js";
@@ -41,7 +41,12 @@ export const Route = createFileRoute("/checkout")({
         deliveryEstimate ? [[slug, deliveryEstimate]] : [],
       ),
     );
-    return { cms, capabilities, estimates };
+    const advanceOverrides = Object.fromEntries(
+      products.flatMap(({ slug, codAdvanceOverridePaise }) =>
+        codAdvanceOverridePaise === undefined ? [] : [[slug, codAdvanceOverridePaise]],
+      ),
+    );
+    return { cms, capabilities, estimates, advanceOverrides };
   },
   head: () => ({
     meta: [
@@ -66,7 +71,7 @@ function readBrowserCookie(name: string) {
 }
 
 function Checkout() {
-  const { cms, capabilities, estimates } = Route.useLoaderData();
+  const { cms, capabilities, estimates, advanceOverrides } = Route.useLoaderData();
   const search = Route.useSearch();
   const items = useCart((s) => s.items);
   const total = useCart((s) => s.totalPaise());
@@ -213,7 +218,10 @@ function Checkout() {
     hasGiftCard: giftEnabled,
   });
   const effectiveTotal = amounts.totalPaise;
-  const followUpAdvancePaise = followUpAdvanceForPrice(effectiveTotal);
+  const followUpAdvancePaise = followUpAdvanceForOrder(
+    effectiveTotal,
+    items.map(({ slug }) => codAdvanceOverride(advanceOverrides[slug])),
+  );
 
   const paymentAmountPaise = payMode === "cod" ? codAdvancePaise : effectiveTotal;
   const deliveryEstimateItems = items
